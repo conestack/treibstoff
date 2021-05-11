@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '0.dev0'
+version = '0.0.dev0'
 shortdesc = 'Javascript Foundations for Cone'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
