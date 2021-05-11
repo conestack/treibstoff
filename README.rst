@@ -1,7 +1,4 @@
 Overview
 ========
 
-0.dev0
-------
-
-- Namespace claim.
+This package will containe the Javascritp foundations for cone.app.
