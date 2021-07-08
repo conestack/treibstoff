@@ -25,15 +25,14 @@ Javascript Tests
 
 Cone uses karma testrunner for JS testing:
 
-    Karma: https://karma-runner.github.io/6.3/intro/installation.html
-    Istanbul: https://istanbul.js.org/
-    Puppeteer: https://pptr.dev/
+- Karma: https://karma-runner.github.io/6.3/intro/installation.html
+- Istanbul: https://istanbul.js.org/
+- Puppeteer: https://pptr.dev/
 
 Following plugins are used:
 
-    karma-qunit
-    karma-chrome
-    karma-viewport
+- karma-qunit
+- karma-chrome
 
 Start karma server (immediately run tests)::
 
