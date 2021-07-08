@@ -1,3 +1,5 @@
 *.pyc
 /dist/
 /treibstoff.egg-info/
+/karma/
+/node_modules/
