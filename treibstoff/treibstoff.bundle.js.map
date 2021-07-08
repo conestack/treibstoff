@@ -1,0 +1,1 @@
+{"version":3,"file":"treibstoff.bundle.js","sources":["../src/ajax.js"],"sourcesContent":["export class Ajax {\n\n    constructor() {\n        console.log('Hello Ajax');\n    }\n}\n"],"names":[],"mappings":";;;IAAO,MAAM,IAAI,CAAC;AAClB;IACA,IAAI,WAAW,GAAG;IAClB,QAAQ,OAAO,CAAC,GAAG,CAAC,YAAY,CAAC,CAAC;IAClC,KAAK;IACL;;;;;;;;;;;;;;;;;;;"}

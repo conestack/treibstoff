@@ -46,3 +46,11 @@ Re-run tests (needs karma server to be started)::
 To view coverage report, open::
 
     karma/coverage/[browser name]/index.html
+
+
+Deploy
+------
+
+Create JS bundle with rollup::
+
+    node_modules/rollup/dist/bin/rollup --config rollup.config.ts
