@@ -13,11 +13,19 @@ Install system dependencies::
 
 Install test requirements::
 
-    npm install qunit karma karma-qunit karma-coverage karma-chrome-launcher
+    npm install \
+        qunit \
+        karma \
+        karma-qunit \
+        karma-coverage \
+        karma-chrome-launcher \
+        karma-module-resolver-preprocessor
 
 Install deployment requirements::
 
-    npm install rollup
+    npm install \
+        rollup \
+        rollup-plugin-terser
 
 
 Javascript Tests
@@ -52,4 +60,4 @@ Deploy
 
 Create JS bundle with rollup::
 
-    node_modules/rollup/dist/bin/rollup --config rollup.config.ts
+    node_modules/rollup/dist/bin/rollup --config rollup.conf.js
