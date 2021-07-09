@@ -18,7 +18,8 @@ export default {
         outro: outro,
         globals: {
             jquery: 'jQuery'
-        }
+        },
+        interop: 'default'
     }, {
         file: 'treibstoff/treibstoff.bundle.min.js',
         format: 'iife',
@@ -29,7 +30,8 @@ export default {
         outro: outro,
         globals: {
             jquery: 'jQuery'
-        }
+        },
+        interop: 'default'
     }],
     external: [
         'jquery'

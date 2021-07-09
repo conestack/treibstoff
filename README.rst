@@ -54,6 +54,8 @@ To view coverage report, open::
 
     karma/coverage/[browser name]/index.html
 
+jQuery is included as git submodule to ensure we can import from it in tests.
+For any reason the jquery package from npm includes the wrong sources.
 
 Deploy
 ------
