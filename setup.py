@@ -9,7 +9,7 @@ def read_file(name):
 
 
 version = '0.0.dev0'
-shortdesc = 'Javascript Foundations for Cone'
+shortdesc = 'Javascript foundations for cone.app'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
     'CHANGES.rst',
