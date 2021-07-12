@@ -1,28 +1,25 @@
 // chromium binary
 process.env.CHROME_BIN = '/usr/bin/chromium';
 
-// relative resource paths
-let src_files = '../src';
-let test_files = '../tests';
-
-// files to include in test run
-let files = [
-    {pattern: `../jquery/src/**/*.js`, type: 'module', included: false},
-    {pattern: `${src_files}/*.js`, type: 'module', included: false},
-    {pattern: `${test_files}/test_*.js`, type: 'module'}
-];
-
-// files to include for test coverage
-let preprocessors = {};
-preprocessors[`${src_files}/*.js`] = ['coverage', 'module-resolver'];
-
+// karma config
 module.exports = function(config) {
     config.set({
         basePath: 'karma',
         frameworks: [
             'qunit'
         ],
-        files: files,
+        files: [{
+            pattern: '../node_modules/jquery/src/**/*.js',
+            type: 'module',
+            included: false
+        }, {
+            pattern: '../src/*.js',
+            type: 'module',
+            included: false
+        }, {
+            pattern: '../tests/test_*.js',
+            type: 'module'
+        }],
         browsers: [
             'ChromeHeadless'
         ],
@@ -31,13 +28,18 @@ module.exports = function(config) {
             'progress',
             'coverage'
         ],
-        preprocessors: preprocessors,
+        preprocessors: {
+            '../src/*.js': [
+                'coverage',
+                'module-resolver'
+            ]
+        },
         moduleResolverPreprocessor: {
             addExtension: 'js',
             customResolver: null,
             ecmaVersion: 6,
             aliases: {
-                jquery: `../jquery/src/jquery.js`
+                jquery: '../node_modules/jquery/src/jquery.js'
             }
         }
     });
