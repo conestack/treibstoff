@@ -21,6 +21,11 @@ Install test requirements::
         karma-chrome-launcher \
         karma-module-resolver-preprocessor
 
+Install jquery from git as jquery 4 is not released yet but required to run
+tests as modules and import from jquery sources works::
+
+    git+https://github.com/jquery/jquery.git
+
 Install deployment requirements::
 
     npm install \
