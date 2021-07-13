@@ -58,4 +58,4 @@ html_static_path = ['_static']
 
 # -- sphinx_js configuration -------------------------------------------------
 
-js_source_path = '../src'
+js_source_path = '../../src'
