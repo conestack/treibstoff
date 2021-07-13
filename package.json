@@ -10,6 +10,8 @@
         "karma-coverage": "^2.0.3",
         "karma-module-resolver-preprocessor": "^1.1.2",
         "karma-qunit": "^4.1.2",
-        "qunit": "^2.16.0"
+        "qunit": "^2.16.0",
+        "rollup": "^2.53.1",
+        "rollup-plugin-terser": "^7.0.2"
     }
 }
