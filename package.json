@@ -5,6 +5,7 @@
     "version": "0.0.dev0",
     "devDependencies": {
         "jquery": "git+https://github.com/jquery/jquery.git#main",
+        "jsdoc": "^3.6.7",
         "karma": "^6.3.4",
         "karma-chrome-launcher": "^3.1.0",
         "karma-coverage": "^2.0.3",

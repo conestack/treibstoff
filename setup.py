@@ -38,4 +38,10 @@ setup(
     install_requires=[
         'setuptools',
     ],
+    extras_require=dict(
+        docs=[
+            'Sphinx',
+            'sphinx_js'
+        ],
+    ),
 )

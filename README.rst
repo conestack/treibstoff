@@ -62,9 +62,32 @@ To view coverage report, open::
 jQuery is included as git submodule to ensure we can import from it in tests.
 For any reason the jquery package from npm includes the wrong sources.
 
+
 Deploy
 ------
 
 Create JS bundle with rollup::
 
     node_modules/rollup/dist/bin/rollup --config rollup.conf.js
+
+
+Documentation
+-------------
+
+Install jsdoc::
+
+    npm install --save-dev jsdoc
+
+Install virtualenv::
+
+    python3 -m venv .
+    ./bin/pip install wheel
+
+Install treibstoff with docs extra dependencies::
+
+    ./bin/pip install -e .[docs]
+
+Generate docs (since we installed jsdoc locally, we need to set path first)::
+
+    export PATH=$PATH:$(pwd)/node_modules/jsdoc
+    ./bin/sphinx-build docs/source/ docs/html
