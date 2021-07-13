@@ -1,6 +1,18 @@
 import $ from 'jquery';
-import Events from '../src/events.js';
-import * from '../src/properties.js';
+import {Events} from '../src/events.js';
+import {
+    AttrProperty,
+    BoundProperty,
+    ButtonProperty,
+    CSSProperty,
+    DataProperty,
+    InputProperty,
+    Property,
+    SVGProperty,
+    TextProperty
+} from '../src/properties.js';
+import {svg_ns} from '../src/utils.js'
+
 
 QUnit.module('treibstoff.properties', hooks => {
 
@@ -15,7 +27,7 @@ QUnit.module('treibstoff.properties', hooks => {
                 res = val;
             }
         }
-        inst = new TestPropertyCls();
+        let inst = new TestPropertyCls();
         assert.strictEqual(res, 1, 'Property default event handler called');
 
         let subscriber = function(inst, val) {

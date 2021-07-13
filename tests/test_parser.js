@@ -1,6 +1,17 @@
 import $ from 'jquery';
-import Events from '../src/events.js';
-import * from '../src/parser.js';
+import {Events} from '../src/events.js';
+import {
+    compile_svg,
+    compile_template,
+    extract_number,
+    HTMLParser,
+    Parser,
+    SVGParser
+} from '../src/parser.js';
+import {
+    create_svg_elem,
+    parse_svg
+} from '../src/utils.js';
 
 QUnit.module('treibstoff.parser', hooks => {
 
@@ -26,8 +37,8 @@ QUnit.module('treibstoff.parser', hooks => {
     });
 
     QUnit.test('Test HTMLParser', assert => {
-        elem = $(`<input type="text" t-prop="foo">`);
-        ob = {};
+        let elem = $(`<input type="text" t-prop="foo">`);
+        let ob = {};
         new HTMLParser(ob).walk(elem.get(0));
         assert.strictEqual(ob.foo, null, 'Property foo set on object');
 

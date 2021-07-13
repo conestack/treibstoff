@@ -1,5 +1,6 @@
 import $ from 'jquery';
 
+
 export class Ajax {
 
     constructor() {

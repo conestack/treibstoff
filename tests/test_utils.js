@@ -1,4 +1,12 @@
-import * from '../src/utils.js';
+import {
+    json_merge,
+    svg_ns,
+    set_svg_attrs,
+    create_svg_elem,
+    parse_svg,
+    uuid4
+} from '../src/utils.js';
+
 
 QUnit.module('treibstoff.utils', hooks => {
 

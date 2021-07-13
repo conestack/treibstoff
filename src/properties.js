@@ -1,4 +1,6 @@
 import $ from 'jquery';
+import {set_svg_attrs} from './utils.js';
+
 
 export class Property {
 
@@ -194,7 +196,7 @@ export class SVGProperty extends BoundProperty {
     set(val) {
         let attrs = {};
         attrs[this._name] = val;
-        editor.set_svg_attrs(this.ctx, attrs);
+        set_svg_attrs(this.ctx, attrs);
         super.set(val);
     }
 }

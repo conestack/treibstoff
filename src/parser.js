@@ -1,3 +1,9 @@
+import {
+    ButtonProperty,
+    InputProperty
+} from './properties.js';
+
+
 export class Parser {
 
     constructor(widget) {

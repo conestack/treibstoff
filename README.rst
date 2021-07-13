@@ -13,7 +13,7 @@ Install system dependencies::
 
 Install test requirements::
 
-    npm install \
+    npm --save-dev install \
         qunit \
         karma \
         karma-qunit \
@@ -24,11 +24,11 @@ Install test requirements::
 Install jquery from git as jquery 4 is not released yet but required to run
 tests as modules and import from jquery sources works::
 
-    npm install https://github.com/jquery/jquery#main
+    npm --save-dev install https://github.com/jquery/jquery#main
 
 Install deployment requirements::
 
-    npm install \
+    npm --save-dev install \
         rollup \
         rollup-plugin-terser
 

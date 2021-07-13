@@ -2,5 +2,14 @@
     "name": "treibstoff",
     "title": "Treibstoff JS",
     "description": "Javascript foundations for cone.app",
-    "version": "0.0.dev0"
+    "version": "0.0.dev0",
+    "devDependencies": {
+        "jquery": "git+https://github.com/jquery/jquery.git#main",
+        "karma": "^6.3.4",
+        "karma-chrome-launcher": "^3.1.0",
+        "karma-coverage": "^2.0.3",
+        "karma-module-resolver-preprocessor": "^1.1.2",
+        "karma-qunit": "^4.1.2",
+        "qunit": "^2.16.0"
+    }
 }
