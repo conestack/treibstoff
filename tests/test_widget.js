@@ -5,7 +5,6 @@ import {
 } from '../src/widget.js';
 import {svg_ns} from '../src/utils.js';
 
-
 QUnit.module('treibstoff.widget', hooks => {
 
     QUnit.test('Test Widget', assert => {

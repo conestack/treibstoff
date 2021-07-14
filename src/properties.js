@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {set_svg_attrs} from './utils.js';
 
-
 export class Property {
 
     constructor(inst, name, val) {

@@ -1,17 +1,20 @@
 import $ from 'jquery';
+import {compile_template} from './parser.js';
 
 class Spinner {
 
     constructor() {
-        this._elem = null;
         this._request_count = 0;
+        this.icon_source = './loading-spokes.svg';
+        this.compile();
     }
 
-    elem() {
-        if (this._elem === null) {
-            this._elem = $('#ajax-spinner');
-        }
-        return this._elem;
+    compile() {
+        compile_template(this, `
+          <div id="ajax-spinner" t-elem="elem">
+            <img src="${spinner.icon_source}" width="64" height="64" alt="" />
+          </div>
+        `, $('body'));
     }
 
     show() {
@@ -19,18 +22,18 @@ class Spinner {
         if (this._request_count > 1) {
             return;
         }
-        this.elem().show();
+        this.elem.show();
     }
 
     hide(force) {
         this._request_count--;
         if (force) {
             this._request_count = 0;
-            this.elem().hide();
+            this.elem.hide();
             return;
         } else if (this._request_count <= 0) {
             this._request_count = 0;
-            this.elem().hide();
+            this.elem.hide();
         }
     }
 }
@@ -47,9 +50,9 @@ class History {
 
     handle(evt) {
         evt.preventDefault();
-        var state = evt.originalEvent.state;
+        let state = evt.originalEvent.state;
         if (!state) { return; }
-        var target;
+        let target;
         if (state.target.url) {
             target = state.target;
         } else {
@@ -259,9 +262,9 @@ class Ajax {
             $(selector).replaceWith(payload);
             let context = $(selector);
             if (context.length) {
-                context.parent().bdajax();
+                context.parent().tsajax();
             } else {
-                $(document).bdajax();
+                $(document).tsajax();
             }
         } else if (mode === 'inner') {
             $(selector).html(payload);
@@ -448,14 +451,14 @@ class Ajax {
                 loadSpeed: 200
             },
             onBeforeLoad: function() {
-                var overlay = this.getOverlay();
+                let overlay = this.getOverlay();
                 $('.message', overlay).html(message);
             },
             onLoad: function() {
                 elem.find('button:first').focus();
             },
             onBeforeClose: function() {
-                var overlay = this.getOverlay();
+                let overlay = this.getOverlay();
                 $('.message', overlay).empty();
             },
             oneInstance: false,
@@ -593,8 +596,8 @@ class Ajax {
         // use ``ajax`` instead of ``this`` in this function. If called
         // as callback via ``ajax.dialog``, ``this`` is undefined.
         // XXX: rework that ``this`` can be ued instead of ``ajax`` singleton
-        var elem = options.elem;
-        var event = options.event;
+        let elem = options.elem,
+            event = options.event;
         if (elem.attr('ajax:action')) {
             ajax._handle_ajax_action(
                 ajax._get_target(elem, event),
@@ -770,7 +773,6 @@ let ajax = new Ajax();
 export {ajax};
 export {ajax as bdajax};  // B/C
 
-
 function jq_ajax_plugin() {
     let context = $(this);
     $('*', context).each(function() {
@@ -806,13 +808,5 @@ function jq_ajax_plugin() {
     return context;
 }
 
-
 $.fn.tsajax = jq_ajax_plugin;
 $.fn.bdajax = jq_ajax_plugin;  // B/C
-
-
-$(function() {
-    ajax.spinner.hide();
-    ajax.history.bind();
-    $(document).tsajax();
-});

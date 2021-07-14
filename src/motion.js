@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {Events} from './events.js';
 
-
 export class Motion extends Events {
 
     constructor() {

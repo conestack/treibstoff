@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {Events} from './events.js';
 
-
 export class KeyState extends Events {
 
     constructor(filter_keyevent) {

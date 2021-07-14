@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {KeyState} from '../src/keystate.js';
 
-
 QUnit.module('treibstoff.keystate', hooks => {
 
     QUnit.test('Test KeyState', assert => {

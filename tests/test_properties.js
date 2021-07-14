@@ -13,7 +13,6 @@ import {
 } from '../src/properties.js';
 import {svg_ns} from '../src/utils.js'
 
-
 QUnit.module('treibstoff.properties', hooks => {
 
     QUnit.test('Test Property', assert => {

@@ -7,7 +7,6 @@ import {
     uuid4
 } from '../src/utils.js';
 
-
 QUnit.module('treibstoff.utils', hooks => {
 
     QUnit.test('Test uuid4', assert => {

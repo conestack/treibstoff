@@ -5,7 +5,6 @@ import {
 } from './properties.js';
 import {parse_svg} from './utils.js';
 
-
 export class Parser {
 
     constructor(widget) {

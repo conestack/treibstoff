@@ -20,7 +20,8 @@ export default {
             jquery: 'jQuery'
         },
         interop: 'default',
-        sourcemap: true
+        sourcemap: true,
+        sourcemapExcludeSources: true
     }, {
         file: 'treibstoff/treibstoff.bundle.min.js',
         format: 'iife',
@@ -33,7 +34,8 @@ export default {
             jquery: 'jQuery'
         },
         interop: 'default',
-        sourcemap: true
+        sourcemap: true,
+        sourcemapExcludeSources: true
     }],
     external: [
         'jquery'

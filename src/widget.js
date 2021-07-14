@@ -10,7 +10,6 @@ import {
     svg_ns
 } from './utils.js';
 
-
 export class Widget extends Motion {
 
     constructor(parent) {

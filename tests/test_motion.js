@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import {Motion} from '../src/motion.js';
 
-
 QUnit.module('treibstoff.motion', hooks => {
 
     QUnit.test('Test Motion', assert => {
