@@ -14,32 +14,97 @@ fancy templating, two-way-binding, componentization, routing and so on via it's
 own API. While they normally provide hooks for "releasing" parts of the DOM
 to inject 3rd party Javascript, they all assume themself as base for the entire
 application, or at least recommend you to do so. Actually, from a design point
-of view a good thing, it's also cumbersome when trying to integrate into or
+of view a good thing, but it's also cumbersome when trying to integrate into or
 migrate from some (legacy) Web Application without ending up in an immediate
 and entire rewrite when using such frameworks.
 
-Apart from human resources and/or budget available, there may be reasons
+Also, apart from human resources and/or budget available, there may be reasons
 to (partly) stick to old fashioned server side rendered web development.
 The major one might be to provide parts of the information or functionality
-even if Javascript is disabled, but there are others, like implementing
+on Javascript disabled browsers. But there are others, like implementing
 a (data) security model might be easier when sticking to server side rendering.
 
-Treibstoff provides event, widget and property handling basics, heavily
-inspired by the ``kivy`` framework.
+Treibstoff tries to address this by making no assumptions about who is
+responsible for, or how the DOM gets rendered and which other Javascript
+libraries are used.
 
-Widgets are organized as tree, and may relate to a DOM element or part of the
-DOM. Each widget is in fact also an event dispatcher, thus motion events or
-custom events are delegated directly to member functions of the widget class.
 
-Widget properties can be used for some aspects of two-way-binding, like setting
-values of HTML inputs or setting attributes or styles to DOM elements, and
-also integrate into the event dispatching mechanism by triggering events on the
-widget classes when values changes.
+Overview
+--------
+
+Treibstoff provides basic event, widget and property handling, heavily
+inspired by the ``kivy`` framework. It also provides very simple template
+parsers for generating DOM from template strings and hooking up elements of
+interest to objects. There exist parsers for HTML and SVG.
+
+
+Event handling
+~~~~~~~~~~~~~~
+
+Treibstoff contains an event dispatcher to inherit from. It supports subscribing
+and unsubscribing handlers to (named) events and implementing default handlers
+for events on the class directly.
+
+.. code-block:: js
+
+    import {Events} from 'events'
+
+    /**
+      * Custom event dispatcher.
+      */
+    class MyDispatcher extends Events {
+
+        /**
+         * Default event handler if 'on_my_event' gets triggered on an instance
+         * of ``MyDispatcher``
+         *
+         * @param {Object} options - Options passed to ``tigger``.
+         */
+        on_my_event(options) {
+        }
+    }
+
+    /**
+     * External subscriber function.
+     *
+     * @param {Events} inst - ``Events`` instance the ``trigger`` function was called on.
+     * @param {Object} options - Options passed to ``tigger``.
+     */
+    let my_subscriber(inst, options) {
+    }
+
+    // Create dispatcher
+    let dsp = MyDispatcher();
+
+    // Bind external subscriber function
+    dsp.on('on_my_event', my_subscriber);
+
+    // Trigger event
+    dsp.trigger('on_my_event', {foo: 'bar'});
+
+    // Unbind external subscriber function.
+    dsp.off('on_my_event', my_subscriber);
+
+
+Properties
+~~~~~~~~~~
+
+Properties can be used for some aspects of two-way-binding, like setting
+values of HTML inputs and setting attributes or styles to DOM elements, or
+bind them to data objects. They also integrate into the event dispatching
+mechanism by triggering events on the widget classes if property value changes,
+of course only if used on ``Events`` deriving objects.
+
+
+Widgets
+~~~~~~~
+
+Widgets are organized as tree. Each widget is an event dispatcher.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
 
 Indices and tables
 ==================

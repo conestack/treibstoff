@@ -1,7 +1,8 @@
 Overview
 ========
 
-This package will containe the Javascritp foundations for cone.app.
+Treibstoff contains a set of useful javascript tools for writing browser based
+applications (or parts of it).
 
 
 Development
