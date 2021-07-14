@@ -32,10 +32,10 @@ libraries are used.
 Overview
 --------
 
-Treibstoff provides basic event, widget and property handling, heavily
-inspired by the ``kivy`` framework. It also provides very simple template
-parsers for generating DOM from template strings and hooking up elements of
-interest to objects. There exist parsers for HTML and SVG.
+Treibstoff provides basic event, widget and property handling, inspired by the
+``kivy`` framework. It also provides very simple template parsers for
+generating DOM from template strings and hooking up elements of interest to
+objects. There exist parsers for HTML and SVG.
 
 
 Event handling
@@ -55,8 +55,8 @@ for events on the class directly.
     class MyDispatcher extends Events {
 
         /**
-         * Default event handler if 'on_my_event' gets triggered on an instance
-         * of ``MyDispatcher``
+         * Default event handler if 'on_my_event' gets triggered on an
+         * instance of ``MyDispatcher``
          *
          * @param {Object} options - Options passed to ``tigger``.
          */
@@ -67,14 +67,15 @@ for events on the class directly.
     /**
      * External subscriber function.
      *
-     * @param {Events} inst - ``Events`` instance the ``trigger`` function was called on.
+     * @param {Events} inst - ``Events`` instance the ``trigger``
+     * function was called on.
      * @param {Object} options - Options passed to ``tigger``.
      */
     let my_subscriber(inst, options) {
     }
 
     // Create dispatcher
-    let dsp = MyDispatcher();
+    let dsp = new MyDispatcher();
 
     // Bind external subscriber function
     dsp.on('on_my_event', my_subscriber);
@@ -95,11 +96,45 @@ bind them to data objects. They also integrate into the event dispatching
 mechanism by triggering events on the widget classes if property value changes,
 of course only if used on ``Events`` deriving objects.
 
+.. code-block:: js
+
+    import {Events} from 'events'
+    import {Property} from 'properties'
+
+    /**
+     * Object defining a {Property} where we can listen on changes.
+     */
+    class MyObject extends Events {
+
+        constructor() {
+            // Create property named 'some_prop'.
+            new Property(this, 'some_prop');
+        }
+
+        /**
+         * Default event handler if 'prop' gets changed on an
+         * instance of ``MyObject``
+         *
+         * @param {Object} val - Value the property was set to.
+         */
+        on_some_prop(val) {
+        }
+    }
+
+    // Create instance
+    let ob = new MyObject();
+
+    // When setting the value of 'some_prop', 'on_some_prop'
+    // default handler gets called
+    ob.some_prop = 'New Value';
+
 
 Widgets
 ~~~~~~~
 
-Widgets are organized as tree. Each widget is an event dispatcher.
+Widgets represent some part of the UI. They are normally related to DOM
+manipulation and/or user interaction. Each widget is an event dispatcher and
+knows about it's parent widget.
 
 
 .. toctree::

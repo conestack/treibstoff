@@ -17,11 +17,6 @@ export class Widget extends Motion {
         super();
         new Property(this, 'parent');
         this.parent = parent ? parent : null;
-        // XXX: later
-        // if (parent && parent instanceof Widget) {
-        //     parent.children.push(this);
-        // }
-        // this.children = [];
     }
 
     acquire(cls) {
@@ -34,23 +29,6 @@ export class Widget extends Motion {
         }
         return parent;
     }
-
-    // XXX: later
-    // remove() {
-    //     if (!this.parent) {
-    //         throw "Widget not contained"
-    //     }
-    //     let idx = this.parent.children.indexOf(this);
-    //     if (idx > -1) {
-    //         this.parent.children.splice(idx, 1);
-    //     }
-    //     this.parent = null
-    //     this.unload()
-    // }
-
-    // XXX: later
-    // unload(){
-    // }
 }
 
 export class HTMLWidget extends Widget {

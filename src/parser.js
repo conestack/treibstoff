@@ -1,7 +1,9 @@
+import $ from 'jquery';
 import {
     ButtonProperty,
     InputProperty
 } from './properties.js';
+import {parse_svg} from './utils.js';
 
 
 export class Parser {
