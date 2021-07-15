@@ -428,10 +428,6 @@ class Ajax {
                     elem.addClass(css);
                 }
                 elem.overlay({
-                    mask: {
-                        color: '#fff',
-                        loadSpeed: 200
-                    },
                     onClose: on_close,
                     oneInstance: false,
                     closeOnClick: true,
@@ -446,10 +442,6 @@ class Ajax {
         let elem = $('#ajax-message');
         elem.removeData('overlay');
         elem.overlay({
-            mask: {
-                color: '#fff',
-                loadSpeed: 200
-            },
             onBeforeLoad: function() {
                 let overlay = this.getOverlay();
                 $('.message', overlay).html(message);
@@ -494,10 +486,6 @@ class Ajax {
         let elem = $('#ajax-dialog');
         elem.removeData('overlay');
         elem.overlay({
-            mask: {
-                color: '#fff',
-                loadSpeed: 200
-            },
             onBeforeLoad: function() {
                 let overlay = this.getOverlay(),
                     closefunc = this.close;
