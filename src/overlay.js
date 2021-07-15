@@ -25,8 +25,8 @@ class DefaultConf {
         this.load = false;
         this.oneInstance = true;
         this.speed = 'normal';
-        this.target: null;
-        this.top: '10%';
+        this.target = null;
+        this.top = '10%';
     }
 }
 
@@ -188,7 +188,7 @@ export class Overlay {
         return this;
     }
 
-    close: function(e) {
+    close(e) {
         if (!this.opened) {
             return this;
         }

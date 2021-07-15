@@ -12,7 +12,7 @@ class Spinner {
     compile() {
         compile_template(this, `
           <div id="ajax-spinner" t-elem="elem">
-            <img src="${spinner.icon_source}" width="64" height="64" alt="" />
+            <img src="${this.icon_source}" width="64" height="64" alt="" />
           </div>
         `, $('body'));
     }
