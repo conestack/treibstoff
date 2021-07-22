@@ -12,7 +12,7 @@ window.ts = exports;`;
 export default {
     input: 'src/treibstoff.js',
     output: [{
-        file: 'treibstoff/treibstoff.bundle.js',
+        file: 'treibstoff/static/treibstoff.bundle.js',
         format: 'iife',
         name: 'ts',
         outro: outro,
@@ -23,7 +23,7 @@ export default {
         sourcemap: true,
         sourcemapExcludeSources: true
     }, {
-        file: 'treibstoff/treibstoff.bundle.min.js',
+        file: 'treibstoff/static/treibstoff.bundle.min.js',
         format: 'iife',
         name: 'ts',
         plugins: [

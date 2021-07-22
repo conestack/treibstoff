@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
 
-class Spinner {
+class AjaxSpinner {
 
     constructor() {
         this._request_count = 0;
@@ -38,7 +38,7 @@ class Spinner {
     }
 }
 
-class History {
+class AjaxHistory {
 
     constructor(ajax) {
         this._ajax = ajax;
@@ -88,9 +88,9 @@ class Ajax {
         // B/C, use ``ajax.register`` instead of direct extension.
         this.binders = {};
         // Ajax spinner.
-        this.spinner = new Spinner();
+        this.spinner = new AjaxSpinner();
         // Browser history
-        this.history = new History(this);
+        this.history = new AjaxHistory(this);
         // Overlay selectors
         this.default_overlay_selector = '#ajax-overlay';
         this.default_overlay_content_selector = '.overlay_content';

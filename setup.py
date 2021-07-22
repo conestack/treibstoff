@@ -40,6 +40,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
+        'cone.app'
     ],
     extras_require=dict(
         docs=[
