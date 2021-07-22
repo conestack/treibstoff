@@ -415,16 +415,16 @@ var ts = (function (exports, $) {
 
         constructor() {
             this._request_count = 0;
-            this.icon_source = './loading-spokes.svg';
+            this.icon_source = '/treibstoff-static/loading-spokes.svg';
             this.compile();
         }
 
         compile() {
-            compile_template(this, `
-          <div id="ajax-spinner" t-elem="elem">
+            compile_template(this,
+              `<div id="ajax-spinner" t-elem="elem">
             <img src="${this.icon_source}" width="64" height="64" alt="" />
-          </div>
-        `, $('body'));
+          </div>`
+            );
         }
 
         show() {
@@ -432,18 +432,18 @@ var ts = (function (exports, $) {
             if (this._request_count > 1) {
                 return;
             }
-            this.elem.show();
+            $('body').append(this.elem);
         }
 
         hide(force) {
             this._request_count--;
             if (force) {
                 this._request_count = 0;
-                this.elem.hide();
+                this.elem.remove();
                 return;
             } else if (this._request_count <= 0) {
                 this._request_count = 0;
-                this.elem.hide();
+                this.elem.remove();
             }
         }
     }
