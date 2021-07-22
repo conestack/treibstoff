@@ -135,11 +135,18 @@ export class HTMLParser extends Parser {
         if (!prop) {
             return;
         }
-        new ButtonProperty(this.widget, prop, {
+        let widget = this.widget;
+        new ButtonProperty(widget, prop, {
             ctx: node,
             ctxa: attrs['t-elem'],
             val: attrs['t-val']
         });
+        for (let evt of ['down', 'up']) {
+            if (attrs[`t-bind-${evt}`]) {
+                let handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
+                this.widget.on(`on_${prop}_${evt}`, handler);
+            }
+        }
     }
 }
 

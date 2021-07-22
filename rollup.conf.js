@@ -16,32 +16,35 @@ $.fn.bdajax = $.fn.tsajax;
 
 export default {
     input: 'src/treibstoff.js',
-    output: [{
-        file: 'treibstoff/static/treibstoff.bundle.js',
-        format: 'iife',
-        name: 'ts',
-        outro: outro,
-        globals: {
-            jquery: 'jQuery'
+    output: [
+        {
+            file: 'treibstoff/static/treibstoff.bundle.js',
+            format: 'iife',
+            name: 'ts',
+            outro: outro,
+            globals: {
+                jquery: 'jQuery'
+            },
+            interop: 'default',
+            sourcemap: true,
+            sourcemapExcludeSources: true
         },
-        interop: 'default',
-        sourcemap: true,
-        sourcemapExcludeSources: true
-    }, {
-        file: 'treibstoff/static/treibstoff.bundle.min.js',
-        format: 'iife',
-        name: 'ts',
-        plugins: [
-            terser()
-        ],
-        outro: outro,
-        globals: {
-            jquery: 'jQuery'
-        },
-        interop: 'default',
-        sourcemap: true,
-        sourcemapExcludeSources: true
-    }],
+        // {
+        //     file: 'treibstoff/static/treibstoff.bundle.min.js',
+        //     format: 'iife',
+        //     name: 'ts',
+        //     plugins: [
+        //         terser()
+        //     ],
+        //     outro: outro,
+        //     globals: {
+        //         jquery: 'jQuery'
+        //     },
+        //     interop: 'default',
+        //     sourcemap: true,
+        //     sourcemapExcludeSources: true
+        // }
+    ],
     external: [
         'jquery'
     ],

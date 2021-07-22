@@ -1,5 +1,7 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
+import {Overlay} from './overlay.js';
+import {uuid4} from './utils.js';
 
 class AjaxSpinner {
 
@@ -412,28 +414,27 @@ class Ajax {
                 options.on_close();
             }
         };
+
+        let uid = uuid4();
+        let content_sel = '.modal-body';
+
         this._perform_ajax_action({
             name: options.action,
-            selector: selector + ' ' + content_selector,
+            selector: '#' + uid + ' ' + content_sel,
             mode: 'inner',
             url: url,
             params: params,
             success: function(data) {
-                this._ajax_action_success(data);
                 // overlays are not displayed if no payload is received.
                 if (!data.payload) {
                     return;
                 }
-                if (css) {
-                    elem.addClass(css);
-                }
-                elem.overlay({
-                    onClose: on_close,
-                    oneInstance: false,
-                    closeOnClick: true,
-                    fixed: false
-                });
-                elem.data('overlay').load();
+                new Overlay({
+                    uid: uid,
+                    css: css,
+                    title: 'Na seawas'
+                }).open();
+                this._ajax_action_success(data);
             }.bind(this)
         });
     }
