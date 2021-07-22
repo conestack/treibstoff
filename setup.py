@@ -40,7 +40,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'cone.app'
+        'pyramid'
     ],
     extras_require=dict(
         docs=[

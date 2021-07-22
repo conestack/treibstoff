@@ -411,7 +411,7 @@ var ts = (function (exports, $) {
     class SVGParser extends Parser {
     }
 
-    class Spinner {
+    class AjaxSpinner {
 
         constructor() {
             this._request_count = 0;
@@ -448,7 +448,7 @@ var ts = (function (exports, $) {
         }
     }
 
-    class History {
+    class AjaxHistory {
 
         constructor(ajax) {
             this._ajax = ajax;
@@ -498,9 +498,9 @@ var ts = (function (exports, $) {
             // B/C, use ``ajax.register`` instead of direct extension.
             this.binders = {};
             // Ajax spinner.
-            this.spinner = new Spinner();
+            this.spinner = new AjaxSpinner();
             // Browser history
-            this.history = new History(this);
+            this.history = new AjaxHistory(this);
             // Overlay selectors
             this.default_overlay_selector = '#ajax-overlay';
             this.default_overlay_content_selector = '.overlay_content';
@@ -1169,7 +1169,7 @@ var ts = (function (exports, $) {
 
     let ajax = new Ajax();
 
-    function jq_ajax_plugin() {
+    $.fn.tsajax = function() {
         let context = $(this);
         $('*', context).each(function() {
             for (let i in this.attributes) {
@@ -1202,10 +1202,7 @@ var ts = (function (exports, $) {
             }
         }
         return context;
-    }
-
-    $.fn.tsajax = jq_ajax_plugin;
-    $.fn.bdajax = jq_ajax_plugin;  // B/C
+    };
 
     class Events {
 
@@ -1285,14 +1282,11 @@ var ts = (function (exports, $) {
      * https://github.com/jquerytools/jquerytools/blob/master/src/overlay/overlay.js
      */
 
-    let instances = [],
-        effects = {};
+    let overlay_instances = [],
+        overlay_effects = {},
+        overlay_templates = {};
 
-    function add_effect(name, loadFn, closeFn) {
-        effects[name] = [loadFn, closeFn];
-    }
-
-    class DefaultConf {
+    class DefaultOverlayConf {
 
         constructor() {
             this.api = false;
@@ -1308,14 +1302,23 @@ var ts = (function (exports, $) {
             this.speed = 'normal';
             this.target = null;
             this.top = '10%';
+            this.template = 'overlay';
         }
     }
 
     class Overlay {
 
+        static add_effect(name, loadFn, closeFn) {
+            overlay_effects[name] = [loadFn, closeFn];
+        }
+
+        static add_template(name, template) {
+            overlay_templates[name] = template;
+        }
+
         constructor(trigger, conf) {
-            conf = $.extend(true, new DefaultConf(), conf);
-            instances.push(this);
+            conf = $.extend(true, new DefaultOverlayConf(), conf);
+            overlay_instances.push(this);
             trigger.data('overlay', this);
 
             this.conf = conf;
@@ -1324,14 +1327,8 @@ var ts = (function (exports, $) {
             this.opened = false;
             this.uid = Math.random().toString().slice(10);
 
-            // get overlay and trigger
-            let jq = conf.target || trigger.attr('rel');
-            let elem = this.elem = jq ? $(jq) : trigger;
-
-            // overlay not found. cannot continue
-            if (!elem.length) {
-                throw 'Could not find Overlay: ' + jq;
-            }
+            this.compile();
+            let elem = this.elem;
 
             // trigger's click event
             if (trigger && trigger.index(elem) == -1) {
@@ -1382,6 +1379,10 @@ var ts = (function (exports, $) {
             }
         }
 
+        compile() {
+            compile_template(this, overlay_templates[this.template], $('body'));
+        }
+
         load(e) {
             // can be opened only once
             if (this.opened) {
@@ -1391,14 +1392,14 @@ var ts = (function (exports, $) {
             let conf = this.conf;
 
             // find the effect
-            let eff = effects[conf.effect];
+            let eff = overlay_effects[conf.effect];
             if (!eff) {
                 throw "Overlay: cannot find effect : \"" + conf.effect + "\"";
             }
 
             // close other instances if oneInstance
             if (conf.oneInstance) {
-                $.each(instances, function() {
+                $.each(overlay_instances, function() {
                     this.close(e);
                 });
             }
@@ -1487,7 +1488,7 @@ var ts = (function (exports, $) {
 
             // close effect
             // XXX: call first argument might be e.target instead of this
-            effects[this.conf.effect][1].call(this, function() {
+            overlay_effects[this.conf.effect][1].call(this, function() {
                 e.type = 'onClose';
                 fire.trigger(e);
             });
@@ -1519,7 +1520,7 @@ var ts = (function (exports, $) {
         }
     }
 
-    add_effect('default',
+    Overlay.add_effect('default',
         function(pos, onLoad) {
             $('body')
                 .css('padding-right', '13px')
@@ -1537,7 +1538,99 @@ var ts = (function (exports, $) {
         }
     );
 
+    Overlay.add_template('form', `
+<div class="modal ajax-overlay" id="ajax-form" t-elem="elem">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h5 class="modal-title">&nbsp;</h5>
+      </div>
+      <div class="modal-body overlay_content">
+        Form Content
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+`);
+
+    Overlay.add_template('overlay', `
+<div class="modal ajax-overlay" id="ajax-overlay" t-elem="elem">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h5 class="modal-title">&nbsp;</h5>
+      </div>
+      <div class="modal-body overlay_content">
+        Overlay Content
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+`);
+
+    Overlay.add_template('dialog', `
+<div class="modal ajax-dialog" id="ajax-dialog" t-elem="elem">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close cancel">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h5 class="modal-title">&nbsp;</h5>
+      </div>
+      <div class="modal-body text">
+        Text
+      </div>
+      <div class="modal-footer">
+        <button class="submit btn btn-default allowMultiSubmit">OK</button>
+        <button class="cancel btn btn-default allowMultiSubmit">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+`);
+
+    Overlay.add_template('message', `
+<div class="modal ajax-message" id="ajax-message" t-elem="elem">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h5 class="modal-title">&nbsp;</h5>
+      </div>
+      <div class="modal-body message">
+        Message
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="close btn btn-default allowMultiSubmit">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+`);
+
     $.fn.overlay = function(conf) {
+        if (this.length != 1) {
+            throw 'Overlay can only be instanciated on unique element.';
+        }
         let inst = this.data('overlay');
         // Always return API if found on this
         if (inst) {
@@ -1548,14 +1641,9 @@ var ts = (function (exports, $) {
                 onBeforeLoad: conf
             };
         }
-        let inst_count = 0;
         this.each(function() {
             inst = new Overlay($(this), conf);
-            inst_count += 1;
         });
-        if (conf.api && inst_count != 1) {
-            throw 'API requested but overlay not unique.';
-        }
         return conf.api ? inst : this;
     };
 
@@ -1580,7 +1668,6 @@ var ts = (function (exports, $) {
     exports.SVGProperty = SVGProperty;
     exports.TextProperty = TextProperty;
     exports.ajax = ajax;
-    exports.bdajax = ajax;
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
     exports.create_svg_elem = create_svg_elem;
@@ -1602,6 +1689,11 @@ var ts = (function (exports, $) {
     }
 
     window.ts = exports;
+
+    // bdajax B/C
+    window.bdajax = exports.ajax;
+    $.fn.bdajax = $.fn.tsajax;
+
 
     return exports;
 

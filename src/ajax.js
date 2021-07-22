@@ -759,9 +759,8 @@ class Ajax {
 
 let ajax = new Ajax();
 export {ajax};
-export {ajax as bdajax};  // B/C
 
-function jq_ajax_plugin() {
+$.fn.tsajax = function() {
     let context = $(this);
     $('*', context).each(function() {
         for (let i in this.attributes) {
@@ -795,6 +794,3 @@ function jq_ajax_plugin() {
     }
     return context;
 }
-
-$.fn.tsajax = jq_ajax_plugin;
-$.fn.bdajax = jq_ajax_plugin;  // B/C

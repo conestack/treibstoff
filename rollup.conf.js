@@ -7,7 +7,12 @@ exports.noConflict = function() {
     return this;
 }
 
-window.ts = exports;`;
+window.ts = exports;
+
+// bdajax B/C
+window.bdajax = exports.ajax;
+$.fn.bdajax = $.fn.tsajax;
+`;
 
 export default {
     input: 'src/treibstoff.js',
