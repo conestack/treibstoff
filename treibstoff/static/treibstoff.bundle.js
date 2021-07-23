@@ -224,10 +224,6 @@ var ts = (function (exports, $) {
     }
 
     class Parser {
-        constructor(widget) {
-            this.widget = widget;
-            this.handlers = {};
-        }
         walk(node) {
            let children = node.childNodes;
            for (let i = 0; i < children.length; i++) {
@@ -238,14 +234,6 @@ var ts = (function (exports, $) {
            }
         }
         parse(node) {
-            let attrs = this.node_attrs(node),
-                wrapped = this.wrap_node(node);
-            this.handle_elem_attr(wrapped, attrs);
-            let tag = node.tagName.toLowerCase(),
-                handler = this.handlers[tag];
-            if (handler) {
-                handler(wrapped, attrs);
-            }
         }
         node_attrs(node) {
             let attrs = {};
@@ -256,6 +244,23 @@ var ts = (function (exports, $) {
                 }
             }
             return attrs;
+        }
+    }
+    class TemplateParser extends Parser {
+        constructor(widget) {
+            super();
+            this.widget = widget;
+            this.handlers = {};
+        }
+        parse(node) {
+            let attrs = this.node_attrs(node),
+                wrapped = this.wrap_node(node);
+            this.handle_elem_attr(wrapped, attrs);
+            let tag = node.tagName.toLowerCase(),
+                handler = this.handlers[tag];
+            if (handler) {
+                handler(wrapped, attrs);
+            }
         }
         wrap_node(node) {
             return node;
@@ -273,18 +278,7 @@ var ts = (function (exports, $) {
         }
         return Number(val);
     }
-    function compile_template(inst, tmpl, container) {
-        let elem = $(tmpl.trim());
-        if (container) {
-            container.append(elem);
-        }
-        let parser = new HTMLParser(inst);
-        elem.each(function() {
-            parser.walk(this);
-        });
-        return elem;
-    }
-    class HTMLParser extends Parser {
+    class HTMLParser extends TemplateParser {
         constructor(widget) {
             super(widget);
             this.handlers = {
@@ -349,6 +343,19 @@ var ts = (function (exports, $) {
             }
         }
     }
+    function compile_template(inst, tmpl, container) {
+        let elem = $(tmpl.trim());
+        if (container) {
+            container.append(elem);
+        }
+        let parser = new HTMLParser(inst);
+        elem.each(function() {
+            parser.walk(this);
+        });
+        return elem;
+    }
+    class SVGParser extends TemplateParser {
+    }
     function compile_svg(inst, tmpl, container) {
         let elems = parse_svg(tmpl, container),
             parser = new SVGParser(inst);
@@ -356,8 +363,6 @@ var ts = (function (exports, $) {
             parser.walk(elem);
         });
         return elems;
-    }
-    class SVGParser extends Parser {
     }
 
     class Events {
@@ -466,22 +471,22 @@ var ts = (function (exports, $) {
         `);
         }
         open() {
-            this.container
+            $('body')
                 .css('padding-right', '13px')
                 .css('overflow-x', 'hidden')
-                .addClass('modal-open')
-                .append(this.elem);
+                .addClass('modal-open');
+            this.container.append(this.elem);
             this.elem.show();
             this.trigger('on_open');
         }
         close() {
-            this.elem.remove();
             if ($('.modal:visible').length === 1) {
-                this.container
+                $('body')
                     .css('padding-right', '')
                     .css('overflow-x', 'auto')
                     .removeClass('modal-open');
             }
+            this.elem.remove();
             this.trigger('on_close');
         }
     }
@@ -1175,6 +1180,7 @@ var ts = (function (exports, $) {
     exports.Property = Property;
     exports.SVGParser = SVGParser;
     exports.SVGProperty = SVGProperty;
+    exports.TemplateParser = TemplateParser;
     exports.TextProperty = TextProperty;
     exports.ajax = ajax;
     exports.compile_svg = compile_svg;
