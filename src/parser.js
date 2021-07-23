@@ -56,10 +56,6 @@ export class Parser {
     }
 }
 
-// ************************************************************************
-// HTML parser
-// ************************************************************************
-
 export function extract_number(val) {
     if (isNaN(val)) {
         throw 'Input is not a number';
@@ -149,10 +145,6 @@ export class HTMLParser extends Parser {
         }
     }
 }
-
-// ************************************************************************
-// SVG parser
-// ************************************************************************
 
 export function compile_svg(inst, tmpl, container) {
     let elems = parse_svg(tmpl, container),

@@ -746,56 +746,6 @@ var ts = (function (exports, $) {
             opts.success = this._ajax_action_success;
             this._perform_ajax_action(opts);
         }
-        _fiddle(payload, selector, mode) {
-            if (mode === 'replace') {
-                $(selector).replaceWith(payload);
-                let context = $(selector);
-                if (context.length) {
-                    context.parent().tsajax();
-                } else {
-                    $(document).tsajax();
-                }
-            } else if (mode === 'inner') {
-                $(selector).html(payload);
-                $(selector).tsajax();
-            }
-        }
-        _continuation(next) {
-            if (!next) { return; }
-            this.spinner.hide();
-            for (let cdef of next) {
-                let type = cdef.type;
-                delete cdef.type;
-                if (type === 'path') {
-                    this.path(cdef);
-                } else if (type === 'action') {
-                    let target = this.parsetarget(cdef.target);
-                    cdef.url = target.url;
-                    cdef.params = target.params;
-                    this.action(cdef);
-                } else if (type === 'event') {
-                    this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
-                } else if (type === 'overlay') {
-                    let target = this.parsetarget(cdef.target);
-                    cdef.url = target.url;
-                    cdef.params = target.params;
-                    this.overlay(cdef);
-                } else if (type === 'message') {
-                    if (cdef.flavor) {
-                        let flavors = ['message', 'info', 'warning', 'error'];
-                        if (flavors.indexOf(cdef.flavor) === -1) {
-                            throw "Continuation definition.flavor unknown";
-                        }
-                        this[cdef.flavor](cdef.payload);
-                    } else {
-                        if (!cdef.selector) {
-                            throw "Continuation definition.selector expected";
-                        }
-                        $(cdef.selector).html(cdef.payload);
-                    }
-                }
-            }
-        }
         trigger(name, selector, target, data) {
             let create_event = function() {
                 let evt = $.Event(name);
@@ -889,7 +839,68 @@ var ts = (function (exports, $) {
                 }
             }).open();
         }
-        bind_ajax_form(context) {
+        render_ajax_form(opts) {
+            this.spinner.hide();
+            if (!opts.error) {
+                this._afr.remove();
+                this._afr = null;
+            }
+            if (opts.payload) {
+                this._fiddle(opts.payload, opts.selector, opts.mode);
+            }
+            this._continuation(opts.next);
+        }
+        _fiddle(payload, selector, mode) {
+            if (mode === 'replace') {
+                $(selector).replaceWith(payload);
+                let context = $(selector);
+                if (context.length) {
+                    context.parent().tsajax();
+                } else {
+                    $(document).tsajax();
+                }
+            } else if (mode === 'inner') {
+                $(selector).html(payload);
+                $(selector).tsajax();
+            }
+        }
+        _continuation(next) {
+            if (!next) { return; }
+            this.spinner.hide();
+            for (let cdef of next) {
+                let type = cdef.type;
+                delete cdef.type;
+                if (type === 'path') {
+                    this.path(cdef);
+                } else if (type === 'action') {
+                    let target = this.parsetarget(cdef.target);
+                    cdef.url = target.url;
+                    cdef.params = target.params;
+                    this.action(cdef);
+                } else if (type === 'event') {
+                    this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
+                } else if (type === 'overlay') {
+                    let target = this.parsetarget(cdef.target);
+                    cdef.url = target.url;
+                    cdef.params = target.params;
+                    this.overlay(cdef);
+                } else if (type === 'message') {
+                    if (cdef.flavor) {
+                        let flavors = ['message', 'info', 'warning', 'error'];
+                        if (flavors.indexOf(cdef.flavor) === -1) {
+                            throw "Continuation definition.flavor unknown";
+                        }
+                        this[cdef.flavor](cdef.payload);
+                    } else {
+                        if (!cdef.selector) {
+                            throw "Continuation definition.selector expected";
+                        }
+                        $(cdef.selector).html(cdef.payload);
+                    }
+                }
+            }
+        }
+        _bind_ajax_form(context) {
             let bc_ajax_form = $('form.ajax', context);
             if (bc_ajax_form.length) {
                 console.log(
@@ -897,9 +908,9 @@ var ts = (function (exports, $) {
                     'attribute instead of ``ajax`` CSS class.'
                 );
             }
-            this.prepare_ajax_form(bc_ajax_form);
+            this._prepare_ajax_form(bc_ajax_form);
         }
-        prepare_ajax_form(form) {
+        _prepare_ajax_form(form) {
             if (!this._afr) {
                 compile_template(this, `
               <iframe t-elem="_afr" id="ajaxformresponse"
@@ -913,17 +924,6 @@ var ts = (function (exports, $) {
             form.off().on('submit', function(event) {
                 this.spinner.show();
             }.bind(this));
-        }
-        render_ajax_form(opts) {
-            this.spinner.hide();
-            if (!opts.error) {
-                this._afr.remove();
-                this._afr = null;
-            }
-            if (opts.payload) {
-                this._fiddle(opts.payload, opts.selector, opts.mode);
-            }
-            this._continuation(opts.next);
         }
         _random_id(id_len) {
             if (!id_len) {
@@ -1138,12 +1138,12 @@ var ts = (function (exports, $) {
                         }
                     }
                     if (name.indexOf('ajax:form') > -1) {
-                        ajax.prepare_ajax_form($(this));
+                        ajax._prepare_ajax_form($(this));
                     }
                 }
             }
         });
-        ajax.bind_ajax_form(context);
+        ajax._bind_ajax_form(context);
         for (let binder in ajax.binders) {
             try {
                 ajax.binders[binder](context);
