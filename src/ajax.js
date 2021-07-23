@@ -16,11 +16,11 @@ class AjaxSpinner {
     }
 
     compile() {
-        compile_template(this,
-          `<div id="ajax-spinner" t-elem="elem">
+        compile_template(this, `
+          <div id="ajax-spinner" t-elem="elem">
             <img src="${this.icon_source}" width="64" height="64" alt="" />
-          </div>`
-        );
+          </div>
+        `);
     }
 
     show() {
@@ -99,6 +99,8 @@ class Ajax {
         this.spinner = new AjaxSpinner();
         // Browser history
         this.history = new AjaxHistory(this);
+        // AJAX form response iframe
+        this._afr = null;
     }
 
     // function for registering ajax binder functions
@@ -359,7 +361,7 @@ class Ajax {
             url = opts.url;
             params = opts.params;
         }
-        let uid = uuid4();
+        let uid = opts.uid ? opts.uid : uuid4();
         params['ajax.overlay-uid'] = uid;
         let selector = '#' + uid + ' ' + this.overlay_content_selector;
         this._perform_ajax_action({
@@ -438,15 +440,13 @@ class Ajax {
 
     // prepare form desired to be an ajax form
     prepare_ajax_form(form) {
-        if (!$('#ajaxformresponse').length) {
-            $('body').append(
-                '<iframe ' +
-                    'id="ajaxformresponse"' +
-                    'name="ajaxformresponse"' +
-                    'src="about:blank"' +
-                    'style="width:0px;height:0px;display:none">' +
-                '</iframe>'
-            );
+        if (!this._afr) {
+            compile_template(this, `
+              <iframe t-elem="_afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
         }
         form.append('<input type="hidden" name="ajax" value="1" />');
         form.attr('target', 'ajaxformresponse');
@@ -459,7 +459,8 @@ class Ajax {
     render_ajax_form(opts) {
         this.spinner.hide();
         if (!opts.error) {
-            $('#ajaxformresponse').remove();
+            this._afr.remove();
+            this._afr = null;
         }
         if (opts.payload) {
             this._fiddle(opts.payload, opts.selector, opts.mode);

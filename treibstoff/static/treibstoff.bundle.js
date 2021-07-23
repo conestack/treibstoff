@@ -442,7 +442,7 @@ var ts = (function (exports, $) {
             this.title = opts.title ? opts.title : '&nbsp;';
             this.content = opts.content ? opts.content : '';
             this.bind_from_options(['on_open', 'on_close'], opts);
-            this.container = $('body');
+            this.container = opts.container ? opts.container : $('body');
             this.compile();
             this.elem.data('overlay', this);
         }
@@ -525,11 +525,11 @@ var ts = (function (exports, $) {
             this.compile();
         }
         compile() {
-            compile_template(this,
-              `<div id="ajax-spinner" t-elem="elem">
+            compile_template(this, `
+          <div id="ajax-spinner" t-elem="elem">
             <img src="${this.icon_source}" width="64" height="64" alt="" />
-          </div>`
-            );
+          </div>
+        `);
         }
         show() {
             this._request_count++;
@@ -593,6 +593,7 @@ var ts = (function (exports, $) {
             this.binders = {};
             this.spinner = new AjaxSpinner();
             this.history = new AjaxHistory(this);
+            this._afr = null;
         }
         register(func, instant) {
             let func_name = this._random_id();
@@ -831,7 +832,7 @@ var ts = (function (exports, $) {
                 url = opts.url;
                 params = opts.params;
             }
-            let uid = uuid4();
+            let uid = opts.uid ? opts.uid : uuid4();
             params['ajax.overlay-uid'] = uid;
             let selector = '#' + uid + ' ' + this.overlay_content_selector;
             this._perform_ajax_action({
@@ -899,15 +900,13 @@ var ts = (function (exports, $) {
             this.prepare_ajax_form(bc_ajax_form);
         }
         prepare_ajax_form(form) {
-            if (!$('#ajaxformresponse').length) {
-                $('body').append(
-                    '<iframe ' +
-                        'id="ajaxformresponse"' +
-                        'name="ajaxformresponse"' +
-                        'src="about:blank"' +
-                        'style="width:0px;height:0px;display:none">' +
-                    '</iframe>'
-                );
+            if (!this._afr) {
+                compile_template(this, `
+              <iframe t-elem="_afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
             }
             form.append('<input type="hidden" name="ajax" value="1" />');
             form.attr('target', 'ajaxformresponse');
@@ -918,7 +917,8 @@ var ts = (function (exports, $) {
         render_ajax_form(opts) {
             this.spinner.hide();
             if (!opts.error) {
-                $('#ajaxformresponse').remove();
+                this._afr.remove();
+                this._afr = null;
             }
             if (opts.payload) {
                 this._fiddle(opts.payload, opts.selector, opts.mode);

@@ -12,7 +12,7 @@ export class Overlay extends Events {
         this.title = opts.title ? opts.title : '&nbsp;';
         this.content = opts.content ? opts.content : '';
         this.bind_from_options(['on_open', 'on_close'], opts);
-        this.container = $('body');
+        this.container = opts.container ? opts.container : $('body');
         this.compile();
         this.elem.data('overlay', this);
     }
