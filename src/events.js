@@ -34,19 +34,19 @@ export class Events {
         return this;
     }
 
-    trigger(event, options) {
+    trigger(event, opts) {
         if (this._suppress_events) {
             return;
         }
         if (this[event]) {
-            this[event](options);
+            this[event](opts);
         }
         let subscribers = this._subscribers[event];
         if (!subscribers) {
             return this;
         }
         for (let i = 0; i < subscribers.length; i++) {
-            subscribers[i](this, options);
+            subscribers[i](this, opts);
         }
         return this;
     }
@@ -57,10 +57,10 @@ export class Events {
         this._suppress_events = false;
     }
 
-    bind_from_options(events, options) {
+    bind_from_options(events, opts) {
         for (let event of events) {
-            if (options[event]) {
-                this.on(event, options[event]);
+            if (opts[event]) {
+                this.on(event, opts[event]);
             }
         }
     }

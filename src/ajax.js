@@ -183,21 +183,21 @@ class Ajax {
         };
     }
 
-    request(options) {
-        if (options.url.indexOf('?') !== -1) {
-            let addparams = options.params;
-            options.params = this.parsequery(options.url);
-            options.url = this.parseurl(options.url);
+    request(opts) {
+        if (opts.url.indexOf('?') !== -1) {
+            let addparams = opts.params;
+            opts.params = this.parsequery(opts.url);
+            opts.url = this.parseurl(opts.url);
             for (let key in addparams) {
-                options.params[key] = addparams[key];
+                opts.params[key] = addparams[key];
             }
         } else {
-            if (!options.params) { options.params = {}; }
+            if (!opts.params) { opts.params = {}; }
         }
-        if (!options.type) { options.type = 'html'; }
-        if (!options.method) { options.method = 'GET'; }
-        if (!options.error) {
-            options.error = function(req, status, exception) {
+        if (!opts.type) { opts.type = 'html'; }
+        if (!opts.method) { opts.method = 'GET'; }
+        if (!opts.error) {
+            opts.error = function(req, status, exception) {
                 if (parseInt(status, 10) === 403) {
                     window.location.hash = '';
                     window.location.pathname = this.default_403;
@@ -208,9 +208,9 @@ class Ajax {
                 }
             }.bind(this);
         }
-        if (!options.cache) { options.cache = false; }
+        if (!opts.cache) { opts.cache = false; }
         let wrapped_success = function(data, status, request) {
-            options.success(data, status, request);
+            opts.success(data, status, request);
             this.spinner.hide();
         }.bind(this);
         let wrapped_error = function(request, status, error) {
@@ -220,46 +220,46 @@ class Ajax {
             }
             status = request.status || status;
             error = request.statusText || error;
-            options.error(request, status, error);
+            opts.error(request, status, error);
             this.spinner.hide(true);
         }.bind(this);
         this.spinner.show();
         $.ajax({
-            url: options.url,
-            dataType: options.type,
-            data: options.params,
-            method: options.method,
+            url: opts.url,
+            dataType: opts.type,
+            data: opts.params,
+            method: opts.method,
             success: wrapped_success,
             error: wrapped_error,
-            cache: options.cache
+            cache: opts.cache
         });
     }
 
-    path(options) {
+    path(opts) {
         if (window.history.pushState === undefined) { return; }
-        if (options.path.charAt(0) !== '/') {
-            options.path = '/' + options.path;
+        if (opts.path.charAt(0) !== '/') {
+            opts.path = '/' + opts.path;
         }
-        if (!options.target) {
-            options.target = window.location.origin + options.path;
+        if (!opts.target) {
+            opts.target = window.location.origin + opts.path;
         }
         let state = {
-            target: options.target,
-            action: options.action,
-            event: options.event,
-            overlay: options.overlay,
-            overlay_css: options.overlay_css
+            target: opts.target,
+            action: opts.action,
+            event: opts.event,
+            overlay: opts.overlay,
+            overlay_css: opts.overlay_css
         };
-        if (options.replace) {
-            window.history.replaceState(state, '', options.path);
+        if (opts.replace) {
+            window.history.replaceState(state, '', opts.path);
         } else {
-            window.history.pushState(state, '', options.path);
+            window.history.pushState(state, '', opts.path);
         }
     }
 
-    action(options) {
-        options.success = this._ajax_action_success;
-        this._perform_ajax_action(options);
+    action(opts) {
+        opts.success = this._ajax_action_success;
+        this._perform_ajax_action(opts);
     }
 
     fiddle(payload, selector, mode) {
@@ -371,10 +371,10 @@ class Ajax {
         });
     }
 
-    overlay(options) {
-        if (options.close) {
+    overlay(opts) {
+        if (opts.close) {
             // a uid must be passed if an overlay should be closed
-            let elem = $('#' + options.uid),
+            let elem = $('#' + opts.uid),
                 overlay = elem.data('overlay');
             if (overlay) {
                 overlay.close();
@@ -382,22 +382,22 @@ class Ajax {
             return;
         }
         let url, params;
-        if (options.target) {
-            let target = options.target;
+        if (opts.target) {
+            let target = opts.target;
             if (!target.url) {
                 target = this.parsetarget(target);
             }
             url = target.url;
             params = target.params;
         } else {
-            url = options.url;
-            params = options.params;
+            url = opts.url;
+            params = opts.params;
         }
         let uid = uuid4();
         params['ajax.overlay-uid'] = uid;
         let selector = '#' + uid + ' ' + this.default_overlay_content_selector;
         this._perform_ajax_action({
-            name: options.action,
+            name: opts.action,
             selector: selector,
             mode: 'inner',
             url: url,
@@ -411,11 +411,11 @@ class Ajax {
                 }
                 new Overlay({
                     uid: uid,
-                    css: options.css,
-                    title: options.title,
+                    css: opts.css,
+                    title: opts.title,
                     on_close: function() {
-                        if (options.on_close) {
-                            options.on_close();
+                        if (opts.on_close) {
+                            opts.on_close();
                         }
                     }
                 }).open();
@@ -448,13 +448,12 @@ class Ajax {
         this.message(message, 'warning');
     }
 
-    dialog(options, callback) {
-        console.log(options);
+    dialog(opts, callback) {
         new Dialog({
             title: 'Dialog',
-            message: options.message,
+            message: opts.message,
             on_confirm: function() {
-                callback(options);
+                callback(opts);
             }
         }).open();
     }
@@ -491,18 +490,15 @@ class Ajax {
     }
 
     // called by iframe response
-    render_ajax_form(payload, selector, mode, next) {
-        console.log('------------- render_ajax_form -------------------');
-        console.log(payload);
-        console.log(selector);
-        console.log(mode);
-        console.log(next);
-        $('#ajaxformresponse').remove();
+    render_ajax_form(opts) {
         this.spinner.hide();
-        if (payload) {
-            this.fiddle(payload, selector, mode);
+        if (!opts.error) {
+            $('#ajaxformresponse').remove();
         }
-        this.continuation(next);
+        if (opts.payload) {
+            this.fiddle(opts.payload, opts.selector, opts.mode);
+        }
+        this.continuation(opts.next);
     }
 
     _random_id(id_len) {
@@ -523,15 +519,15 @@ class Ajax {
         event.preventDefault();
         event.stopPropagation();
         let elem = $(this),
-            options = {
+            opts = {
                 elem: elem,
                 event: event
             };
         if (elem.attr('ajax:confirm')) {
-            options.message = elem.attr('ajax:confirm');
-            ajax.dialog(options, ajax._do_dispatching);
+            opts.message = elem.attr('ajax:confirm');
+            ajax.dialog(opts, ajax._do_dispatching);
         } else {
-            ajax._do_dispatching(options);
+            ajax._do_dispatching(opts);
         }
     }
 
@@ -544,12 +540,12 @@ class Ajax {
         return this.parsetarget(elem.attr('ajax:target'));
     }
 
-    _do_dispatching(options) {
+    _do_dispatching(opts) {
         // use ``ajax`` instead of ``this`` in this function. If called
         // as callback via ``ajax.dialog``, ``this`` is undefined.
         // XXX: rework that ``this`` can be ued instead of ``ajax`` singleton
-        let elem = options.elem,
-            event = options.event;
+        let elem = opts.elem,
+            event = opts.event;
         if (elem.attr('ajax:action')) {
             ajax._handle_ajax_action(
                 ajax._get_target(elem, event),
@@ -655,15 +651,15 @@ class Ajax {
         }
     }
 
-    _perform_ajax_action(options) {
-        options.params['ajax.action'] = options.name;
-        options.params['ajax.mode'] = options.mode;
-        options.params['ajax.selector'] = options.selector;
+    _perform_ajax_action(opts) {
+        opts.params['ajax.action'] = opts.name;
+        opts.params['ajax.mode'] = opts.mode;
+        opts.params['ajax.selector'] = opts.selector;
         this.request({
-            url: this.parseurl(options.url) + '/ajaxaction',
+            url: this.parseurl(opts.url) + '/ajaxaction',
             type: 'json',
-            params: options.params,
-            success: options.success
+            params: opts.params,
+            success: opts.success
         });
     }
 
@@ -684,17 +680,17 @@ class Ajax {
     _handle_ajax_overlay(target, overlay, css) {
         // XXX: close needs an overlay uid
         if (overlay.indexOf('CLOSE') > -1) {
-            let options = {};
+            let opts = {};
             if (overlay.indexOf(':') > -1) {
-                options.selector = overlay.split(':')[1];
+                opts.selector = overlay.split(':')[1];
             }
-            options.close = true;
-            this.overlay(options);
+            opts.close = true;
+            this.overlay(opts);
             return;
         }
         if (overlay.indexOf(':') > -1) {
             let defs = overlay.split(':');
-            let options = {
+            let opts = {
                 action: defs[0],
                 selector: defs[1],
                 url: target.url,
@@ -702,9 +698,9 @@ class Ajax {
                 css: css
             };
             if (defs.length === 3) {
-                options.content_selector = defs[2];
+                opts.content_selector = defs[2];
             }
-            this.overlay(options);
+            this.overlay(opts);
             return;
         }
         this.overlay({

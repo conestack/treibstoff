@@ -392,19 +392,19 @@ var ts = (function (exports, $) {
             this._subscribers[event] = subscribers;
             return this;
         }
-        trigger(event, options) {
+        trigger(event, opts) {
             if (this._suppress_events) {
                 return;
             }
             if (this[event]) {
-                this[event](options);
+                this[event](opts);
             }
             let subscribers = this._subscribers[event];
             if (!subscribers) {
                 return this;
             }
             for (let i = 0; i < subscribers.length; i++) {
-                subscribers[i](this, options);
+                subscribers[i](this, opts);
             }
             return this;
         }
@@ -413,10 +413,10 @@ var ts = (function (exports, $) {
             fn();
             this._suppress_events = false;
         }
-        bind_from_options(events, options) {
+        bind_from_options(events, opts) {
             for (let event of events) {
-                if (options[event]) {
-                    this.on(event, options[event]);
+                if (opts[event]) {
+                    this.on(event, opts[event]);
                 }
             }
         }
@@ -490,22 +490,21 @@ var ts = (function (exports, $) {
             opts.content = opts.message ? opts.message : opts.content;
             opts.css = opts.flavor ? opts.flavor : opts.css;
             super(opts);
+            this.compile_actions();
         }
-        compile() {
-            super.compile();
+        compile_actions() {
             compile_template(this, `
           <button class="close btn btn-default allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
         `, this.footer);
         }
     }
-    class Dialog extends Overlay {
+    class Dialog extends Message {
         constructor(opts) {
             super(opts);
             this.bind_from_options(['on_confirm'], opts);
         }
-        compile() {
-            super.compile();
+        compile_actions() {
             compile_template(this, `
           <button class="submit btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
@@ -670,21 +669,21 @@ var ts = (function (exports, $) {
                 query: query
             };
         }
-        request(options) {
-            if (options.url.indexOf('?') !== -1) {
-                let addparams = options.params;
-                options.params = this.parsequery(options.url);
-                options.url = this.parseurl(options.url);
+        request(opts) {
+            if (opts.url.indexOf('?') !== -1) {
+                let addparams = opts.params;
+                opts.params = this.parsequery(opts.url);
+                opts.url = this.parseurl(opts.url);
                 for (let key in addparams) {
-                    options.params[key] = addparams[key];
+                    opts.params[key] = addparams[key];
                 }
             } else {
-                if (!options.params) { options.params = {}; }
+                if (!opts.params) { opts.params = {}; }
             }
-            if (!options.type) { options.type = 'html'; }
-            if (!options.method) { options.method = 'GET'; }
-            if (!options.error) {
-                options.error = function(req, status, exception) {
+            if (!opts.type) { opts.type = 'html'; }
+            if (!opts.method) { opts.method = 'GET'; }
+            if (!opts.error) {
+                opts.error = function(req, status, exception) {
                     if (parseInt(status, 10) === 403) {
                         window.location.hash = '';
                         window.location.pathname = this.default_403;
@@ -695,9 +694,9 @@ var ts = (function (exports, $) {
                     }
                 }.bind(this);
             }
-            if (!options.cache) { options.cache = false; }
+            if (!opts.cache) { opts.cache = false; }
             let wrapped_success = function(data, status, request) {
-                options.success(data, status, request);
+                opts.success(data, status, request);
                 this.spinner.hide();
             }.bind(this);
             let wrapped_error = function(request, status, error) {
@@ -707,44 +706,44 @@ var ts = (function (exports, $) {
                 }
                 status = request.status || status;
                 error = request.statusText || error;
-                options.error(request, status, error);
+                opts.error(request, status, error);
                 this.spinner.hide(true);
             }.bind(this);
             this.spinner.show();
             $.ajax({
-                url: options.url,
-                dataType: options.type,
-                data: options.params,
-                method: options.method,
+                url: opts.url,
+                dataType: opts.type,
+                data: opts.params,
+                method: opts.method,
                 success: wrapped_success,
                 error: wrapped_error,
-                cache: options.cache
+                cache: opts.cache
             });
         }
-        path(options) {
+        path(opts) {
             if (window.history.pushState === undefined) { return; }
-            if (options.path.charAt(0) !== '/') {
-                options.path = '/' + options.path;
+            if (opts.path.charAt(0) !== '/') {
+                opts.path = '/' + opts.path;
             }
-            if (!options.target) {
-                options.target = window.location.origin + options.path;
+            if (!opts.target) {
+                opts.target = window.location.origin + opts.path;
             }
             let state = {
-                target: options.target,
-                action: options.action,
-                event: options.event,
-                overlay: options.overlay,
-                overlay_css: options.overlay_css
+                target: opts.target,
+                action: opts.action,
+                event: opts.event,
+                overlay: opts.overlay,
+                overlay_css: opts.overlay_css
             };
-            if (options.replace) {
-                window.history.replaceState(state, '', options.path);
+            if (opts.replace) {
+                window.history.replaceState(state, '', opts.path);
             } else {
-                window.history.pushState(state, '', options.path);
+                window.history.pushState(state, '', opts.path);
             }
         }
-        action(options) {
-            options.success = this._ajax_action_success;
-            this._perform_ajax_action(options);
+        action(opts) {
+            opts.success = this._ajax_action_success;
+            this._perform_ajax_action(opts);
         }
         fiddle(payload, selector, mode) {
             if (mode === 'replace') {
@@ -845,9 +844,9 @@ var ts = (function (exports, $) {
                 $(this).trigger(create_event());
             });
         }
-        overlay(options) {
-            if (options.close) {
-                let elem = $('#' + options.uid),
+        overlay(opts) {
+            if (opts.close) {
+                let elem = $('#' + opts.uid),
                     overlay = elem.data('overlay');
                 if (overlay) {
                     overlay.close();
@@ -855,22 +854,22 @@ var ts = (function (exports, $) {
                 return;
             }
             let url, params;
-            if (options.target) {
-                let target = options.target;
+            if (opts.target) {
+                let target = opts.target;
                 if (!target.url) {
                     target = this.parsetarget(target);
                 }
                 url = target.url;
                 params = target.params;
             } else {
-                url = options.url;
-                params = options.params;
+                url = opts.url;
+                params = opts.params;
             }
             let uid = uuid4();
             params['ajax.overlay-uid'] = uid;
             let selector = '#' + uid + ' ' + this.default_overlay_content_selector;
             this._perform_ajax_action({
-                name: options.action,
+                name: opts.action,
                 selector: selector,
                 mode: 'inner',
                 url: url,
@@ -882,11 +881,11 @@ var ts = (function (exports, $) {
                     }
                     new Overlay({
                         uid: uid,
-                        css: options.css,
-                        title: options.title,
+                        css: opts.css,
+                        title: opts.title,
                         on_close: function() {
-                            if (options.on_close) {
-                                options.on_close();
+                            if (opts.on_close) {
+                                opts.on_close();
                             }
                         }
                     }).open();
@@ -914,13 +913,12 @@ var ts = (function (exports, $) {
         warning(message) {
             this.message(message, 'warning');
         }
-        dialog(options, callback) {
-            console.log(options);
+        dialog(opts, callback) {
             new Dialog({
                 title: 'Dialog',
-                message: options.message,
+                message: opts.message,
                 on_confirm: function() {
-                    callback(options);
+                    callback(opts);
                 }
             }).open();
         }
@@ -951,18 +949,15 @@ var ts = (function (exports, $) {
                 this.spinner.show();
             }.bind(this));
         }
-        render_ajax_form(payload, selector, mode, next) {
-            console.log('------------- render_ajax_form -------------------');
-            console.log(payload);
-            console.log(selector);
-            console.log(mode);
-            console.log(next);
-            $('#ajaxformresponse').remove();
+        render_ajax_form(opts) {
             this.spinner.hide();
-            if (payload) {
-                this.fiddle(payload, selector, mode);
+            if (!opts.error) {
+                $('#ajaxformresponse').remove();
             }
-            this.continuation(next);
+            if (opts.payload) {
+                this.fiddle(opts.payload, opts.selector, opts.mode);
+            }
+            this.continuation(opts.next);
         }
         _random_id(id_len) {
             if (!id_len) {
@@ -980,15 +975,15 @@ var ts = (function (exports, $) {
             event.preventDefault();
             event.stopPropagation();
             let elem = $(this),
-                options = {
+                opts = {
                     elem: elem,
                     event: event
                 };
             if (elem.attr('ajax:confirm')) {
-                options.message = elem.attr('ajax:confirm');
-                ajax.dialog(options, ajax._do_dispatching);
+                opts.message = elem.attr('ajax:confirm');
+                ajax.dialog(opts, ajax._do_dispatching);
             } else {
-                ajax._do_dispatching(options);
+                ajax._do_dispatching(opts);
             }
         }
         _get_target(elem, event) {
@@ -997,9 +992,9 @@ var ts = (function (exports, $) {
             }
             return this.parsetarget(elem.attr('ajax:target'));
         }
-        _do_dispatching(options) {
-            let elem = options.elem,
-                event = options.event;
+        _do_dispatching(opts) {
+            let elem = opts.elem,
+                event = opts.event;
             if (elem.attr('ajax:action')) {
                 ajax._handle_ajax_action(
                     ajax._get_target(elem, event),
@@ -1098,15 +1093,15 @@ var ts = (function (exports, $) {
                 ajax.continuation(data.continuation);
             }
         }
-        _perform_ajax_action(options) {
-            options.params['ajax.action'] = options.name;
-            options.params['ajax.mode'] = options.mode;
-            options.params['ajax.selector'] = options.selector;
+        _perform_ajax_action(opts) {
+            opts.params['ajax.action'] = opts.name;
+            opts.params['ajax.mode'] = opts.mode;
+            opts.params['ajax.selector'] = opts.selector;
             this.request({
-                url: this.parseurl(options.url) + '/ajaxaction',
+                url: this.parseurl(opts.url) + '/ajaxaction',
                 type: 'json',
-                params: options.params,
-                success: options.success
+                params: opts.params,
+                success: opts.success
             });
         }
         _handle_ajax_action(target, action) {
@@ -1124,17 +1119,17 @@ var ts = (function (exports, $) {
         }
         _handle_ajax_overlay(target, overlay, css) {
             if (overlay.indexOf('CLOSE') > -1) {
-                let options = {};
+                let opts = {};
                 if (overlay.indexOf(':') > -1) {
-                    options.selector = overlay.split(':')[1];
+                    opts.selector = overlay.split(':')[1];
                 }
-                options.close = true;
-                this.overlay(options);
+                opts.close = true;
+                this.overlay(opts);
                 return;
             }
             if (overlay.indexOf(':') > -1) {
                 let defs = overlay.split(':');
-                let options = {
+                let opts = {
                     action: defs[0],
                     selector: defs[1],
                     url: target.url,
@@ -1142,9 +1137,9 @@ var ts = (function (exports, $) {
                     css: css
                 };
                 if (defs.length === 3) {
-                    options.content_selector = defs[2];
+                    opts.content_selector = defs[2];
                 }
-                this.overlay(options);
+                this.overlay(opts);
                 return;
             }
             this.overlay({

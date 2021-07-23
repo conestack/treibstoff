@@ -65,10 +65,10 @@ export class Message extends Overlay {
         opts.content = opts.message ? opts.message : opts.content;
         opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
+        this.compile_actions()
     }
 
-    compile() {
-        super.compile();
+    compile_actions() {
         compile_template(this, `
           <button class="close btn btn-default allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
@@ -76,15 +76,14 @@ export class Message extends Overlay {
     }
 }
 
-export class Dialog extends Overlay {
+export class Dialog extends Message {
 
     constructor(opts) {
         super(opts);
         this.bind_from_options(['on_confirm'], opts);
     }
 
-    compile() {
-        super.compile();
+    compile_actions() {
         compile_template(this, `
           <button class="submit btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
