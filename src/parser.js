@@ -7,11 +7,6 @@ import {parse_svg} from './utils.js';
 
 export class Parser {
 
-    constructor(widget) {
-        this.widget = widget;
-        this.handlers = {};
-    }
-
     walk(node) {
        let children = node.childNodes;
        for (let i = 0; i < children.length; i++) {
@@ -23,14 +18,6 @@ export class Parser {
     }
 
     parse(node) {
-        let attrs = this.node_attrs(node),
-            wrapped = this.wrap_node(node);
-        this.handle_elem_attr(wrapped, attrs);
-        let tag = node.tagName.toLowerCase(),
-            handler = this.handlers[tag];
-        if (handler) {
-            handler(wrapped, attrs);
-        }
     }
 
     node_attrs(node) {
@@ -42,6 +29,26 @@ export class Parser {
             }
         }
         return attrs;
+    }
+}
+
+export class TemplateParser extends Parser {
+
+    constructor(widget) {
+        super();
+        this.widget = widget;
+        this.handlers = {};
+    }
+
+    parse(node) {
+        let attrs = this.node_attrs(node),
+            wrapped = this.wrap_node(node);
+        this.handle_elem_attr(wrapped, attrs);
+        let tag = node.tagName.toLowerCase(),
+            handler = this.handlers[tag];
+        if (handler) {
+            handler(wrapped, attrs);
+        }
     }
 
     wrap_node(node) {
@@ -63,19 +70,7 @@ export function extract_number(val) {
     return Number(val);
 }
 
-export function compile_template(inst, tmpl, container) {
-    let elem = $(tmpl.trim());
-    if (container) {
-        container.append(elem);
-    }
-    let parser = new HTMLParser(inst);
-    elem.each(function() {
-        parser.walk(this);
-    });
-    return elem;
-}
-
-export class HTMLParser extends Parser {
+export class HTMLParser extends TemplateParser {
 
     constructor(widget) {
         super(widget);
@@ -146,6 +141,21 @@ export class HTMLParser extends Parser {
     }
 }
 
+export function compile_template(inst, tmpl, container) {
+    let elem = $(tmpl.trim());
+    if (container) {
+        container.append(elem);
+    }
+    let parser = new HTMLParser(inst);
+    elem.each(function() {
+        parser.walk(this);
+    });
+    return elem;
+}
+
+export class SVGParser extends TemplateParser {
+}
+
 export function compile_svg(inst, tmpl, container) {
     let elems = parse_svg(tmpl, container),
         parser = new SVGParser(inst);
@@ -153,7 +163,4 @@ export function compile_svg(inst, tmpl, container) {
         parser.walk(elem);
     });
     return elems;
-}
-
-export class SVGParser extends Parser {
 }

@@ -6,7 +6,8 @@ import {
     extract_number,
     HTMLParser,
     Parser,
-    SVGParser
+    SVGParser,
+    TemplateParser
 } from '../src/parser.js';
 import {
     create_svg_elem,
@@ -16,9 +17,27 @@ import {
 QUnit.module('treibstoff.parser', hooks => {
 
     QUnit.test('Test Parser', assert => {
+        class MyParser extends Parser {
+            parse(node) {
+                assert.step('parse()');
+            }
+        }
+
+        let parser = new MyParser();
+        let elem = $(`<div attr="val" ns:attr="nsval">`).get(0);
+
+        parser.walk(elem);
+        assert.verifySteps(['parse()']);
+
+        let attrs = parser.node_attrs(elem);
+        assert.strictEqual(attrs.attr, 'val');
+        assert.strictEqual(attrs['ns:attr'], 'nsval');
+    });
+
+    QUnit.test('Test TemplateParser', assert => {
         let elem = $(`<div t-elem="elem">`);
         let ob = {};
-        new Parser(ob).walk(elem.get(0));
+        new TemplateParser(ob).walk(elem.get(0));
         assert.strictEqual(ob.elem.tagName, 'DIV', 'DOM element set on object');
     });
 
