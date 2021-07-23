@@ -38,23 +38,23 @@ export class Overlay extends Events {
     }
 
     open() {
-        this.container
+        $('body')
             .css('padding-right', '13px')
             .css('overflow-x', 'hidden')
-            .addClass('modal-open')
-            .append(this.elem);
+            .addClass('modal-open');
+        this.container.append(this.elem);
         this.elem.show();
         this.trigger('on_open');
     }
 
     close() {
-        this.elem.remove();
         if ($('.modal:visible').length === 1) {
-            this.container
+            $('body')
                 .css('padding-right', '')
                 .css('overflow-x', 'auto')
                 .removeClass('modal-open');
         }
+        this.elem.remove();
         this.trigger('on_close');
     }
 }
