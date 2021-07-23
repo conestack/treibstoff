@@ -589,7 +589,7 @@ var ts = (function (exports, $) {
     class Ajax {
         constructor() {
             this.default_403 = '/login';
-            this.default_overlay_content_selector = '.modal-body';
+            this.overlay_content_selector = '.modal-body';
             this.binders = {};
             this.spinner = new AjaxSpinner();
             this.history = new AjaxHistory(this);
@@ -745,7 +745,7 @@ var ts = (function (exports, $) {
             opts.success = this._ajax_action_success;
             this._perform_ajax_action(opts);
         }
-        fiddle(payload, selector, mode) {
+        _fiddle(payload, selector, mode) {
             if (mode === 'replace') {
                 $(selector).replaceWith(payload);
                 let context = $(selector);
@@ -759,72 +759,38 @@ var ts = (function (exports, $) {
                 $(selector).tsajax();
             }
         }
-        continuation(definitions) {
-            if (!definitions) { return; }
+        _continuation(next) {
+            if (!next) { return; }
             this.spinner.hide();
-            let definition, target;
-            for (let idx in definitions) {
-                definition = definitions[idx];
-                if (definition.type === 'path') {
-                    this.path({
-                        path: definition.path,
-                        target: definition.target,
-                        action: definition.action,
-                        event: definition.event,
-                        overlay: definition.overlay,
-                        overlay_css: definition.overlay_css
-                    });
-                } else if (definition.type === 'action') {
-                    target = this.parsetarget(definition.target);
-                    this.action({
-                        url: target.url,
-                        params: target.params,
-                        name: definition.name,
-                        mode: definition.mode,
-                        selector: definition.selector
-                    });
-                } else if (definition.type === 'event') {
-                    this.trigger(
-                        definition.name,
-                        definition.selector,
-                        definition.target,
-                        definition.data
-                    );
-                } else if (definition.type === 'overlay') {
-                    target = this.parsetarget(definition.target);
-                    this.overlay({
-                        action: definition.action,
-                        css: definition.css,
-                        url: target.url,
-                        params: target.params,
-                        close: definition.close,
-                        uid: definition.uid
-                    });
-                } else if (definition.type === 'message') {
-                    if (definition.flavor) {
+            for (let cdef of next) {
+                let type = cdef.type;
+                delete cdef.type;
+                if (type === 'path') {
+                    this.path(cdef);
+                } else if (type === 'action') {
+                    let target = this.parsetarget(cdef.target);
+                    cdef.url = target.url;
+                    cdef.params = target.params;
+                    this.action(cdef);
+                } else if (type === 'event') {
+                    this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
+                } else if (type === 'overlay') {
+                    let target = this.parsetarget(cdef.target);
+                    cdef.url = target.url;
+                    cdef.params = target.params;
+                    this.overlay(cdef);
+                } else if (type === 'message') {
+                    if (cdef.flavor) {
                         let flavors = ['message', 'info', 'warning', 'error'];
-                        if (flavors.indexOf(definition.flavor) === -1) {
+                        if (flavors.indexOf(cdef.flavor) === -1) {
                             throw "Continuation definition.flavor unknown";
                         }
-                        switch (definition.flavor) {
-                            case 'message':
-                                this.message(definition.payload);
-                                break;
-                            case 'info':
-                                this.info(definition.payload);
-                                break;
-                            case 'warning':
-                                this.warning(definition.payload);
-                                break;
-                            case 'error':
-                                this.error(definition.payload);
-                                break;
-                        }
+                        this[cdef.flavor](cdef.payload);
                     } else {
-                        if (!definition.selector) {
+                        if (!cdef.selector) {
                             throw "Continuation definition.selector expected";
                         }
-                        $(definition.selector).html(definition.payload);
+                        $(cdef.selector).html(cdef.payload);
                     }
                 }
             }
@@ -867,7 +833,7 @@ var ts = (function (exports, $) {
             }
             let uid = uuid4();
             params['ajax.overlay-uid'] = uid;
-            let selector = '#' + uid + ' ' + this.default_overlay_content_selector;
+            let selector = '#' + uid + ' ' + this.overlay_content_selector;
             this._perform_ajax_action({
                 name: opts.action,
                 selector: selector,
@@ -955,17 +921,16 @@ var ts = (function (exports, $) {
                 $('#ajaxformresponse').remove();
             }
             if (opts.payload) {
-                this.fiddle(opts.payload, opts.selector, opts.mode);
+                this._fiddle(opts.payload, opts.selector, opts.mode);
             }
-            this.continuation(opts.next);
+            this._continuation(opts.next);
         }
         _random_id(id_len) {
             if (!id_len) {
                 id_len = 8;
             }
             let ret = '',
-                chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' +
-                        'abcdefghijklmnopqrstuvwxyz';
+                chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
             for (let i = 0; i < id_len; i++) {
                 ret += chars.charAt(Math.floor(Math.random() * chars.length));
             }
@@ -1089,8 +1054,8 @@ var ts = (function (exports, $) {
                 ajax.error('Empty response');
                 ajax.spinner.hide();
             } else {
-                ajax.fiddle(data.payload, data.selector, data.mode);
-                ajax.continuation(data.continuation);
+                ajax._fiddle(data.payload, data.selector, data.mode);
+                ajax._continuation(data.continuation);
             }
         }
         _perform_ajax_action(opts) {
