@@ -10,6 +10,5 @@ export * from './utils.js';
 
 $(function() {
     ajax.spinner.hide();
-    ajax.history.bind();
     $(document).tsajax();
 });

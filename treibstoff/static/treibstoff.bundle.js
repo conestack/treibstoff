@@ -554,42 +554,6 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxHistory {
-        constructor(ajax) {
-            this.ajax = ajax;
-        }
-        bind() {
-            $(window).on('popstate', this.handle);
-        }
-        handle(evt) {
-            evt.preventDefault();
-            let state = evt.originalEvent.state;
-            if (!state) { return; }
-            let target;
-            if (state.target.url) {
-                target = state.target;
-            } else {
-                target = this.ajax.parsetarget(state.target);
-            }
-            target.params.popstate = '1';
-            if (state.action) {
-                this.ajax._handle_ajax_action(target, state.action);
-            }
-            if (state.event) {
-                this.ajax._handle_ajax_event(target, state.event);
-            }
-            if (state.overlay) {
-                this.ajax._handle_ajax_overlay(
-                    target,
-                    state.overlay,
-                    state.overlay_css
-                );
-            }
-            if (!state.action && !state.event && !state.overlay) {
-                window.location = target.url;
-            }
-        }
-    }
     class AjaxParser extends Parser {
         constructor(ajax) {
             super();
@@ -615,17 +579,16 @@ var ts = (function (exports, $) {
             this.overlay_content_selector = '.modal-body';
             this.binders = {};
             this.spinner = new AjaxSpinner();
-            this.history = new AjaxHistory(this);
             this._afr = null;
+            $(window).on('popstate', this._history_handle.bind(this));
         }
         register(func, instant) {
-            let func_name = this._random_id();
+            let func_name = 'binder_' + uuid4();
             while (true) {
-                if (this.binders[func_name] !== undefined) {
-                    func_name = this._random_id();
-                } else {
+                if (this.binders[func_name] === undefined) {
                     break;
                 }
+                func_name = 'binder_' + uuid4();
             }
             this.binders[func_name] = func;
             if (instant) {
@@ -767,7 +730,7 @@ var ts = (function (exports, $) {
         }
         action(opts) {
             opts.success = this._ajax_action_success.bind(this);
-            this._perform_ajax_action(opts);
+            this._request_ajax_action(opts);
         }
         trigger(name, selector, target, data) {
             let create_event = function() {
@@ -808,7 +771,7 @@ var ts = (function (exports, $) {
             let uid = opts.uid ? opts.uid : uuid4();
             params['ajax.overlay-uid'] = uid;
             let selector = '#' + uid + ' ' + this.overlay_content_selector;
-            this._perform_ajax_action({
+            this._request_ajax_action({
                 name: opts.action,
                 selector: selector,
                 mode: 'inner',
@@ -951,16 +914,33 @@ var ts = (function (exports, $) {
                 }
             }
         }
-        _random_id(id_len) {
-            if (!id_len) {
-                id_len = 8;
+        _history_handle(evt) {
+            evt.preventDefault();
+            let state = evt.originalEvent.state;
+            if (!state) { return; }
+            let target;
+            if (state.target.url) {
+                target = state.target;
+            } else {
+                target = this.parsetarget(state.target);
             }
-            let ret = '',
-                chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-            for (let i = 0; i < id_len; i++) {
-                ret += chars.charAt(Math.floor(Math.random() * chars.length));
+            target.params.popstate = '1';
+            if (state.action) {
+                this._handle_ajax_action(target, state.action);
             }
-            return ret;
+            if (state.event) {
+                this._handle_ajax_event(target, state.event);
+            }
+            if (state.overlay) {
+                this._handle_ajax_overlay(
+                    target,
+                    state.overlay,
+                    state.overlay_css
+                );
+            }
+            if (!state.action && !state.event && !state.overlay) {
+                window.location = target.url;
+            }
         }
         _dispatch_handle(event) {
             event.preventDefault();
@@ -1013,7 +993,7 @@ var ts = (function (exports, $) {
             let attr = elem.attr(name);
             return attr !== undefined && attr !== false;
         }
-        _attr_value_or_fallback(elem, name, fallback) {
+        _attr_val_or_default(elem, name, fallback) {
             if (this._has_attr(elem, name)) {
                 return elem.attr(name);
             } else {
@@ -1038,22 +1018,22 @@ var ts = (function (exports, $) {
             } else {
                 target = this._get_target(elem, evt);
             }
-            let action = this._attr_value_or_fallback(
+            let action = this._attr_val_or_default(
                 elem,
                 'ajax:path-action',
                 'ajax:action'
             );
-            let event = this._attr_value_or_fallback(
+            let event = this._attr_val_or_default(
                 elem,
                 'ajax:path-event',
                 'ajax:event'
             );
-            let overlay = this._attr_value_or_fallback(
+            let overlay = this._attr_val_or_default(
                 elem,
                 'ajax:path-overlay',
                 'ajax:overlay'
             );
-            let overlay_css = this._attr_value_or_fallback(
+            let overlay_css = this._attr_val_or_default(
                 elem,
                 'ajax:path-overlay-css',
                 'ajax:overlay-css'
@@ -1084,7 +1064,7 @@ var ts = (function (exports, $) {
                 this._continuation(data.continuation);
             }
         }
-        _perform_ajax_action(opts) {
+        _request_ajax_action(opts) {
             opts.params['ajax.action'] = opts.name;
             opts.params['ajax.mode'] = opts.mode;
             opts.params['ajax.selector'] = opts.selector;
@@ -1165,7 +1145,6 @@ var ts = (function (exports, $) {
 
     $(function() {
         ajax.spinner.hide();
-        ajax.history.bind();
         $(document).tsajax();
     });
 
