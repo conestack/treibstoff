@@ -17,7 +17,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         container.remove();
     });
 
-    QUnit.test('Overlay rendering', assert => {
+    QUnit.test('Test Overlay rendering', assert => {
         let ol = new Overlay({
             uid: '1234',
             css: 'some-class',
@@ -38,7 +38,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         assert.deepEqual($('.modal-body', elem).text(), 'Overlay Content');
     });
 
-    QUnit.test('Overlay visibility', assert => {
+    QUnit.test('Test Overlay visibility', assert => {
         let ol = new Overlay({
             container: container
         });
@@ -64,7 +64,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         assert.deepEqual(body.css('overflow-x'), 'auto');
     });
 
-    QUnit.test('Overlay events', assert => {
+    QUnit.test('Test Overlay events', assert => {
         let ol = new Overlay({
             title: 'Bound Overlay',
             container: container,
@@ -94,5 +94,59 @@ QUnit.module('treibstoff.overlay', hooks => {
             "Bound Overlay: on_close from opts",
             "Bound Overlay: on_close after Overlay creation"
         ]);
-    })
+    });
+
+    QUnit.test('Test Message', assert => {
+        let msg = new Message({
+            message: 'Message Content',
+            flavor: 'info'
+        });
+
+        assert.true(msg instanceof Overlay);
+        assert.deepEqual(msg.css, 'info');
+        assert.deepEqual(msg.content, 'Message Content');
+        assert.true(msg.f_close_btn !== undefined);
+
+        msg.open();
+        assert.true(msg.elem.is(':visible'));
+
+        let btn = $('button', msg.footer);
+        btn.click();
+        assert.false(msg.elem.is(':visible'));
+    });
+
+    QUnit.test('Test Dialog', assert => {
+        let on_confirm = function(inst) {
+            assert.step(inst.title + ': on_confirm');
+        }
+
+        let dial = new Dialog({
+            title: 'Dialog',
+            on_confirm: on_confirm
+        });
+        assert.true(dial instanceof Overlay);
+
+        dial.open();
+        assert.true(dial.elem.is(':visible'));
+
+        let cancel_btn = $('button.cancel', dial.footer);
+        cancel_btn.click();
+        assert.false(dial.elem.is(':visible'));
+
+        assert.verifySteps([]);
+
+        dial = new Dialog({
+            title: 'Dialog',
+            on_confirm: on_confirm
+        });
+
+        dial.open();
+        assert.true(dial.elem.is(':visible'));
+
+        let ok_btn = $('button.submit', dial.footer);
+        ok_btn.click();
+        assert.false(dial.elem.is(':visible'));
+
+        assert.verifySteps(['Dialog: on_confirm']);
+    });
 });
