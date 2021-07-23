@@ -174,6 +174,7 @@ export class ButtonProperty extends BoundProperty {
         super(inst, name, opts);
         this.ctx.on('mousedown', this._down.bind(this));
         this.ctx.on('mouseup', this._up.bind(this));
+        this.ctx.on('click', this._click.bind(this));
     }
 
     set(val) {
@@ -187,6 +188,10 @@ export class ButtonProperty extends BoundProperty {
 
     _up(evt) {
         this.trigger(`on_${this.name}_up`, this);
+    }
+
+    _click(evt) {
+        this.trigger(`on_${this.name}_click`, this);
     }
 }
 

@@ -31,6 +31,7 @@ Install deployment requirements::
 
     npm --save-dev install \
         rollup \
+        rollup-plugin-cleanup \
         rollup-plugin-terser
 
 

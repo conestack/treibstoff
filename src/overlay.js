@@ -11,6 +11,7 @@ export class Overlay extends Events {
         this.css = opts.css ? opts.css : '';
         this.title = opts.title ? opts.title : '&nbsp;';
         this.content = opts.content ? opts.content : '';
+        this.bind_from_options(['on_open', 'on_close'], opts);
         this.container = $('body');
         this.compile();
         this.elem.data('overlay', this);
@@ -22,8 +23,7 @@ export class Overlay extends Events {
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close"
-                          t-prop="close_btn" t-bind-down="close">
+                  <button class="close" t-prop="close_btn" t-bind-click="close">
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">Close</span>
                   </button>
@@ -63,6 +63,7 @@ export class Message extends Overlay {
 
     constructor(opts) {
         opts.content = opts.message ? opts.message : opts.content;
+        opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
     }
 
@@ -70,7 +71,7 @@ export class Message extends Overlay {
         super.compile();
         compile_template(this, `
           <button class="close btn btn-default allowMultiSubmit"
-                  t-prop="f_close_btn" t-bind-down="close">Close</button>
+                  t-prop="f_close_btn" t-bind-click="close">Close</button>
         `, this.footer);
     }
 }
@@ -78,8 +79,8 @@ export class Message extends Overlay {
 export class Dialog extends Overlay {
 
     constructor(opts) {
-        opts.content = opts.message ? opts.message : opts.content;
         super(opts);
+        this.bind_from_options(['on_confirm'], opts);
     }
 
     compile() {
@@ -88,17 +89,12 @@ export class Dialog extends Overlay {
           <button class="submit btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-default allowMultiSubmit"
-                  t-prop="cancel_btn">Cancel</button>
+                  t-prop="cancel_btn" t-bind-click="close">Cancel</button>
         `, this.footer);
     }
 
-    on_ok_btn_down() {
+    on_ok_btn_click() {
         this.close();
-        this.trigger('on_ok');
-    }
-
-    on_cancel_btn_down() {
-        this.close();
-        this.trigger('on_cancel');
+        this.trigger('on_confirm');
     }
 }

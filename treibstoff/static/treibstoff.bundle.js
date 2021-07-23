@@ -6,7 +6,6 @@ var ts = (function (exports, $) {
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
     }
-
     function json_merge(base, other) {
         let ret = {};
         for (let ob of [base, other]) {
@@ -16,15 +15,12 @@ var ts = (function (exports, $) {
         }
         return ret;
     }
-
     const svg_ns = 'http://www.w3.org/2000/svg';
-
     function set_svg_attrs(el, opts) {
         for (let n in opts) {
             el.setAttributeNS(null, n, opts[n]);
         }
     }
-
     function create_svg_elem(name, opts, container) {
         let el = document.createElementNS(svg_ns, name);
         set_svg_attrs(el, opts);
@@ -33,7 +29,6 @@ var ts = (function (exports, $) {
         }
         return el;
     }
-
     function parse_svg(tmpl, container) {
         var wrapper = create_svg_elem('svg', {});
         wrapper.innerHTML = tmpl.trim();
@@ -49,7 +44,6 @@ var ts = (function (exports, $) {
         }
         return elems;
     }
-
     function load_svg(url, callback) {
         $.get(url, function(data) {
             let svg = $(data).find('svg');
@@ -59,7 +53,6 @@ var ts = (function (exports, $) {
     }
 
     class Property {
-
         constructor(inst, name, val) {
             this._inst = inst;
             this._name = name;
@@ -73,11 +66,9 @@ var ts = (function (exports, $) {
                 inst[name] = val;
             }
         }
-
         get() {
             return this._val;
         }
-
         set(val) {
             let changed = val !== this._val;
             this._val = val;
@@ -85,7 +76,6 @@ var ts = (function (exports, $) {
                 this.trigger(`on_${this._name}`, val);
             }
         }
-
         trigger(evt, opts) {
             let inst = this._inst;
             if (inst.trigger) {
@@ -93,9 +83,7 @@ var ts = (function (exports, $) {
             }
         }
     }
-
     class BoundProperty extends Property {
-
         constructor(inst, name, opts) {
             super(inst, name);
             this._ctxa = 'elem';
@@ -112,29 +100,23 @@ var ts = (function (exports, $) {
                 inst[name] = val;
             }
         }
-
         get name() {
             return this._name;
         }
-
         get val() {
             return this._val;
         }
-
         get ctx() {
             if (!this._ctx) {
                 this._ctx = this._inst[this._ctxa];
             }
             return this._ctx;
         }
-
         get tgt() {
             return this._tgt;
         }
     }
-
     class DataProperty extends BoundProperty {
-
         constructor(inst, name, opts) {
             if (!opts) {
                 opts = {ctx: inst.data};
@@ -144,39 +126,30 @@ var ts = (function (exports, $) {
             opts.ctxa = 'data';
             super(inst, name, opts);
         }
-
         set(val) {
             this.ctx[this.tgt] = val;
             super.set(val);
         }
     }
-
     class AttrProperty extends BoundProperty {
-
         set(val) {
             this.ctx.attr(this.tgt, val);
             super.set(val);
         }
     }
-
     class TextProperty extends BoundProperty {
-
         set(val) {
             this.ctx.text(val);
             super.set(val);
         }
     }
-
     class CSSProperty extends BoundProperty {
-
         set(val) {
             $(this.ctx).css(this.tgt, val);
             super.set(val);
         }
     }
-
     class InputProperty extends BoundProperty {
-
         constructor(inst, name, opts) {
             super(inst, name, opts);
             this.extract = opts ? opts.extract : null;
@@ -188,17 +161,14 @@ var ts = (function (exports, $) {
             this._err_marker = {};
             this.ctx.on('change', this._change.bind(this));
         }
-
         set(val) {
             $(this.ctx).val(val);
             this._set(val);
         }
-
         _change(evt) {
             let val = $(evt.currentTarget).val();
             this._set(val);
         }
-
         _set(val) {
             val = this._extract(val);
             if (val !== this._err_marker) {
@@ -208,7 +178,6 @@ var ts = (function (exports, $) {
                 this.trigger(this.state_evt, this);
             }
         }
-
         _extract(val) {
             if (this.extract) {
                 try {
@@ -224,31 +193,28 @@ var ts = (function (exports, $) {
             return val;
         }
     }
-
     class ButtonProperty extends BoundProperty {
-
         constructor(inst, name, opts) {
             super(inst, name, opts);
             this.ctx.on('mousedown', this._down.bind(this));
             this.ctx.on('mouseup', this._up.bind(this));
+            this.ctx.on('click', this._click.bind(this));
         }
-
         set(val) {
             this.ctx.text(val);
             super.set(val);
         }
-
         _down(evt) {
             this.trigger(`on_${this.name}_down`, this);
         }
-
         _up(evt) {
             this.trigger(`on_${this.name}_up`, this);
         }
+        _click(evt) {
+            this.trigger(`on_${this.name}_click`, this);
+        }
     }
-
     class SVGProperty extends BoundProperty {
-
         set(val) {
             let attrs = {};
             attrs[this._name] = val;
@@ -258,12 +224,10 @@ var ts = (function (exports, $) {
     }
 
     class Parser {
-
         constructor(widget) {
             this.widget = widget;
             this.handlers = {};
         }
-
         walk(node) {
            let children = node.childNodes;
            for (let i = 0; i < children.length; i++) {
@@ -273,7 +237,6 @@ var ts = (function (exports, $) {
                this.parse(node);
            }
         }
-
         parse(node) {
             let attrs = this.node_attrs(node),
                 wrapped = this.wrap_node(node);
@@ -284,7 +247,6 @@ var ts = (function (exports, $) {
                 handler(wrapped, attrs);
             }
         }
-
         node_attrs(node) {
             let attrs = {};
             for (let i in node.attributes) {
@@ -295,11 +257,9 @@ var ts = (function (exports, $) {
             }
             return attrs;
         }
-
         wrap_node(node) {
             return node;
         }
-
         handle_elem_attr(node, attrs) {
             let elem_attr = attrs['t-elem'];
             if (elem_attr) {
@@ -307,18 +267,12 @@ var ts = (function (exports, $) {
             }
         }
     }
-
-    // ************************************************************************
-    // HTML parser
-    // ************************************************************************
-
     function extract_number(val) {
         if (isNaN(val)) {
             throw 'Input is not a number';
         }
         return Number(val);
     }
-
     function compile_template(inst, tmpl, container) {
         let elem = $(tmpl.trim());
         if (container) {
@@ -330,9 +284,7 @@ var ts = (function (exports, $) {
         });
         return elem;
     }
-
     class HTMLParser extends Parser {
-
         constructor(widget) {
             super(widget);
             this.handlers = {
@@ -344,11 +296,9 @@ var ts = (function (exports, $) {
                 number: extract_number
             };
         }
-
         wrap_node(node) {
             return $(node);
         }
-
         handle_input(node, attrs) {
             let prop = attrs['t-prop'];
             if (!prop) {
@@ -371,7 +321,6 @@ var ts = (function (exports, $) {
                 state_evt: attrs['t-state-evt']
             });
         }
-
         handle_select(node, attrs) {
             let opts = attrs['t-options'];
             if (opts) {
@@ -381,7 +330,6 @@ var ts = (function (exports, $) {
             }
             this.handle_input(node, attrs);
         }
-
         handle_button(node, attrs) {
             let prop = attrs['t-prop'];
             if (!prop) {
@@ -393,7 +341,7 @@ var ts = (function (exports, $) {
                 ctxa: attrs['t-elem'],
                 val: attrs['t-val']
             });
-            for (let evt of ['down', 'up']) {
+            for (let evt of ['down', 'up', 'click']) {
                 if (attrs[`t-bind-${evt}`]) {
                     let handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
                     this.widget.on(`on_${prop}_${evt}`, handler);
@@ -401,11 +349,6 @@ var ts = (function (exports, $) {
             }
         }
     }
-
-    // ************************************************************************
-    // SVG parser
-    // ************************************************************************
-
     function compile_svg(inst, tmpl, container) {
         let elems = parse_svg(tmpl, container),
             parser = new SVGParser(inst);
@@ -414,17 +357,14 @@ var ts = (function (exports, $) {
         });
         return elems;
     }
-
     class SVGParser extends Parser {
     }
 
     class Events {
-
         constructor() {
             this._subscribers = {};
             this._suppress_events = false;
         }
-
         on(event, subscriber) {
             let subscribers = this._subscribers[event];
             if (subscribers === undefined) {
@@ -436,7 +376,6 @@ var ts = (function (exports, $) {
             subscribers.push(subscriber);
             return this;
         }
-
         off(event, subscriber) {
             let subscribers = this._subscribers[event];
             if (subscribers === undefined) {
@@ -453,7 +392,6 @@ var ts = (function (exports, $) {
             this._subscribers[event] = subscribers;
             return this;
         }
-
         trigger(event, options) {
             if (this._suppress_events) {
                 return;
@@ -470,13 +408,18 @@ var ts = (function (exports, $) {
             }
             return this;
         }
-
         suppress_events(fn) {
             this._suppress_events = true;
             fn();
             this._suppress_events = false;
         }
-
+        bind_from_options(events, options) {
+            for (let event of events) {
+                if (options[event]) {
+                    this.on(event, options[event]);
+                }
+            }
+        }
         _contains_subscriber(event, subscriber) {
             let subscribers = this._subscribers[event];
             if (!subscribers) {
@@ -492,26 +435,24 @@ var ts = (function (exports, $) {
     }
 
     class Overlay extends Events {
-
         constructor(opts) {
             super();
             this.uid = opts.uid ? opts.uid : uuid4();
             this.css = opts.css ? opts.css : '';
             this.title = opts.title ? opts.title : '&nbsp;';
             this.content = opts.content ? opts.content : '';
+            this.bind_from_options(['on_open', 'on_close'], opts);
             this.container = $('body');
             this.compile();
             this.elem.data('overlay', this);
         }
-
         compile() {
             compile_template(this, `
           <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close"
-                          t-prop="close_btn" t-bind-down="close">
+                  <button class="close" t-prop="close_btn" t-bind-click="close">
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">Close</span>
                   </button>
@@ -524,7 +465,6 @@ var ts = (function (exports, $) {
           </div>
         `);
         }
-
         open() {
             this.container
                 .css('padding-right', '13px')
@@ -534,7 +474,6 @@ var ts = (function (exports, $) {
             this.elem.show();
             this.trigger('on_open');
         }
-
         close() {
             this.elem.remove();
             if ($('.modal:visible').length === 1) {
@@ -546,59 +485,46 @@ var ts = (function (exports, $) {
             this.trigger('on_close');
         }
     }
-
     class Message extends Overlay {
-
         constructor(opts) {
             opts.content = opts.message ? opts.message : opts.content;
+            opts.css = opts.flavor ? opts.flavor : opts.css;
             super(opts);
         }
-
         compile() {
             super.compile();
             compile_template(this, `
           <button class="close btn btn-default allowMultiSubmit"
-                  t-prop="f_close_btn" t-bind-down="close">Close</button>
+                  t-prop="f_close_btn" t-bind-click="close">Close</button>
         `, this.footer);
         }
     }
-
     class Dialog extends Overlay {
-
         constructor(opts) {
-            opts.content = opts.message ? opts.message : opts.content;
             super(opts);
+            this.bind_from_options(['on_confirm'], opts);
         }
-
         compile() {
             super.compile();
             compile_template(this, `
           <button class="submit btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-default allowMultiSubmit"
-                  t-prop="cancel_btn">Cancel</button>
+                  t-prop="cancel_btn" t-bind-click="close">Cancel</button>
         `, this.footer);
         }
-
-        on_ok_btn_down() {
+        on_ok_btn_click() {
             this.close();
-            this.trigger('on_ok');
-        }
-
-        on_cancel_btn_down() {
-            this.close();
-            this.trigger('on_cancel');
+            this.trigger('on_confirm');
         }
     }
 
     class AjaxSpinner {
-
         constructor() {
             this._request_count = 0;
             this.icon_source = '/treibstoff-static/loading-spokes.svg';
             this.compile();
         }
-
         compile() {
             compile_template(this,
               `<div id="ajax-spinner" t-elem="elem">
@@ -606,7 +532,6 @@ var ts = (function (exports, $) {
           </div>`
             );
         }
-
         show() {
             this._request_count++;
             if (this._request_count > 1) {
@@ -614,7 +539,6 @@ var ts = (function (exports, $) {
             }
             $('body').append(this.elem);
         }
-
         hide(force) {
             this._request_count--;
             if (force) {
@@ -627,17 +551,13 @@ var ts = (function (exports, $) {
             }
         }
     }
-
     class AjaxHistory {
-
         constructor(ajax) {
             this._ajax = ajax;
         }
-
         bind() {
             $(window).on('popstate', this.handle);
         }
-
         handle(evt) {
             evt.preventDefault();
             let state = evt.originalEvent.state;
@@ -667,25 +587,14 @@ var ts = (function (exports, $) {
             }
         }
     }
-
     class Ajax {
-
         constructor() {
-            // By default, we redirect to the login page on 403 error.
-            // That we assume at '/login'.
             this.default_403 = '/login';
-            // Overlay defaults
             this.default_overlay_content_selector = '.modal-body';
-            // Object for hooking up JS binding functions after ajax calls
-            // B/C, use ``ajax.register`` instead of direct extension.
             this.binders = {};
-            // Ajax spinner.
             this.spinner = new AjaxSpinner();
-            // Browser history
             this.history = new AjaxHistory(this);
         }
-
-        // function for registering ajax binder functions
         register(func, instant) {
             let func_name = this._random_id();
             while (true) {
@@ -700,13 +609,11 @@ var ts = (function (exports, $) {
                 func();
             }
         }
-
         parseurl(url) {
             let parser = document.createElement('a');
             parser.href = url;
             let path = parser.pathname;
             if (path.indexOf('/') !== 0) {
-                // Internet Explorer 11 doesn't starts with '/'
                 path = '/' + path;
             }
             url = parser.protocol + '//' + parser.host + path;
@@ -715,7 +622,6 @@ var ts = (function (exports, $) {
             }
             return url;
         }
-
         parsequery(url, as_string) {
             let parser = document.createElement('a');
             parser.href = url;
@@ -733,7 +639,6 @@ var ts = (function (exports, $) {
             }
             return params;
         }
-
         parsepath(url, include_query) {
             let parser = document.createElement('a');
             parser.href = url;
@@ -742,7 +647,6 @@ var ts = (function (exports, $) {
             }
             return parser.pathname;
         }
-
         parsetarget(target) {
             if (!target) {
                 return {
@@ -766,7 +670,6 @@ var ts = (function (exports, $) {
                 query: query
             };
         }
-
         request(options) {
             if (options.url.indexOf('?') !== -1) {
                 let addparams = options.params;
@@ -818,7 +721,6 @@ var ts = (function (exports, $) {
                 cache: options.cache
             });
         }
-
         path(options) {
             if (window.history.pushState === undefined) { return; }
             if (options.path.charAt(0) !== '/') {
@@ -840,12 +742,10 @@ var ts = (function (exports, $) {
                 window.history.pushState(state, '', options.path);
             }
         }
-
         action(options) {
             options.success = this._ajax_action_success;
             this._perform_ajax_action(options);
         }
-
         fiddle(payload, selector, mode) {
             if (mode === 'replace') {
                 $(selector).replaceWith(payload);
@@ -860,7 +760,6 @@ var ts = (function (exports, $) {
                 $(selector).tsajax();
             }
         }
-
         continuation(definitions) {
             if (!definitions) { return; }
             this.spinner.hide();
@@ -931,7 +830,6 @@ var ts = (function (exports, $) {
                 }
             }
         }
-
         trigger(name, selector, target, data) {
             let create_event = function() {
                 let evt = $.Event(name);
@@ -943,23 +841,12 @@ var ts = (function (exports, $) {
                 evt.ajaxdata = data;
                 return evt;
             }.bind(this);
-            // _dispatching_handler calls stopPropagation on event which is
-            // fine in order to prevent weird behavior on parent DOM elements,
-            // especially for standard events. Since upgrade to jQuery 1.9
-            // stopPropagation seem to react on the event instance instead of
-            // the trigger call for each element returned by selector, at least
-            // on custom events, thus we create a separate event instance for
-            // each elem returned by selector.
             $(selector).each(function() {
                 $(this).trigger(create_event());
             });
         }
-
         overlay(options) {
-            console.log('--------------------- ajax.overlay ------------------');
-            console.log(options);
             if (options.close) {
-                // a uid must be passed if an overlay should be closed
                 let elem = $('#' + options.uid),
                     overlay = elem.data('overlay');
                 if (overlay) {
@@ -989,99 +876,54 @@ var ts = (function (exports, $) {
                 url: url,
                 params: params,
                 success: function(data) {
-                    // overlays are not displayed if no payload is received.
                     if (!data.payload) {
-                        // ensure continuation gets performed anyway.
                         this._ajax_action_success(data);
                         return;
                     }
-                    let overlay = new Overlay({
+                    new Overlay({
                         uid: uid,
                         css: options.css,
-                        title: options.title
-                    });
-                    overlay.on('on_close', function() {
-                        if (options.on_close) {
-                            options.on_close();
+                        title: options.title,
+                        on_close: function() {
+                            if (options.on_close) {
+                                options.on_close();
+                            }
                         }
-                    });
-                    overlay.open();
+                    }).open();
                     this._ajax_action_success(data);
                 }.bind(this)
             });
             return uid;
         }
-
-        message(message) {
-            let elem = $('#ajax-message');
-            elem.removeData('overlay');
-            elem.overlay({
-                onBeforeLoad: function() {
-                    let overlay = this.getOverlay();
-                    $('.message', overlay).html(message);
-                },
-                onLoad: function() {
-                    elem.find('button:first').focus();
-                },
-                onBeforeClose: function() {
-                    let overlay = this.getOverlay();
-                    $('.message', overlay).empty();
-                },
-                oneInstance: false,
-                closeOnClick: false,
-                fixed: false,
-                top:'20%'
-            });
-            elem.data('overlay').load();
+        message(message, flavor='') {
+            new Message({
+                title: 'Message',
+                message: message,
+                flavor: flavor,
+                on_open: function(inst) {
+                    $('button', inst.elem).first().focus();
+                }
+            }).open();
         }
-
         error(message) {
-            $("#ajax-message .message")
-                .removeClass('error warning info')
-                .addClass('error');
-            this.message(message);
+            this.message(message, 'error');
         }
-
         info(message) {
-            $("#ajax-message .message")
-                .removeClass('error warning info')
-                .addClass('info');
-            this.message(message);
+            this.message(message, 'info');
         }
-
         warning(message) {
-            $("#ajax-message .message")
-                .removeClass('error warning info')
-                .addClass('warning');
-            this.message(message);
+            this.message(message, 'warning');
         }
-
         dialog(options, callback) {
-            let elem = $('#ajax-dialog');
-            elem.removeData('overlay');
-            elem.overlay({
-                onBeforeLoad: function() {
-                    let overlay = this.getOverlay(),
-                        closefunc = this.close;
-                    $('.text', overlay).html(options.message);
-                    $('button', overlay).off();
-                    $('button.submit', overlay).on('click', function() {
-                        closefunc();
-                        callback(options);
-                    });
-                    $('button.cancel', overlay).on('click', function() {
-                        closefunc();
-                    });
-                },
-                oneInstance: false,
-                closeOnClick: false,
-                fixed: false,
-                top:'20%'
-            });
-            elem.data('overlay').load();
+            console.log(options);
+            new Dialog({
+                title: 'Dialog',
+                message: options.message,
+                on_confirm: function() {
+                    callback(options);
+                }
+            }).open();
         }
-
-        // B/C: bind ajax form handling to all forms providing ajax css class
         bind_ajax_form(context) {
             let bc_ajax_form = $('form.ajax', context);
             if (bc_ajax_form.length) {
@@ -1092,8 +934,6 @@ var ts = (function (exports, $) {
             }
             this.prepare_ajax_form(bc_ajax_form);
         }
-
-        // prepare form desired to be an ajax form
         prepare_ajax_form(form) {
             if (!$('#ajaxformresponse').length) {
                 $('body').append(
@@ -1111,8 +951,6 @@ var ts = (function (exports, $) {
                 this.spinner.show();
             }.bind(this));
         }
-
-        // called by iframe response
         render_ajax_form(payload, selector, mode, next) {
             console.log('------------- render_ajax_form -------------------');
             console.log(payload);
@@ -1126,7 +964,6 @@ var ts = (function (exports, $) {
             }
             this.continuation(next);
         }
-
         _random_id(id_len) {
             if (!id_len) {
                 id_len = 8;
@@ -1139,9 +976,7 @@ var ts = (function (exports, $) {
             }
             return ret;
         }
-
         _dispatching_handler(event) {
-            // XXX: rework that ``this`` can be ued instead of ``ajax`` singleton
             event.preventDefault();
             event.stopPropagation();
             let elem = $(this),
@@ -1156,20 +991,13 @@ var ts = (function (exports, $) {
                 ajax._do_dispatching(options);
             }
         }
-
         _get_target(elem, event) {
-            // return ajax target. lookup ``ajaxtarget`` on event, fall back to
-            // ``ajax:target`` attribute on elem.
             if (event.ajaxtarget) {
                 return event.ajaxtarget;
             }
             return this.parsetarget(elem.attr('ajax:target'));
         }
-
         _do_dispatching(options) {
-            // use ``ajax`` instead of ``this`` in this function. If called
-            // as callback via ``ajax.dialog``, ``this`` is undefined.
-            // XXX: rework that ``this`` can be ued instead of ``ajax`` singleton
             let elem = options.elem,
                 event = options.event;
             if (elem.attr('ajax:action')) {
@@ -1195,12 +1023,10 @@ var ts = (function (exports, $) {
                 ajax._handle_ajax_path(elem, event);
             }
         }
-
         _has_attr(elem, name) {
             let attr = elem.attr(name);
             return attr !== undefined && attr !== false;
         }
-
         _attr_value_or_fallback(elem, name, fallback) {
             if (this._has_attr(elem, name)) {
                 return elem.attr(name);
@@ -1208,7 +1034,6 @@ var ts = (function (exports, $) {
                 return elem.attr(fallback);
             }
         }
-
         _handle_ajax_path(elem, evt) {
             let path = elem.attr('ajax:path');
             if (path === 'href') {
@@ -1256,7 +1081,6 @@ var ts = (function (exports, $) {
                 overlay_css: overlay_css
             });
         }
-
         _handle_ajax_event(target, event) {
             let defs = this._defs_to_array(event);
             for (let i = 0; i < defs.length; i++) {
@@ -1265,9 +1089,7 @@ var ts = (function (exports, $) {
                 this.trigger(def[0], def[1], target);
             }
         }
-
         _ajax_action_success(data) {
-            // XXX: rework that ``this`` can be ued instead of ``ajax`` singleton
             if (!data) {
                 ajax.error('Empty response');
                 ajax.spinner.hide();
@@ -1276,7 +1098,6 @@ var ts = (function (exports, $) {
                 ajax.continuation(data.continuation);
             }
         }
-
         _perform_ajax_action(options) {
             options.params['ajax.action'] = options.name;
             options.params['ajax.mode'] = options.mode;
@@ -1288,7 +1109,6 @@ var ts = (function (exports, $) {
                 success: options.success
             });
         }
-
         _handle_ajax_action(target, action) {
             let actions = this._defs_to_array(action);
             for (let i = 0; i < actions.length; i++) {
@@ -1302,7 +1122,6 @@ var ts = (function (exports, $) {
                 });
             }
         }
-
         _handle_ajax_overlay(target, overlay, css) {
             if (overlay.indexOf('CLOSE') > -1) {
                 let options = {};
@@ -1335,16 +1154,12 @@ var ts = (function (exports, $) {
                 css: css
             });
         }
-
         _defs_to_array(str) {
-            // XXX: if space in selector when receiving def str, this will fail
             let arr = str.replace(/\s+/g, ' ').split(' ');
             return arr;
         }
     }
-
     let ajax = new Ajax();
-
     $.fn.tsajax = function() {
         let context = $(this);
         $('*', context).each(function() {
@@ -1368,10 +1183,7 @@ var ts = (function (exports, $) {
                 }
             }
         });
-
-        // B/C: Ajax forms have a dedicated ``ajax:form`` directive now.
         ajax.bind_ajax_form(context);
-
         for (let binder in ajax.binders) {
             try {
                 ajax.binders[binder](context);

@@ -57,6 +57,14 @@ export class Events {
         this._suppress_events = false;
     }
 
+    bind_from_options(events, options) {
+        for (let event of events) {
+            if (options[event]) {
+                this.on(event, options[event]);
+            }
+        }
+    }
+
     _contains_subscriber(event, subscriber) {
         let subscribers = this._subscribers[event];
         if (!subscribers) {

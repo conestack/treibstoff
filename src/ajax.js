@@ -1,6 +1,10 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
-import {Overlay} from './overlay.js';
+import {
+    Overlay,
+    Message,
+    Dialog
+} from './overlay.js';
 import {uuid4} from './utils.js';
 
 class AjaxSpinner {
@@ -368,8 +372,6 @@ class Ajax {
     }
 
     overlay(options) {
-        console.log('--------------------- ajax.overlay ------------------');
-        console.log(options);
         if (options.close) {
             // a uid must be passed if an overlay should be closed
             let elem = $('#' + options.uid),
@@ -407,90 +409,54 @@ class Ajax {
                     this._ajax_action_success(data);
                     return;
                 }
-                let overlay = new Overlay({
+                new Overlay({
                     uid: uid,
                     css: options.css,
-                    title: options.title
-                })
-                overlay.on('on_close', function() {
-                    if (options.on_close) {
-                        options.on_close();
+                    title: options.title,
+                    on_close: function() {
+                        if (options.on_close) {
+                            options.on_close();
+                        }
                     }
-                });
-                overlay.open();
+                }).open();
                 this._ajax_action_success(data);
             }.bind(this)
         });
         return uid;
     }
 
-    message(message) {
-        let elem = $('#ajax-message');
-        elem.removeData('overlay');
-        elem.overlay({
-            onBeforeLoad: function() {
-                let overlay = this.getOverlay();
-                $('.message', overlay).html(message);
-            },
-            onLoad: function() {
-                elem.find('button:first').focus();
-            },
-            onBeforeClose: function() {
-                let overlay = this.getOverlay();
-                $('.message', overlay).empty();
-            },
-            oneInstance: false,
-            closeOnClick: false,
-            fixed: false,
-            top:'20%'
-        });
-        elem.data('overlay').load();
+    message(message, flavor='') {
+        new Message({
+            title: 'Message',
+            message: message,
+            flavor: flavor,
+            on_open: function(inst) {
+                $('button', inst.elem).first().focus();
+            }
+        }).open();
     }
 
     error(message) {
-        $("#ajax-message .message")
-            .removeClass('error warning info')
-            .addClass('error');
-        this.message(message);
+        this.message(message, 'error');
     }
 
     info(message) {
-        $("#ajax-message .message")
-            .removeClass('error warning info')
-            .addClass('info');
-        this.message(message);
+        this.message(message, 'info');
     }
 
     warning(message) {
-        $("#ajax-message .message")
-            .removeClass('error warning info')
-            .addClass('warning');
-        this.message(message);
+        this.message(message, 'warning');
     }
 
     dialog(options, callback) {
-        let elem = $('#ajax-dialog');
-        elem.removeData('overlay');
-        elem.overlay({
-            onBeforeLoad: function() {
-                let overlay = this.getOverlay(),
-                    closefunc = this.close;
-                $('.text', overlay).html(options.message);
-                $('button', overlay).off();
-                $('button.submit', overlay).on('click', function() {
-                    closefunc();
-                    callback(options);
-                });
-                $('button.cancel', overlay).on('click', function() {
-                    closefunc();
-                });
-            },
-            oneInstance: false,
-            closeOnClick: false,
-            fixed: false,
-            top:'20%'
-        });
-        elem.data('overlay').load();
+        console.log(options);
+        new Dialog({
+            title: 'Dialog',
+            message: options.message,
+            on_confirm: function() {
+                callback(options);
+            }
+        }).open();
     }
 
     // B/C: bind ajax form handling to all forms providing ajax css class

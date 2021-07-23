@@ -17,15 +17,15 @@
     line-height:1.42857;
     opacity:1;
 }
-.modal-body.info,
-.modal-body.warning,
-.modal-body.error {
+.modal.info .modal-body,
+.modal.warning .modal-body,
+.modal.error .modal-body {
     padding-left:14px;
     min-height:80px;
 }
-.modal-body.info:before,
-.modal-body.warning:before,
-.modal-body.error:before {
+.modal.info .modal-body:before,
+.modal.warning .modal-body:before,
+.modal.error .modal-body:before {
     top:2px;
     position:relative;
     display:inline-block;
@@ -38,12 +38,12 @@
     line-height:46px;
     float:left;
 }
-.modal-body.info:before {
+.modal.info .modal-body:before {
     content:"";
 }​
-.modal-body.warning:before {
+.modal.warning .modal-body:before {
     content:"";
 }
-.modal-body.error:before {
+.modal.error .modal-body:before {
     content:"";
 }

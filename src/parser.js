@@ -141,7 +141,7 @@ export class HTMLParser extends Parser {
             ctxa: attrs['t-elem'],
             val: attrs['t-val']
         });
-        for (let evt of ['down', 'up']) {
+        for (let evt of ['down', 'up', 'click']) {
             if (attrs[`t-bind-${evt}`]) {
                 let handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
                 this.widget.on(`on_${prop}_${evt}`, handler);
