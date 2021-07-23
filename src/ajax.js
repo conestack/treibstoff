@@ -244,7 +244,7 @@ class Ajax {
     }
 
     action(opts) {
-        opts.success = this._ajax_action_success.bind(this);
+        opts.success = this._finish_ajax_action.bind(this);
         this._request_ajax_action(opts);
     }
 
@@ -306,7 +306,7 @@ class Ajax {
                 // overlays are not displayed if no payload is received.
                 if (!data.payload) {
                     // ensure continuation gets performed anyway.
-                    this._ajax_action_success(data);
+                    this._finish_ajax_action(data);
                     return;
                 }
                 new Overlay({
@@ -319,7 +319,7 @@ class Ajax {
                         }
                     }
                 }).open();
-                this._ajax_action_success(data);
+                this._finish_ajax_action(data);
             }.bind(this)
         });
         return uid;
@@ -468,13 +468,13 @@ class Ajax {
         }
         target.params.popstate = '1';
         if (state.action) {
-            this._handle_ajax_action(target, state.action);
+            this._ajax_action(target, state.action);
         }
         if (state.event) {
-            this._handle_ajax_event(target, state.event);
+            this._ajax_event(target, state.event);
         }
         if (state.overlay) {
-            this._handle_ajax_overlay(
+            this._ajax_overlay(
                 target,
                 state.overlay,
                 state.overlay_css
@@ -514,26 +514,26 @@ class Ajax {
         let elem = opts.elem,
             event = opts.event;
         if (elem.attr('ajax:action')) {
-            this._handle_ajax_action(
+            this._ajax_action(
                 this._get_target(elem, event),
                 elem.attr('ajax:action')
             );
         }
         if (elem.attr('ajax:event')) {
-            this._handle_ajax_event(
+            this._ajax_event(
                 elem.attr('ajax:target'),
                 elem.attr('ajax:event')
             );
         }
         if (elem.attr('ajax:overlay')) {
-            this._handle_ajax_overlay(
+            this._ajax_overlay(
                 this._get_target(elem, event),
                 elem.attr('ajax:overlay'),
                 elem.attr('ajax:overlay-css')
             );
         }
         if (elem.attr('ajax:path')) {
-            this._handle_ajax_path(elem, event);
+            this._ajax_path(elem, event);
         }
     }
 
@@ -550,7 +550,7 @@ class Ajax {
         }
     }
 
-    _handle_ajax_path(elem, evt) {
+    _ajax_path(elem, evt) {
         let path = elem.attr('ajax:path');
         if (path === 'href') {
             let href = elem.attr('href');
@@ -598,22 +598,12 @@ class Ajax {
         });
     }
 
-    _handle_ajax_event(target, event) {
+    _ajax_event(target, event) {
         let defs = this._defs_to_array(event);
         for (let i = 0; i < defs.length; i++) {
             let def = defs[i];
             def = def.split(':');
             this.trigger(def[0], def[1], target);
-        }
-    }
-
-    _ajax_action_success(data) {
-        if (!data) {
-            this.error('Empty response');
-            this.spinner.hide();
-        } else {
-            this._fiddle(data.payload, data.selector, data.mode);
-            this._continuation(data.continuation);
         }
     }
 
@@ -629,7 +619,17 @@ class Ajax {
         });
     }
 
-    _handle_ajax_action(target, action) {
+    _finish_ajax_action(data) {
+        if (!data) {
+            this.error('Empty response');
+            this.spinner.hide();
+        } else {
+            this._fiddle(data.payload, data.selector, data.mode);
+            this._continuation(data.continuation);
+        }
+    }
+
+    _ajax_action(target, action) {
         let actions = this._defs_to_array(action);
         for (let i = 0; i < actions.length; i++) {
             let defs = actions[i].split(':');
@@ -643,7 +643,7 @@ class Ajax {
         }
     }
 
-    _handle_ajax_overlay(target, overlay, css) {
+    _ajax_overlay(target, overlay, css) {
         // XXX: close needs an overlay uid
         if (overlay.indexOf('CLOSE') > -1) {
             let opts = {};
