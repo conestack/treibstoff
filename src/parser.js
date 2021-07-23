@@ -9,8 +9,8 @@ export class Parser {
 
     walk(node) {
        let children = node.childNodes;
-       for (let i = 0; i < children.length; i++) {
-           this.walk(children[i]);
+       for (let child of children) {
+           this.walk(child);
        }
        if (node.nodeType === Node.ELEMENT_NODE) {
            this.parse(node);
@@ -22,8 +22,7 @@ export class Parser {
 
     node_attrs(node) {
         let attrs = {};
-        for (let i in node.attributes) {
-            let attr = node.attributes[i];
+        for (let attr of node.attributes) {
             if (attr && attr.nodeName) {
                 attrs[attr.nodeName] = attr.nodeValue;
             }

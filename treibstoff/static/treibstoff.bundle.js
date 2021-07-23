@@ -226,8 +226,8 @@ var ts = (function (exports, $) {
     class Parser {
         walk(node) {
            let children = node.childNodes;
-           for (let i = 0; i < children.length; i++) {
-               this.walk(children[i]);
+           for (let child of children) {
+               this.walk(child);
            }
            if (node.nodeType === Node.ELEMENT_NODE) {
                this.parse(node);
@@ -237,8 +237,7 @@ var ts = (function (exports, $) {
         }
         node_attrs(node) {
             let attrs = {};
-            for (let i in node.attributes) {
-                let attr = node.attributes[i];
+            for (let attr of node.attributes) {
                 if (attr && attr.nodeName) {
                     attrs[attr.nodeName] = attr.nodeValue;
                 }
@@ -557,7 +556,7 @@ var ts = (function (exports, $) {
     }
     class AjaxHistory {
         constructor(ajax) {
-            this._ajax = ajax;
+            this.ajax = ajax;
         }
         bind() {
             $(window).on('popstate', this.handle);
@@ -570,17 +569,17 @@ var ts = (function (exports, $) {
             if (state.target.url) {
                 target = state.target;
             } else {
-                target = this._ajax.parsetarget(state.target);
+                target = this.ajax.parsetarget(state.target);
             }
             target.params.popstate = '1';
             if (state.action) {
-                this._ajax._handle_ajax_action(target, state.action);
+                this.ajax._handle_ajax_action(target, state.action);
             }
             if (state.event) {
-                this._ajax._handle_ajax_event(target, state.event);
+                this.ajax._handle_ajax_event(target, state.event);
             }
             if (state.overlay) {
-                this._ajax._handle_ajax_overlay(
+                this.ajax._handle_ajax_overlay(
                     target,
                     state.overlay,
                     state.overlay_css
@@ -588,6 +587,25 @@ var ts = (function (exports, $) {
             }
             if (!state.action && !state.event && !state.overlay) {
                 window.location = target.url;
+            }
+        }
+    }
+    class AjaxParser extends Parser {
+        constructor(ajax) {
+            super();
+            this.ajax = ajax;
+        }
+        parse(node) {
+            let attrs = this.node_attrs(node);
+            if (attrs['ajax:bind'] && (
+                attrs['ajax:action'] ||
+                attrs['ajax:event'] ||
+                attrs['ajax:overlay'])) {
+                let evts = attrs['ajax:bind'];
+                this.ajax.bind_dispatcher(node, evts);
+            }
+            if (attrs['ajax:form']) {
+                this.ajax.prepare_ajax_form($(node));
             }
         }
     }
@@ -748,7 +766,7 @@ var ts = (function (exports, $) {
             }
         }
         action(opts) {
-            opts.success = this._ajax_action_success;
+            opts.success = this._ajax_action_success.bind(this);
             this._perform_ajax_action(opts);
         }
         trigger(name, selector, target, data) {
@@ -844,6 +862,34 @@ var ts = (function (exports, $) {
                 }
             }).open();
         }
+        bind_dispatcher(node, evts) {
+            $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
+        }
+        bind_ajax_form(context) {
+            let bc_ajax_form = $('form.ajax', context);
+            if (bc_ajax_form.length) {
+                console.log(
+                    'B/C AJAX form found. Please use ``ajax:form`` ' +
+                    'attribute instead of ``ajax`` CSS class.'
+                );
+            }
+            this.prepare_ajax_form(bc_ajax_form);
+        }
+        prepare_ajax_form(form) {
+            if (!this._afr) {
+                compile_template(this, `
+              <iframe t-elem="_afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
+            }
+            form.append('<input type="hidden" name="ajax" value="1" />');
+            form.attr('target', 'ajaxformresponse');
+            form.off().on('submit', function(event) {
+                this.spinner.show();
+            }.bind(this));
+        }
         render_ajax_form(opts) {
             this.spinner.hide();
             if (!opts.error) {
@@ -905,31 +951,6 @@ var ts = (function (exports, $) {
                 }
             }
         }
-        _bind_ajax_form(context) {
-            let bc_ajax_form = $('form.ajax', context);
-            if (bc_ajax_form.length) {
-                console.log(
-                    'B/C AJAX form found. Please use ``ajax:form`` ' +
-                    'attribute instead of ``ajax`` CSS class.'
-                );
-            }
-            this._prepare_ajax_form(bc_ajax_form);
-        }
-        _prepare_ajax_form(form) {
-            if (!this._afr) {
-                compile_template(this, `
-              <iframe t-elem="_afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `, $('body'));
-            }
-            form.append('<input type="hidden" name="ajax" value="1" />');
-            form.attr('target', 'ajaxformresponse');
-            form.off().on('submit', function(event) {
-                this.spinner.show();
-            }.bind(this));
-        }
         _random_id(id_len) {
             if (!id_len) {
                 id_len = 8;
@@ -941,19 +962,19 @@ var ts = (function (exports, $) {
             }
             return ret;
         }
-        _dispatching_handler(event) {
+        _dispatch_handle(event) {
             event.preventDefault();
             event.stopPropagation();
-            let elem = $(this),
+            let elem = $(event.currentTarget),
                 opts = {
                     elem: elem,
                     event: event
                 };
             if (elem.attr('ajax:confirm')) {
                 opts.message = elem.attr('ajax:confirm');
-                ajax.dialog(opts, ajax._do_dispatching);
+                this.dialog(opts, this._dispatch.bind(this));
             } else {
-                ajax._do_dispatching(opts);
+                this._dispatch(opts);
             }
         }
         _get_target(elem, event) {
@@ -962,30 +983,30 @@ var ts = (function (exports, $) {
             }
             return this.parsetarget(elem.attr('ajax:target'));
         }
-        _do_dispatching(opts) {
+        _dispatch(opts) {
             let elem = opts.elem,
                 event = opts.event;
             if (elem.attr('ajax:action')) {
-                ajax._handle_ajax_action(
-                    ajax._get_target(elem, event),
+                this._handle_ajax_action(
+                    this._get_target(elem, event),
                     elem.attr('ajax:action')
                 );
             }
             if (elem.attr('ajax:event')) {
-                ajax._handle_ajax_event(
+                this._handle_ajax_event(
                     elem.attr('ajax:target'),
                     elem.attr('ajax:event')
                 );
             }
             if (elem.attr('ajax:overlay')) {
-                ajax._handle_ajax_overlay(
-                    ajax._get_target(elem, event),
+                this._handle_ajax_overlay(
+                    this._get_target(elem, event),
                     elem.attr('ajax:overlay'),
                     elem.attr('ajax:overlay-css')
                 );
             }
             if (elem.attr('ajax:path')) {
-                ajax._handle_ajax_path(elem, event);
+                this._handle_ajax_path(elem, event);
             }
         }
         _has_attr(elem, name) {
@@ -1056,11 +1077,11 @@ var ts = (function (exports, $) {
         }
         _ajax_action_success(data) {
             if (!data) {
-                ajax.error('Empty response');
-                ajax.spinner.hide();
+                this.error('Empty response');
+                this.spinner.hide();
             } else {
-                ajax._fiddle(data.payload, data.selector, data.mode);
-                ajax._continuation(data.continuation);
+                this._fiddle(data.payload, data.selector, data.mode);
+                this._continuation(data.continuation);
             }
         }
         _perform_ajax_action(opts) {
@@ -1127,28 +1148,11 @@ var ts = (function (exports, $) {
     let ajax = new Ajax();
     $.fn.tsajax = function() {
         let context = $(this);
-        $('*', context).each(function() {
-            for (let i in this.attributes) {
-                let attr = this.attributes[i];
-                if (attr && attr.nodeName) {
-                    let name = attr.nodeName;
-                    if (name.indexOf('ajax:bind') > -1) {
-                        let events = attr.nodeValue;
-                        let el = $(this);
-                        el.off(events);
-                        if (el.attr('ajax:action') ||
-                            el.attr('ajax:event')  ||
-                            el.attr('ajax:overlay')) {
-                            el.on(events, ajax._dispatching_handler);
-                        }
-                    }
-                    if (name.indexOf('ajax:form') > -1) {
-                        ajax._prepare_ajax_form($(this));
-                    }
-                }
-            }
+        let parser = new AjaxParser(ajax);
+        context.each(function() {
+            parser.walk(this);
         });
-        ajax._bind_ajax_form(context);
+        ajax.bind_ajax_form(context);
         for (let binder in ajax.binders) {
             try {
                 ajax.binders[binder](context);
