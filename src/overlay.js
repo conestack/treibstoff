@@ -13,6 +13,7 @@ export class Overlay extends Events {
         this.content = opts.content ? opts.content : '';
         this.container = $('body');
         this.compile();
+        this.elem.data('overlay', this);
     }
 
     compile() {

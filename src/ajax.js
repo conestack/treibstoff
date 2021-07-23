@@ -86,6 +86,8 @@ class Ajax {
         // By default, we redirect to the login page on 403 error.
         // That we assume at '/login'.
         this.default_403 = '/login';
+        // Overlay defaults
+        this.default_overlay_content_selector = '.modal-body';
         // Object for hooking up JS binding functions after ajax calls
         // B/C, use ``ajax.register`` instead of direct extension.
         this.binders = {};
@@ -93,9 +95,6 @@ class Ajax {
         this.spinner = new AjaxSpinner();
         // Browser history
         this.history = new AjaxHistory(this);
-        // Overlay selectors
-        this.default_overlay_selector = '#ajax-overlay';
-        this.default_overlay_content_selector = '.overlay_content';
     }
 
     // function for registering ajax binder functions
@@ -309,12 +308,11 @@ class Ajax {
                 target = this.parsetarget(definition.target);
                 this.overlay({
                     action: definition.action,
-                    selector: definition.selector,
-                    content_selector: definition.content_selector,
                     css: definition.css,
                     url: target.url,
                     params: target.params,
-                    close: definition.close
+                    close: definition.close,
+                    uid: definition.uid
                 });
             } else if (definition.type === 'message') {
                 if (definition.flavor) {
@@ -370,24 +368,17 @@ class Ajax {
     }
 
     overlay(options) {
-        let selector = this.default_overlay_selector;
-        if (options.selector) {
-            selector = options.selector;
-        }
+        console.log('--------------------- ajax.overlay ------------------');
+        console.log(options);
         if (options.close) {
-            let elem = $(selector),
+            // a uid must be passed if an overlay should be closed
+            let elem = $('#' + options.uid),
                 overlay = elem.data('overlay');
             if (overlay) {
                 overlay.close();
             }
             return;
         }
-        let content_selector = this.default_overlay_content_selector;
-        if (options.content_selector) {
-            content_selector = options.content_selector;
-        }
-        let elem = $(selector);
-        elem.removeData('overlay');
         let url, params;
         if (options.target) {
             let target = options.target;
@@ -400,43 +391,37 @@ class Ajax {
             url = options.url;
             params = options.params;
         }
-        let css;
-        if (options.css) {
-            css = options.css;
-        }
-        let on_close = function() {
-            let overlay = this.getOverlay();
-            $(content_selector, overlay).html('');
-            if (css) {
-                overlay.removeClass(css);
-            }
-            if (options.on_close) {
-                options.on_close();
-            }
-        };
-
         let uid = uuid4();
-        let content_sel = '.modal-body';
-
+        params['ajax.overlay-uid'] = uid;
+        let selector = '#' + uid + ' ' + this.default_overlay_content_selector;
         this._perform_ajax_action({
             name: options.action,
-            selector: '#' + uid + ' ' + content_sel,
+            selector: selector,
             mode: 'inner',
             url: url,
             params: params,
             success: function(data) {
                 // overlays are not displayed if no payload is received.
                 if (!data.payload) {
+                    // ensure continuation gets performed anyway.
+                    this._ajax_action_success(data);
                     return;
                 }
-                new Overlay({
+                let overlay = new Overlay({
                     uid: uid,
-                    css: css,
-                    title: 'Na seawas'
-                }).open();
+                    css: options.css,
+                    title: options.title
+                })
+                overlay.on('on_close', function() {
+                    if (options.on_close) {
+                        options.on_close();
+                    }
+                });
+                overlay.open();
                 this._ajax_action_success(data);
             }.bind(this)
         });
+        return uid;
     }
 
     message(message) {
@@ -510,7 +495,14 @@ class Ajax {
 
     // B/C: bind ajax form handling to all forms providing ajax css class
     bind_ajax_form(context) {
-        this.prepare_ajax_form($('form.ajax', context));
+        let bc_ajax_form = $('form.ajax', context);
+        if (bc_ajax_form.length) {
+            console.log(
+                'B/C AJAX form found. Please use ``ajax:form`` ' +
+                'attribute instead of ``ajax`` CSS class.'
+            );
+        }
+        this.prepare_ajax_form(bc_ajax_form);
     }
 
     // prepare form desired to be an ajax form
@@ -534,6 +526,11 @@ class Ajax {
 
     // called by iframe response
     render_ajax_form(payload, selector, mode, next) {
+        console.log('------------- render_ajax_form -------------------');
+        console.log(payload);
+        console.log(selector);
+        console.log(mode);
+        console.log(next);
         $('#ajaxformresponse').remove();
         this.spinner.hide();
         if (payload) {
@@ -693,9 +690,9 @@ class Ajax {
     }
 
     _perform_ajax_action(options) {
-        options.params['bdajax.action'] = options.name;
-        options.params['bdajax.mode'] = options.mode;
-        options.params['bdajax.selector'] = options.selector;
+        options.params['ajax.action'] = options.name;
+        options.params['ajax.mode'] = options.mode;
+        options.params['ajax.selector'] = options.selector;
         this.request({
             url: this.parseurl(options.url) + '/ajaxaction',
             type: 'json',
@@ -719,6 +716,7 @@ class Ajax {
     }
 
     _handle_ajax_overlay(target, overlay, css) {
+        // XXX: close needs an overlay uid
         if (overlay.indexOf('CLOSE') > -1) {
             let options = {};
             if (overlay.indexOf(':') > -1) {
@@ -784,8 +782,10 @@ $.fn.tsajax = function() {
             }
         }
     });
+
     // B/C: Ajax forms have a dedicated ``ajax:form`` directive now.
     ajax.bind_ajax_form(context);
+
     for (let binder in ajax.binders) {
         try {
             ajax.binders[binder](context);
