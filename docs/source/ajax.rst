@@ -638,30 +638,7 @@ at the ``ajaxdata`` attribute of the event:
 Set URL path
 ------------
 
-To set URL path:
-
-.. code-block:: js
-
-    ts.ajax.path({
-        path: '/some/path',
-        target: 'http://example.com/some/path',
-        action: 'layout:#layout:replace',
-        event: 'contextchanged:#layout',
-        overlay: 'actionname',
-        overlay_css: 'additional-overlay-css-class'
-    });
-
-``ts.ajax.path`` also accepts a ``replace`` option. If given browser history
-gets reset.
-
-.. code-block:: js
-
-    ts.ajax.path({
-        path: '/some/path',
-        target: 'http://example.com/some/path',
-        action: 'layout:#layout:replace',
-        replace: true
-    });
+.. js:autofunction:: Ajax#path
 
 
 Ajax forms

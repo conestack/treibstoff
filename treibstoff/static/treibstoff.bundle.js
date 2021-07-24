@@ -594,13 +594,14 @@ var ts = (function (exports, $) {
         }
     }
     class Ajax {
-        constructor() {
+        constructor(win=window) {
+            this.win = win;
             this.default_403 = '/login';
             this.overlay_content_selector = '.modal-body';
             this.binders = {};
             this.spinner = new AjaxSpinner();
             this._afr = null;
-            $(window).on('popstate', this._history_handle.bind(this));
+            $(this.win).on('popstate', this._history_handle.bind(this));
         }
         register(func, instant) {
             let func_name = 'binder_' + uuid4();
@@ -632,54 +633,35 @@ var ts = (function (exports, $) {
             return this.parse_target(target);
         }
         parse_target(target) {
-            if (!target) {
-                return {
-                    url: undefined,
-                    params: {},
-                    path: undefined,
-                    query: undefined
-                };
-            }
-            let url = parse_url(target),
-                params = parse_query(target),
-                path = parse_path(target),
-                query = parse_query(target, true);
-            if (!params) {
-                params = {};
-            }
             return {
-                url: url,
-                params: params,
-                path: path,
-                query: query
+                url: target ? parse_url(target) : undefined,
+                params: target ? parse_query(target) : {},
+                path: target ? parse_path(target) : undefined,
+                query: target ? parse_query(target, true) : undefined
             };
         }
         request(opts) {
             if (opts.url.indexOf('?') !== -1) {
-                let addparams = opts.params;
+                let params_ = opts.params;
                 opts.params = parse_query(opts.url);
                 opts.url = parse_url(opts.url);
-                for (let key in addparams) {
-                    opts.params[key] = addparams[key];
+                for (let key in params_) {
+                    opts.params[key] = params_[key];
                 }
             } else {
-                if (!opts.params) { opts.params = {}; }
+                this._set_default_opt(opts, 'params', {});
             }
-            if (!opts.type) { opts.type = 'html'; }
-            if (!opts.method) { opts.method = 'GET'; }
-            if (!opts.error) {
-                opts.error = function(req, status, exception) {
-                    if (parseInt(status, 10) === 403) {
-                        window.location.hash = '';
-                        window.location.pathname = this.default_403;
-                    } else {
-                        let message = '<strong>' + status + '</strong> ';
-                        message += exception;
-                        this.error(message);
-                    }
-                }.bind(this);
-            }
-            if (!opts.cache) { opts.cache = false; }
+            this._set_default_opt(opts, 'type', 'html');
+            this._set_default_opt(opts, 'method', 'GET');
+            this._set_default_opt(opts, 'cache', false);
+            this._set_default_opt(opts, 'error', function(request, status, error) {
+                if (parseInt(status, 10) === 403) {
+                    this.win.location.hash = '';
+                    this.win.location.pathname = this.default_403;
+                    return;
+                }
+                this.error(`<strong>${status}</strong>${error}`);
+            }.bind(this));
             let wrapped_success = function(data, status, request) {
                 opts.success(data, status, request);
                 this.spinner.hide();
@@ -706,13 +688,14 @@ var ts = (function (exports, $) {
             });
         }
         path(opts) {
-            if (window.history.pushState === undefined) { return; }
+            let history = this.win.history;
+            if (history.pushState === undefined) {
+                return;
+            }
             if (opts.path.charAt(0) !== '/') {
                 opts.path = '/' + opts.path;
             }
-            if (!opts.target) {
-                opts.target = window.location.origin + opts.path;
-            }
+            this._set_default_opt(opts, 'target', this.win.location.origin + opts.path);
             let state = {
                 target: opts.target,
                 action: opts.action,
@@ -721,9 +704,9 @@ var ts = (function (exports, $) {
                 overlay_css: opts.overlay_css
             };
             if (opts.replace) {
-                window.history.replaceState(state, '', opts.path);
+                history.replaceState(state, '', opts.path);
             } else {
-                window.history.pushState(state, '', opts.path);
+                history.pushState(state, '', opts.path);
             }
         }
         action(opts) {
@@ -871,6 +854,11 @@ var ts = (function (exports, $) {
                 }
             }
         }
+        _set_default_opt(opts, name, val) {
+            if (!opts[name]) {
+                opts[name] = val;
+            }
+        }
         _fiddle(payload, selector, mode) {
             if (mode === 'replace') {
                 $(selector).replaceWith(payload);
@@ -924,7 +912,9 @@ var ts = (function (exports, $) {
         _history_handle(evt) {
             evt.preventDefault();
             let state = evt.originalEvent.state;
-            if (!state) { return; }
+            if (!state) {
+                return;
+            }
             let target;
             if (state.target.url) {
                 target = state.target;
@@ -946,7 +936,7 @@ var ts = (function (exports, $) {
                 );
             }
             if (!state.action && !state.event && !state.overlay) {
-                window.location = target.url;
+                this.win.location = target.url;
             }
         }
         _dispatch_handle(event) {

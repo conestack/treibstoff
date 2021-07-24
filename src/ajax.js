@@ -252,16 +252,52 @@ export class Ajax {
         });
     }
 
+    /**
+     * Write browser history.
+     *
+     * When performing ajax actions, it's desired to keep the browser history
+     * sane. With this function it's possible to inject ajax definitions into
+     * the browser history. When the user navigates via the browser's back or
+     * forward buttons, ajax operations get executed as defined.
+     *
+     * Add an entry to the browser history::
+     *
+     *     ts.ajax.path({
+     *         path: '/some/path',
+     *         target: 'http://tld.com/some/path',
+     *         action: 'layout:#layout:replace',
+     *         event: 'contextchanged:#layout',
+     *         overlay: 'actionname',
+     *         overlay_css: 'additional-overlay-css-class'
+     *     });
+     *
+     * If ``replace`` option is given, browser history gets reset::
+     *
+     *     ts.ajax.path({
+     *         path: '/some/path',
+     *         target: 'http://example.com/some/path',
+     *         action: 'layout:#layout:replace',
+     *         replace: true
+     *     });
+     *
+     * @param {Object} opts - Path options.
+     * @param {string} opts.path - The path to write to the address bar.
+     * @param {string} opts.target - Related target URL.
+     * @param {string} opts.action - Ajax action to perform.
+     * @param {string} opts.event - Ajax event to trigger.
+     * @param {string} opts.overlay - Ajax overlay to display.
+     * @param {string} opts.overlay_css - CSS class to add to ajax overlay.
+     * @param {boolean} opts.replace - Flag whether to reset browser history.
+     */
     path(opts) {
-        if (this.win.history.pushState === undefined) {
+        let history = this.win.history;
+        if (history.pushState === undefined) {
             return;
         }
         if (opts.path.charAt(0) !== '/') {
             opts.path = '/' + opts.path;
         }
-        if (!opts.target) {
-            opts.target = this.win.location.origin + opts.path;
-        }
+        this._set_default_opt(opts, 'target', this.win.location.origin + opts.path);
         let state = {
             target: opts.target,
             action: opts.action,
@@ -270,9 +306,9 @@ export class Ajax {
             overlay_css: opts.overlay_css
         };
         if (opts.replace) {
-            this.win.history.replaceState(state, '', opts.path);
+            history.replaceState(state, '', opts.path);
         } else {
-            this.win.history.pushState(state, '', opts.path);
+            history.pushState(state, '', opts.path);
         }
     }
 
@@ -508,7 +544,9 @@ export class Ajax {
     _history_handle(evt) {
         evt.preventDefault();
         let state = evt.originalEvent.state;
-        if (!state) { return; }
+        if (!state) {
+            return;
+        }
         let target;
         if (state.target.url) {
             target = state.target;
