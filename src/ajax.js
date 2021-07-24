@@ -54,7 +54,9 @@ export class AjaxSpinner {
 
 export class Ajax {
 
-    constructor() {
+    constructor(win=window) {
+        // Custom window can be injected for tests.
+        this.win = win;
         // By default, we redirect to the login page on 403 error.
         // That we assume at '/login'.
         this.default_403 = '/login';
@@ -68,10 +70,29 @@ export class Ajax {
         // Ajax form response iframe
         this._afr = null;
         // Browser history handling
-        $(window).on('popstate', this._history_handle.bind(this));
+        $(this.win).on('popstate', this._history_handle.bind(this));
     }
 
-    // function for registering ajax binder functions
+    /**
+     * Register binder callback function.
+     *
+     * Integration of custom JavaScript to the binding mechanism is done via
+     * this function. The register function takes a callback function and a
+     * boolean flag whether to immediately execute the callback as arguments.
+     *
+     * The passed binder callback gets called every time when markup is changed
+     * by this object and gets passed the changed DOM part as ``context``::
+     *
+     *     $(function() {
+     *         ts.ajax.register(function(context) {
+     *             $('.sel', context).on('click', function() {});
+     *         }, true);
+     *     });
+     *
+     * @param {function} func - Binder callback.
+     * @param {boolean} instant - Flag whether to execute binder callback
+     * immediately at registration time.
+     */
     register(func, instant) {
         let func_name = 'binder_' + uuid4();
         while (true) {
@@ -133,26 +154,11 @@ export class Ajax {
      * @returns {Object} Containing ``url``, ``params``, ``path`` and ``query``.
      */
     parse_target(target) {
-        if (!target) {
-            return {
-                url: undefined,
-                params: {},
-                path: undefined,
-                query: undefined
-            };
-        }
-        let url = parse_url(target),
-            params = parse_query(target),
-            path = parse_path(target),
-            query = parse_query(target, true);
-        if (!params) {
-            params = {};
-        }
         return {
-            url: url,
-            params: params,
-            path: path,
-            query: query
+            url: target ? parse_url(target) : undefined,
+            params: target ? parse_query(target) : {},
+            path: target ? parse_path(target) : undefined,
+            query: target ? parse_query(target, true) : undefined
         };
     }
 
@@ -197,34 +203,32 @@ export class Ajax {
      */
     request(opts) {
         if (opts.url.indexOf('?') !== -1) {
-            let addparams = opts.params;
+            let params_ = opts.params;
             opts.params = parse_query(opts.url);
             opts.url = parse_url(opts.url);
-            for (let key in addparams) {
-                opts.params[key] = addparams[key];
+            for (let key in params_) {
+                opts.params[key] = params_[key];
             }
         } else {
-            if (!opts.params) { opts.params = {}; }
+            this._set_default_opt(opts, 'params', {});
         }
-        if (!opts.type) { opts.type = 'html'; }
-        if (!opts.method) { opts.method = 'GET'; }
-        if (!opts.error) {
-            opts.error = function(req, status, exception) {
-                if (parseInt(status, 10) === 403) {
-                    window.location.hash = '';
-                    window.location.pathname = this.default_403;
-                } else {
-                    let message = '<strong>' + status + '</strong> ';
-                    message += exception;
-                    this.error(message);
-                }
-            }.bind(this);
-        }
-        if (!opts.cache) { opts.cache = false; }
+        this._set_default_opt(opts, 'type', 'html');
+        this._set_default_opt(opts, 'method', 'GET');
+        this._set_default_opt(opts, 'cache', false);
+        this._set_default_opt(opts, 'error', function(request, status, error) {
+            if (parseInt(status, 10) === 403) {
+                this.win.location.hash = '';
+                this.win.location.pathname = this.default_403;
+                return;
+            }
+            this.error(`<strong>${status}</strong>${error}`);
+        }.bind(this));
+
         let wrapped_success = function(data, status, request) {
             opts.success(data, status, request);
             this.spinner.hide();
         }.bind(this);
+
         let wrapped_error = function(request, status, error) {
             if (request.status === 0) {
                 this.spinner.hide(true);
@@ -235,6 +239,7 @@ export class Ajax {
             opts.error(request, status, error);
             this.spinner.hide(true);
         }.bind(this);
+
         this.spinner.show();
         $.ajax({
             url: opts.url,
@@ -248,12 +253,14 @@ export class Ajax {
     }
 
     path(opts) {
-        if (window.history.pushState === undefined) { return; }
+        if (this.win.history.pushState === undefined) {
+            return;
+        }
         if (opts.path.charAt(0) !== '/') {
             opts.path = '/' + opts.path;
         }
         if (!opts.target) {
-            opts.target = window.location.origin + opts.path;
+            opts.target = this.win.location.origin + opts.path;
         }
         let state = {
             target: opts.target,
@@ -263,9 +270,9 @@ export class Ajax {
             overlay_css: opts.overlay_css
         };
         if (opts.replace) {
-            window.history.replaceState(state, '', opts.path);
+            this.win.history.replaceState(state, '', opts.path);
         } else {
-            window.history.pushState(state, '', opts.path);
+            this.win.history.pushState(state, '', opts.path);
         }
     }
 
@@ -440,6 +447,12 @@ export class Ajax {
         }
     }
 
+    _set_default_opt(opts, name, val) {
+        if (!opts[name]) {
+            opts[name] = val;
+        }
+    }
+
     _fiddle(payload, selector, mode) {
         if (mode === 'replace') {
             $(selector).replaceWith(payload);
@@ -517,7 +530,7 @@ export class Ajax {
             );
         }
         if (!state.action && !state.event && !state.overlay) {
-            window.location = target.url;
+            this.win.location = target.url;
         }
     }
 

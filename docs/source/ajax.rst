@@ -729,23 +729,4 @@ providing this.
 3rd party javascript
 --------------------
 
-Integration of custom JavaScript to the binding mechanism of ajax singleton is
-done via ``ts.ajax.register``. The register function takes a function and
-a boolean flag whether to immediately execute this function as arguments.
-
-The passed binder function gets called every time treibstoff hooks up some markup
-and gets passed the changed DOM part as ``context``:
-
-.. code-block:: js
-
-    (function($) {
-
-        var custom_binder = function(context) {
-            $('mysel', context).on('click', function() { ... });
-        };
-
-        $(document).ready(function() {
-            ts.ajax.register(custom_binder, true);
-        });
-
-    })(jQuery);
+.. js:autofunction:: Ajax#register

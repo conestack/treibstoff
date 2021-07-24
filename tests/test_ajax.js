@@ -9,6 +9,7 @@ import {
 
 QUnit.module('treibstoff.ajax', hooks => {
     let container;
+    let ajax_orgin = $.ajax;
 
     hooks.beforeEach(() => {
         container = $('<div></div>');
@@ -19,6 +20,8 @@ QUnit.module('treibstoff.ajax', hooks => {
         container.remove();
         // Ajax binds popstate
         $(window).off('popstate');
+        // Reset $.ajax patch if any
+        $.ajax = ajax_orgin;
     });
 
     QUnit.test('Test AjaxSpinner', assert => {
@@ -194,5 +197,211 @@ QUnit.module('treibstoff.ajax', hooks => {
             path: '/sub',
             query: '?foo=bar'
         });
+    });
+
+    QUnit.test('Test Ajax.request defaults', assert => {
+        let ajax = new Ajax();
+
+        $.ajax = function(opts) {
+            assert.step(`url: ${opts.url}`);
+            assert.step(`params: ${JSON.stringify(opts.data)}`);
+            assert.step(`type: ${opts.dataType}`);
+            assert.step(`method: ${opts.method}`);
+            assert.step(`cache: ${opts.cache}`);
+            ajax.spinner.hide();
+        }
+
+        // defaults
+        ajax.request({url: 'https://tld.com'});
+        assert.verifySteps([
+            'url: https://tld.com',
+            'params: {}',
+            'type: html',
+            'method: GET',
+            'cache: false'
+        ]);
+
+        // override defaults
+        ajax.request({
+            url: 'https://tld.com',
+            type: 'json',
+            method: 'POST',
+            cache: true
+        });
+        assert.verifySteps([
+            'url: https://tld.com',
+            'params: {}',
+            'type: json',
+            'method: POST',
+            'cache: true'
+        ]);
+
+        // params from url
+        ajax.request({url: 'https://tld.com?foo=bar'});
+        assert.verifySteps([
+            'url: https://tld.com',
+            'params: {"foo":"bar"}',
+            'type: html',
+            'method: GET',
+            'cache: false'
+        ]);
+
+        // params from object
+        ajax.request({
+            url: 'https://tld.com',
+            params: {foo: 'bar'}
+        });
+        assert.verifySteps([
+            'url: https://tld.com',
+            'params: {"foo":"bar"}',
+            'type: html',
+            'method: GET',
+            'cache: false'
+        ]);
+
+        // params from object take precedencs over url params
+        ajax.request({
+            url: 'https://tld.com?foo=bar',
+            params: {foo: 'baz'}
+        });
+        assert.verifySteps([
+            'url: https://tld.com',
+            'params: {"foo":"baz"}',
+            'type: html',
+            'method: GET',
+            'cache: false'
+        ]);
+    });
+
+    QUnit.test('Test Ajax.request success callback', assert => {
+        let ajax = new Ajax();
+
+        $.ajax = function(opts) {
+            assert.step(`request count: ${ajax.spinner._request_count}`);
+            opts.success('<span />', '200', {});
+        }
+
+        ajax.request({
+            url: 'https://tld.com',
+            success: function(data, status, request) {
+                assert.step(`data: ${data}`);
+                assert.step(`status: ${status}`);
+                assert.step(`request: ${JSON.stringify(request)}`);
+            }
+        });
+        assert.verifySteps([
+            'request count: 1',
+            'data: <span />',
+            'status: 200',
+            'request: {}'
+        ]);
+        assert.deepEqual(ajax.spinner._request_count, 0);
+    });
+
+    QUnit.test('Test Ajax.request error callback', assert => {
+        let ajax = new Ajax();
+
+        let err_opts = {
+            request: { status: 0 },
+            status: 0,
+            error: ''
+        }
+
+        $.ajax = function(opts) {
+            assert.step(`request count: ${ajax.spinner._request_count}`);
+            opts.error(err_opts.request, err_opts.status, err_opts.error);
+        }
+
+        let err_cb = function(request, status, error) {
+            assert.step(`status: ${status}`);
+            assert.step(`error: ${error}`);
+        }
+
+        // case status 0
+        ajax.request({
+            url: 'https://tld.com',
+            error: err_cb
+        });
+        assert.verifySteps(['request count: 1']);
+        assert.deepEqual(ajax.spinner._request_count, 0);
+
+        // case status and error from request
+        err_opts.request.status = 507;
+        err_opts.request.statusText = 'Insufficient Storage'
+        ajax.request({
+            url: 'https://tld.com',
+            error: err_cb
+        });
+        assert.verifySteps([
+            'request count: 1',
+            'status: 507',
+            'error: Insufficient Storage'
+        ]);
+        assert.deepEqual(ajax.spinner._request_count, 0);
+
+        // case status and error from function arguments
+        err_opts.request = {};
+        err_opts.status = '501';
+        err_opts.error = 'Not Implemented';
+
+        ajax.request({
+            url: 'https://tld.com',
+            error: err_cb
+        });
+        assert.verifySteps([
+            'request count: 1',
+            'status: 501',
+            'error: Not Implemented'
+        ]);
+        assert.deepEqual(ajax.spinner._request_count, 0);
+    });
+
+    QUnit.test('Test Ajax.request default error callback', assert => {
+        let err_opts = {
+            request: {},
+            status: 0,
+            error: ''
+        }
+
+        $.ajax = function(opts) {
+            assert.step(`request count: ${ajax.spinner._request_count}`);
+            opts.error(err_opts.request, err_opts.status, err_opts.error);
+        }
+
+        class TestLocation {
+            set hash(val) {
+                assert.step(`hash: ${val}`);
+            }
+            set pathname(val) {
+                assert.step(`pathname: ${val}`);
+            }
+        }
+
+        let ajax = new Ajax({
+            location: new TestLocation()
+        });
+
+        // case redirect to login
+        err_opts.status = '403';
+        err_opts.error = 'Forbidden';
+        ajax.request({url: 'https://tld.com'});
+        assert.verifySteps([
+            'request count: 1',
+            'hash: ',
+            'pathname: /login'
+        ]);
+        assert.deepEqual(ajax.spinner._request_count, 0);
+
+        // case show error message
+        err_opts.status = '501';
+        err_opts.error = 'Not Implemented';
+        ajax.request({url: 'https://tld.com'});
+        assert.verifySteps(['request count: 1']);
+        let err_msg = $('.modal.error').data('overlay');
+        assert.strictEqual(
+            err_msg.content,
+            '<strong>501</strong>Not Implemented'
+        );
+        err_msg.close();
     });
 });
