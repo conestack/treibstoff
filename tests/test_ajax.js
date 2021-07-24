@@ -404,4 +404,76 @@ QUnit.module('treibstoff.ajax', hooks => {
         );
         err_msg.close();
     });
+
+    QUnit.test('Test Ajax.path', assert => {
+        class TestHistory {
+            pushState(state, title, url) {
+                assert.step('pushState');
+                assert.step(`state: ${JSON.stringify(state)}`);
+                assert.step(`url: ${url}`);
+            }
+            replaceState(state, title, url) {
+                assert.step('replaceState');
+                assert.step(`state: ${JSON.stringify(state)}`);
+                assert.step(`url: ${url}`);
+            }
+        }
+
+        let ajax = new Ajax({
+            history: {},
+            location: {
+                origin: 'https://tld.com'
+            }
+        })
+
+        // nothing happens if history not provides pushState, call for coverage.
+        ajax.path({});
+
+        ajax.win.history = new TestHistory();
+
+        // if no target given, window.location.origin is used
+        ajax.path({
+            path: 'foo'
+        });
+        assert.verifySteps([
+            'pushState',
+            'state: {"target":"https://tld.com/foo"}',
+            'url: /foo'
+        ]);
+
+        ajax.path({
+            path: '/some/path',
+            target: 'http://tld.com/some/path',
+            action: 'layout:#layout:replace',
+            event: 'contextchanged:#layout',
+            overlay: 'actionname',
+            overlay_css: 'additional-overlay-css-class'
+        });
+        assert.verifySteps([
+            'pushState',
+            'state: {' +
+                '"target":"http://tld.com/some/path",' +
+                '"action":"layout:#layout:replace",' +
+                '"event":"contextchanged:#layout",' +
+                '"overlay":"actionname",' +
+                '"overlay_css":"additional-overlay-css-class"' +
+            '}',
+            'url: /some/path'
+        ]);
+
+        ajax.path({
+            path: '/some/path',
+            target: 'http://example.com/some/path',
+            action: 'layout:#layout:replace',
+            replace: true
+        });
+        assert.verifySteps([
+            'replaceState',
+            'state: {' +
+                '"target":"http://example.com/some/path",' +
+                '"action":"layout:#layout:replace"' +
+            '}',
+            'url: /some/path'
+        ]);
+    });
 });

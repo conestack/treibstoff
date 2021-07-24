@@ -692,21 +692,16 @@ var ts = (function (exports, $) {
             if (history.pushState === undefined) {
                 return;
             }
-            if (opts.path.charAt(0) !== '/') {
-                opts.path = '/' + opts.path;
-            }
-            this._set_default_opt(opts, 'target', this.win.location.origin + opts.path);
-            let state = {
-                target: opts.target,
-                action: opts.action,
-                event: opts.event,
-                overlay: opts.overlay,
-                overlay_css: opts.overlay_css
-            };
-            if (opts.replace) {
-                history.replaceState(state, '', opts.path);
+            let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
+            this._set_default_opt(opts, 'target', this.win.location.origin + path);
+            this._set_default_opt(opts, 'replace', false);
+            let replace = opts.replace;
+            delete opts.path;
+            delete opts.replace;
+            if (replace) {
+                history.replaceState(opts, '', path);
             } else {
-                history.pushState(state, '', opts.path);
+                history.pushState(opts, '', path);
             }
         }
         action(opts) {
