@@ -45,7 +45,8 @@ setup(
     extras_require=dict(
         docs=[
             'Sphinx',
-            'sphinx_js'
+            'sphinx_js',
+            'Jinja2<3.0'
         ],
     ),
 )

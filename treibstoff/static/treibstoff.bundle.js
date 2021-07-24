@@ -15,6 +15,45 @@ var ts = (function (exports, $) {
         }
         return ret;
     }
+    function _strip_trailing_char(str, chr) {
+        if (str.charAt(str.length - 1) === chr) {
+            str = str.substring(0, str.length - 1);
+        }
+        return str;
+    }
+    function parse_url(url) {
+        let parser = document.createElement('a');
+        parser.href = url;
+        let path = parser.pathname;
+        url = parser.protocol + '//' + parser.host + path;
+        return _strip_trailing_char(url, '/');
+    }
+    function parse_query(url, as_string) {
+        let parser = document.createElement('a');
+        parser.href = url;
+        let search = parser.search;
+        if (as_string) {
+            return search ? search : '';
+        }
+        let params = {};
+        if (search) {
+            let parameters = search.substring(1, search.length).split('&');
+            for (let i = 0; i < parameters.length; i++) {
+                let param = parameters[i].split('=');
+                params[param[0]] = param[1];
+            }
+        }
+        return params;
+    }
+    function parse_path(url, include_query) {
+        let parser = document.createElement('a');
+        parser.href = url;
+        let path = _strip_trailing_char(parser.pathname, '/');
+        if (include_query) {
+            path += parse_query(url, true);
+        }
+        return path;
+    }
     const svg_ns = 'http://www.w3.org/2000/svg';
     function set_svg_attrs(el, opts) {
         for (let n in opts) {
@@ -577,44 +616,22 @@ var ts = (function (exports, $) {
             }
         }
         parseurl(url) {
-            let parser = document.createElement('a');
-            parser.href = url;
-            let path = parser.pathname;
-            if (path.indexOf('/') !== 0) {
-                path = '/' + path;
-            }
-            url = parser.protocol + '//' + parser.host + path;
-            if (url.charAt(url.length - 1) === '/') {
-                url = url.substring(0, url.length - 1);
-            }
-            return url;
+            console.log('ts.ajax.parseurl is deprecated. use ts.parse_url');
+            return parse_url(url);
         }
         parsequery(url, as_string) {
-            let parser = document.createElement('a');
-            parser.href = url;
-            let search = parser.search;
-            if (as_string) {
-                return search ? search : '';
-            }
-            let params = {};
-            if (search) {
-                let parameters = search.substring(1, search.length).split('&');
-                for (let i = 0; i < parameters.length; i++) {
-                    let param = parameters[i].split('=');
-                    params[param[0]] = param[1];
-                }
-            }
-            return params;
+            console.log('ts.ajax.parsequery is deprecated. use ts.parse_query');
+            return parse_query(url, as_string);
         }
         parsepath(url, include_query) {
-            let parser = document.createElement('a');
-            parser.href = url;
-            if (include_query) {
-                return parser.pathname + this.parsequery(url, true);
-            }
-            return parser.pathname;
+            console.log('ts.ajax.parsepath is deprecated. use ts.parse_path');
+            return parse_path(url, include_query);
         }
         parsetarget(target) {
+            console.log('ts.ajax.parsetarget is deprecated. use ts.ajax.parse_target');
+            return this.parse_target(target);
+        }
+        parse_target(target) {
             if (!target) {
                 return {
                     url: undefined,
@@ -623,10 +640,10 @@ var ts = (function (exports, $) {
                     query: undefined
                 };
             }
-            let url = this.parseurl(target),
-                params = this.parsequery(target),
-                path = this.parsepath(target),
-                query = this.parsequery(target, true);
+            let url = parse_url(target),
+                params = parse_query(target),
+                path = parse_path(target),
+                query = parse_query(target, true);
             if (!params) {
                 params = {};
             }
@@ -640,8 +657,8 @@ var ts = (function (exports, $) {
         request(opts) {
             if (opts.url.indexOf('?') !== -1) {
                 let addparams = opts.params;
-                opts.params = this.parsequery(opts.url);
-                opts.url = this.parseurl(opts.url);
+                opts.params = parse_query(opts.url);
+                opts.url = parse_url(opts.url);
                 for (let key in addparams) {
                     opts.params[key] = addparams[key];
                 }
@@ -719,7 +736,7 @@ var ts = (function (exports, $) {
                 if (target.url) {
                     evt.ajaxtarget = target;
                 } else {
-                    evt.ajaxtarget = this.parsetarget(target);
+                    evt.ajaxtarget = this.parse_target(target);
                 }
                 evt.ajaxdata = data;
                 return evt;
@@ -741,7 +758,7 @@ var ts = (function (exports, $) {
             if (opts.target) {
                 let target = opts.target;
                 if (!target.url) {
-                    target = this.parsetarget(target);
+                    target = this.parse_target(target);
                 }
                 url = target.url;
                 params = target.params;
@@ -877,14 +894,14 @@ var ts = (function (exports, $) {
                 if (type === 'path') {
                     this.path(cdef);
                 } else if (type === 'action') {
-                    let target = this.parsetarget(cdef.target);
+                    let target = this.parse_target(cdef.target);
                     cdef.url = target.url;
                     cdef.params = target.params;
                     this.action(cdef);
                 } else if (type === 'event') {
                     this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
                 } else if (type === 'overlay') {
-                    let target = this.parsetarget(cdef.target);
+                    let target = this.parse_target(cdef.target);
                     cdef.url = target.url;
                     cdef.params = target.params;
                     this.overlay(cdef);
@@ -912,7 +929,7 @@ var ts = (function (exports, $) {
             if (state.target.url) {
                 target = state.target;
             } else {
-                target = this.parsetarget(state.target);
+                target = this.parse_target(state.target);
             }
             target.params.popstate = '1';
             if (state.action) {
@@ -951,7 +968,7 @@ var ts = (function (exports, $) {
             if (event.ajaxtarget) {
                 return event.ajaxtarget;
             }
-            return this.parsetarget(elem.attr('ajax:target'));
+            return this.parse_target(elem.attr('ajax:target'));
         }
         _dispatch(opts) {
             let elem = opts.elem,
@@ -994,7 +1011,7 @@ var ts = (function (exports, $) {
             let path = elem.attr('ajax:path');
             if (path === 'href') {
                 let href = elem.attr('href');
-                path = this.parsepath(href, true);
+                path = parse_path(href, true);
             } else if (path === 'target') {
                 let tgt = this._get_target(elem, evt);
                 path = tgt.path + tgt.query;
@@ -1003,7 +1020,7 @@ var ts = (function (exports, $) {
             if (this._has_attr(elem, 'ajax:path-target')) {
                 target = elem.attr('ajax:path-target');
                 if (target) {
-                    target = this.parsetarget(target);
+                    target = this.parse_target(target);
                 }
             } else {
                 target = this._get_target(elem, evt);
@@ -1050,7 +1067,7 @@ var ts = (function (exports, $) {
             opts.params['ajax.mode'] = opts.mode;
             opts.params['ajax.selector'] = opts.selector;
             this.request({
-                url: this.parseurl(opts.url) + '/ajaxaction',
+                url: parse_url(opts.url) + '/ajaxaction',
                 type: 'json',
                 params: opts.params,
                 success: opts.success
@@ -1181,7 +1198,10 @@ var ts = (function (exports, $) {
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
     exports.parse_ajax = parse_ajax;
+    exports.parse_path = parse_path;
+    exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
+    exports.parse_url = parse_url;
     exports.set_svg_attrs = set_svg_attrs;
     exports.svg_ns = svg_ns;
     exports.uuid4 = uuid4;
