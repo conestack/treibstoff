@@ -115,10 +115,10 @@ export class Ajax {
                 query: undefined
             };
         }
-        let url = this.parseurl(target),
-            params = this.parsequery(target),
-            path = this.parsepath(target),
-            query = this.parsequery(target, true);
+        let url = parse_url(target),
+            params = parse_query(target),
+            path = parse_path(target),
+            query = parse_query(target, true);
         if (!params) {
             params = {};
         }
@@ -133,8 +133,8 @@ export class Ajax {
     request(opts) {
         if (opts.url.indexOf('?') !== -1) {
             let addparams = opts.params;
-            opts.params = this.parsequery(opts.url);
-            opts.url = this.parseurl(opts.url);
+            opts.params = parse_query(opts.url);
+            opts.url = parse_url(opts.url);
             for (let key in addparams) {
                 opts.params[key] = addparams[key];
             }
@@ -215,7 +215,7 @@ export class Ajax {
             if (target.url) {
                 evt.ajaxtarget = target;
             } else {
-                evt.ajaxtarget = this.parsetarget(target);
+                evt.ajaxtarget = this.parse_target(target);
             }
             evt.ajaxdata = data;
             return evt;
@@ -246,7 +246,7 @@ export class Ajax {
         if (opts.target) {
             let target = opts.target;
             if (!target.url) {
-                target = this.parsetarget(target);
+                target = this.parse_target(target);
             }
             url = target.url;
             params = target.params;
@@ -399,14 +399,14 @@ export class Ajax {
             if (type === 'path') {
                 this.path(cdef);
             } else if (type === 'action') {
-                let target = this.parsetarget(cdef.target);
+                let target = this.parse_target(cdef.target);
                 cdef.url = target.url;
                 cdef.params = target.params;
                 this.action(cdef);
             } else if (type === 'event') {
                 this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
             } else if (type === 'overlay') {
-                let target = this.parsetarget(cdef.target);
+                let target = this.parse_target(cdef.target);
                 cdef.url = target.url;
                 cdef.params = target.params;
                 this.overlay(cdef);
@@ -435,7 +435,7 @@ export class Ajax {
         if (state.target.url) {
             target = state.target;
         } else {
-            target = this.parsetarget(state.target);
+            target = this.parse_target(state.target);
         }
         target.params.popstate = '1';
         if (state.action) {
@@ -478,7 +478,7 @@ export class Ajax {
         if (event.ajaxtarget) {
             return event.ajaxtarget;
         }
-        return this.parsetarget(elem.attr('ajax:target'));
+        return this.parse_target(elem.attr('ajax:target'));
     }
 
     _dispatch(opts) {
@@ -525,7 +525,7 @@ export class Ajax {
         let path = elem.attr('ajax:path');
         if (path === 'href') {
             let href = elem.attr('href');
-            path = this.parsepath(href, true);
+            path = parse_path(href, true);
         } else if (path === 'target') {
             let tgt = this._get_target(elem, evt);
             path = tgt.path + tgt.query;
@@ -534,7 +534,7 @@ export class Ajax {
         if (this._has_attr(elem, 'ajax:path-target')) {
             target = elem.attr('ajax:path-target');
             if (target) {
-                target = this.parsetarget(target);
+                target = this.parse_target(target);
             }
         } else {
             target = this._get_target(elem, evt);
@@ -583,7 +583,7 @@ export class Ajax {
         opts.params['ajax.mode'] = opts.mode;
         opts.params['ajax.selector'] = opts.selector;
         this.request({
-            url: this.parseurl(opts.url) + '/ajaxaction',
+            url: parse_url(opts.url) + '/ajaxaction',
             type: 'json',
             params: opts.params,
             success: opts.success
