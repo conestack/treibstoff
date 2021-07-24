@@ -10,7 +10,7 @@ import {
 } from './overlay.js';
 import {uuid4} from './utils.js';
 
-class AjaxSpinner {
+export class AjaxSpinner {
 
     constructor() {
         this._request_count = 0;
@@ -47,29 +47,7 @@ class AjaxSpinner {
     }
 }
 
-class AjaxParser extends Parser {
-
-    constructor(ajax) {
-        super();
-        this.ajax = ajax;
-    }
-
-    parse(node) {
-        let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind'] && (
-            attrs['ajax:action'] ||
-            attrs['ajax:event'] ||
-            attrs['ajax:overlay'])) {
-            let evts = attrs['ajax:bind'];
-            this.ajax.bind_dispatcher(node, evts);
-        }
-        if (attrs['ajax:form']) {
-            this.ajax.prepare_ajax_form($(node));
-        }
-    }
-}
-
-class Ajax {
+export class Ajax {
 
     constructor() {
         // By default, we redirect to the login page on 403 error.
@@ -404,6 +382,16 @@ class Ajax {
         this._continuation(opts.next);
     }
 
+    call_binders(context) {
+        for (let func_name in this.binders) {
+            try {
+                this.binders[func_name](context)
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    }
+
     _fiddle(payload, selector, mode) {
         if (mode === 'replace') {
             $(selector).replaceWith(payload);
@@ -687,20 +675,39 @@ class Ajax {
 let ajax = new Ajax();
 export {ajax};
 
-$.fn.tsajax = function() {
-    let context = $(this);
+export class AjaxParser extends Parser {
+
+    constructor(ajax) {
+        super();
+        this.ajax = ajax;
+    }
+
+    parse(node) {
+        let attrs = this.node_attrs(node);
+        if (attrs['ajax:bind'] && (
+            attrs['ajax:action'] ||
+            attrs['ajax:event'] ||
+            attrs['ajax:overlay'])) {
+            let evts = attrs['ajax:bind'];
+            this.ajax.bind_dispatcher(node, evts);
+        }
+        if (attrs['ajax:form']) {
+            this.ajax.prepare_ajax_form($(node));
+        }
+    }
+}
+
+export function parse_ajax(context) {
     let parser = new AjaxParser(ajax);
     context.each(function() {
         parser.walk(this);
     });
     // B/C: Ajax forms have a dedicated ``ajax:form`` directive now.
     ajax.bind_ajax_form(context);
-    for (let binder in ajax.binders) {
-        try {
-            ajax.binders[binder](context);
-        } catch(err) {
-            console.log(err);
-        }
-    }
+    ajax.call_binders(context);
     return context;
+}
+
+$.fn.tsajax = function() {
+    parse_ajax(this);
 }

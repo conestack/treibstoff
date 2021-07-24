@@ -554,25 +554,6 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxParser extends Parser {
-        constructor(ajax) {
-            super();
-            this.ajax = ajax;
-        }
-        parse(node) {
-            let attrs = this.node_attrs(node);
-            if (attrs['ajax:bind'] && (
-                attrs['ajax:action'] ||
-                attrs['ajax:event'] ||
-                attrs['ajax:overlay'])) {
-                let evts = attrs['ajax:bind'];
-                this.ajax.bind_dispatcher(node, evts);
-            }
-            if (attrs['ajax:form']) {
-                this.ajax.prepare_ajax_form($(node));
-            }
-        }
-    }
     class Ajax {
         constructor() {
             this.default_403 = '/login';
@@ -864,6 +845,15 @@ var ts = (function (exports, $) {
             }
             this._continuation(opts.next);
         }
+        call_binders(context) {
+            for (let func_name in this.binders) {
+                try {
+                    this.binders[func_name](context);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
         _fiddle(payload, selector, mode) {
             if (mode === 'replace') {
                 $(selector).replaceWith(payload);
@@ -1126,21 +1116,36 @@ var ts = (function (exports, $) {
         }
     }
     let ajax = new Ajax();
-    $.fn.tsajax = function() {
-        let context = $(this);
+    class AjaxParser extends Parser {
+        constructor(ajax) {
+            super();
+            this.ajax = ajax;
+        }
+        parse(node) {
+            let attrs = this.node_attrs(node);
+            if (attrs['ajax:bind'] && (
+                attrs['ajax:action'] ||
+                attrs['ajax:event'] ||
+                attrs['ajax:overlay'])) {
+                let evts = attrs['ajax:bind'];
+                this.ajax.bind_dispatcher(node, evts);
+            }
+            if (attrs['ajax:form']) {
+                this.ajax.prepare_ajax_form($(node));
+            }
+        }
+    }
+    function parse_ajax(context) {
         let parser = new AjaxParser(ajax);
         context.each(function() {
             parser.walk(this);
         });
         ajax.bind_ajax_form(context);
-        for (let binder in ajax.binders) {
-            try {
-                ajax.binders[binder](context);
-            } catch(err) {
-                console.log(err);
-            }
-        }
+        ajax.call_binders(context);
         return context;
+    }
+    $.fn.tsajax = function() {
+        parse_ajax(this);
     };
 
     $(function() {
@@ -1148,6 +1153,9 @@ var ts = (function (exports, $) {
         $(document).tsajax();
     });
 
+    exports.Ajax = Ajax;
+    exports.AjaxParser = AjaxParser;
+    exports.AjaxSpinner = AjaxSpinner;
     exports.AttrProperty = AttrProperty;
     exports.BoundProperty = BoundProperty;
     exports.ButtonProperty = ButtonProperty;
@@ -1172,6 +1180,7 @@ var ts = (function (exports, $) {
     exports.extract_number = extract_number;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
+    exports.parse_ajax = parse_ajax;
     exports.parse_svg = parse_svg;
     exports.set_svg_attrs = set_svg_attrs;
     exports.svg_ns = svg_ns;

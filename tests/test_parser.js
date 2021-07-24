@@ -17,13 +17,13 @@ import {
 QUnit.module('treibstoff.parser', hooks => {
 
     QUnit.test('Test Parser', assert => {
-        class MyParser extends Parser {
+        class TestParser extends Parser {
             parse(node) {
                 assert.step('parse()');
             }
         }
 
-        let parser = new MyParser();
+        let parser = new TestParser();
         let elem = $(`<div attr="val" ns:attr="nsval">`).get(0);
 
         parser.walk(elem);
