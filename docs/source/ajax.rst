@@ -453,11 +453,11 @@ Overlays can be closed by setting special value ``CLOSE`` at
 
 
 JavaScript API
-==============
+--------------
 
 
 Messages, infos, warnings and errors
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``ts.ajax.message`` displays a plain message. ``ts.ajax.info``,
 ``ts.ajax.warning`` and ``ts.ajax.error`` decorates message with appropriate
@@ -469,7 +469,7 @@ icon:
 
 
 Overlay
--------
+~~~~~~~
 
 Load ajax action contents into an overlay:
 
@@ -524,7 +524,7 @@ if given, otherwise ``ts.ajax.default_overlay_selector`` is used.
 
 
 Modal dialog
-------------
+~~~~~~~~~~~~
 
 Render a modal dialog inside an overlay. The function expects an options object
 and a callback function, which gets executed if user confirms dialog. The
@@ -539,101 +539,28 @@ in options:
     ts.ajax.dialog(options, callback);
 
 
+Deprecated calls
+~~~~~~~~~~~~~~~~
+
+.. js:autofunction:: Ajax#parseurl
+
+|
+
+.. js:autofunction:: Ajax#parsequery
+
+|
+
+.. js:autofunction:: Ajax#parsepath
+
+|
+
+.. js:autofunction:: Ajax#parsetarget
+
+
 URL operations
---------------
+~~~~~~~~~~~~~~
 
-parseurl
-~~~~~~~~
-
-Parse hyperlinks for base URL:
-
-.. code-block:: js
-
-    ts.ajax.parseurl('http://fubar.org?param=value');
-
-This results in:
-
-.. code-block:: js
-
-    'http://fubar.org'
-
-
-parsequery
-~~~~~~~~~~
-
-Parse hyperlinks for request parameters:
-
-.. code-block:: js
-
-    ts.ajax.parsequery('http://fubar.org?param=value');
-
-This results in:
-
-.. code-block:: js
-
-    { param: 'value' }
-
-The raw query as string can be parsed by additionally passing ``true`` to
-``parsequery``::
-
-.. code-block:: js
-
-    ts.ajax.parsequery('http://fubar.org?param=value', true);
-
-This results in::
-
-.. code-block:: js
-
-    '?param=value'
-
-
-parsepath
-~~~~~~~~~
-
-Parse hyperlinks for path without base URL::
-
-.. code-block:: js
-
-    ts.ajax.parsepath('http://fubar.org/some/path?param=value');
-
-This results in::
-
-.. code-block:: js
-
-    '/some/path'
-
-The query can be included by additionally passing ``true`` to ``parsepath``::
-
-.. code-block:: js
-
-    ts.ajax.parsepath('http://fubar.org/some/path?param=value', true);
-
-This results in::
-
-.. code-block:: js
-
-    '/some/path?param=value'
-
-
-parse_target
-~~~~~~~~~~~~
-
-Parse all information at once by calling ``parse_target``:
-
-.. code-block:: js
-
-    ts.ajax.parse_target('http://fubar.org/some/path?param=value');
-
-This result in:
-
-.. code-block:: js
-
-    {
-        url: 'http://fubar.org/some/path',
-        params: { param: 'value' },
-        path: '/some/path',
-        query: '?param=value'
-    }
+.. js:autofunction:: Ajax#parse_target
 
 
 XMLHTTPRequest convenience

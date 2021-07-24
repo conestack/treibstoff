@@ -21,6 +21,9 @@ QUnit.module('treibstoff.utils', hooks => {
     QUnit.test('Test parse_url', assert => {
         assert.deepEqual(parse_url('https://tld.com/'), 'https://tld.com');
         assert.deepEqual(parse_url('https://tld.com?foo=bar'), 'https://tld.com');
+
+        assert.deepEqual(parse_url('https://tld.com/sub/'), 'https://tld.com/sub');
+        assert.deepEqual(parse_url('https://tld.com/sub?foo=bar'), 'https://tld.com/sub');
     });
 
     QUnit.test('Test parse_query', assert => {

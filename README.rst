@@ -80,6 +80,10 @@ Install jsdoc::
 
     npm install --save-dev jsdoc
 
+Link ``jsdoc`` executable::
+
+    sudo ln -s $(pwd)/node_modules/jsdoc/jsdoc.js /usr/local/bin/jsdoc
+
 Install virtualenv::
 
     python3 -m venv .

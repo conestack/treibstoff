@@ -23,6 +23,15 @@ function _strip_trailing_char(str, chr) {
     return str;
 }
 
+/**
+ * Parse URL without query from string::
+ *
+ *     >> ts.parse_url('https://tld.com/path?param=value');
+ *     <- 'https://tld.com/path'
+ *
+ * @param url - URL string to parse.
+ * @returns URL string without query.
+ */
 export function parse_url(url) {
     let parser = document.createElement('a');
     parser.href = url;
@@ -31,6 +40,24 @@ export function parse_url(url) {
     return _strip_trailing_char(url, '/');
 }
 
+/**
+ * Parse query parameters from URL string.
+ *
+ * By default, the query parameters are returned as object::
+ *
+ *     >> ts.parse_query('http://tld.com?param=value');
+ *     <- { param: 'value' }
+ *
+ * The query parameters can be parsed as string by passing ``true`` to
+ * ``parse_query``::
+ *
+ *     >> ts.parse_query('http://tld.com?param=value', true);
+ *     <- '?param=value'
+ *
+ * @param url - URL string to parse.
+ * @param as_string - Boolean whether to return query as string.
+ * @returns Query parameters as object or string.
+ */
 export function parse_query(url, as_string) {
     let parser = document.createElement('a');
     parser.href = url;
@@ -49,6 +76,23 @@ export function parse_query(url, as_string) {
     return params;
 }
 
+/**
+ * Parse relative path from URL string.
+ *
+ * By default, the query is excluded::
+ *
+ *     >> ts.parse_path('http://tld.com/some/path?param=value');
+ *     <- '/some/path'
+ *
+ * The query can be included by passing ``true`` to ``parse_path``::
+ *
+ *     >> ts.parse_path('http://tld.com/some/path?param=value', true);
+ *     <- '/some/path?param=value'
+ *
+ * @param url - URL string to parse.
+ * @param include_query - Boolean whether to include query.
+ * @returns Path as string with or without query.
+ */
 export function parse_path(url, include_query) {
     let parser = document.createElement('a');
     parser.href = url;

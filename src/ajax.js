@@ -86,26 +86,52 @@ export class Ajax {
         }
     }
 
+    /**
+     * This function is deprecated. Use ``ts.parse_url`` instead.
+     */
     parseurl(url) {
         console.log('ts.ajax.parseurl is deprecated. use ts.parse_url');
         return parse_url(url);
     }
 
+    /**
+     * This function is deprecated. Use ``ts.parse_query`` instead.
+     */
     parsequery(url, as_string) {
         console.log('ts.ajax.parsequery is deprecated. use ts.parse_query');
         return parse_query(url, as_string);
     }
 
+    /**
+     * This function is deprecated. Use ``ts.parse_path`` instead.
+     */
     parsepath(url, include_query) {
         console.log('ts.ajax.parsepath is deprecated. use ts.parse_path');
         return parse_path(url, include_query);
     }
 
+    /**
+     * This function is deprecated. Use ``ts.ajax.parse_target`` instead.
+     */
     parsetarget(target) {
         console.log('ts.ajax.parsetarget is deprecated. use ts.ajax.parse_target');
         return this.parse_target(target);
     }
 
+    /**
+     * Parse URL, query and path from URL string::
+     *
+     *     >> ts.ajax.parse_target('http://tld.com/some/path?param=value');
+     *     -> {
+     *         url: 'http://tld.com/some/path',
+     *         params: { param: 'value' },
+     *         path: '/some/path',
+     *         query: '?param=value'
+     *     }
+     *
+     * @param target - URL string to parse.
+     * @returns Object containing ``url``, ``params``, ``path`` and ``query``.
+     */
     parse_target(target) {
         if (!target) {
             return {
