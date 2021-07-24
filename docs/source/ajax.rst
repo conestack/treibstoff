@@ -566,50 +566,7 @@ URL operations
 XMLHTTPRequest convenience
 --------------------------
 
-``ts.ajax.request`` function is convenience for XMLHTTPRequests. By default
-it sends requests of type ``html`` and displays a ``ts.ajax.error`` message if
-request fails:
-
-.. code-block:: js
-
-    ts.ajax.request({
-        success: function(data) {
-            // do something with data.
-        },
-        url: 'foo',
-        params: {
-            a: 'a',
-            b: 'b'
-        },
-        type: 'json',
-        error: function() {
-            ts.ajax.error('Request failed');
-        }
-    });
-
-Given ``url`` might contain a query string. It gets parsed and written to
-request parameters. If same request parameter is defined in URL query AND
-params object, latter one rules.
-
-Options:
-
-**success**
-    Callback if request is successful.
-
-**url**
-    Request url as string.
-
-**params (optional)**
-    Query parameters for request as Object.
-
-**type (optional)**
-    ``xml``, ``json``, ``script``, or ``html``.
-
-**error (optional)**
-    Callback if request fails.
-
-Success and error callback functions are wrapped in ``ts.ajax.request`` to
-consider ajax spinner handling automatically.
+.. js:autofunction:: Ajax#request
 
 
 Perform action

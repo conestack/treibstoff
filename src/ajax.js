@@ -129,8 +129,8 @@ export class Ajax {
      *         query: '?param=value'
      *     }
      *
-     * @param target - URL string to parse.
-     * @returns Object containing ``url``, ``params``, ``path`` and ``query``.
+     * @param {string} target - URL string to parse.
+     * @returns {Object} Containing ``url``, ``params``, ``path`` and ``query``.
      */
     parse_target(target) {
         if (!target) {
@@ -156,6 +156,41 @@ export class Ajax {
         };
     }
 
+    /**
+     * Perform XMLHttpRequest request.
+     *
+     * By default it sends requests of type ``html`` and displays a
+     * ``ts.ajax.error`` message if request fails::
+     *
+     *     >> ts.ajax.request({
+     *         success: function(data) {
+     *             // do something with data.
+     *         },
+     *         url: 'https://tld.com/some/path',
+     *         params: {
+     *             a: 'a',
+     *             b: 'b'
+     *         },
+     *         type: 'json',
+     *         error: function() {
+     *             ts.ajax.error('Request failed');
+     *         }
+     *     });
+     *
+     * Given ``url`` might contain a query string. It gets parsed and written to
+     * request parameters. If same request parameter is defined in URL query and
+     * params object, latter one takes precedence.
+     *
+     * Success and error callback functions gets wrapped to handle ajax spinner
+     * automatically.
+     *
+     * @param {Object} opts - Request options.
+     * @param {function} opts.success - Callback if request is successful.
+     * @param {string} opts.url - Request URL.
+     * @param {Object} opts.params - Optional query parameters for request.
+     * @param {string} opts.type - ``xml``, ``json``, ``script``, or ``html``.
+     * @param {function} opts.error - Callback if request fails.
+     */
     request(opts) {
         if (opts.url.indexOf('?') !== -1) {
             let addparams = opts.params;

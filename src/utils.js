@@ -29,8 +29,8 @@ function _strip_trailing_char(str, chr) {
  *     >> ts.parse_url('https://tld.com/path?param=value');
  *     <- 'https://tld.com/path'
  *
- * @param url - URL string to parse.
- * @returns URL string without query.
+ * @param {string} url - URL to parse.
+ * @returns {string} URL without query.
  */
 export function parse_url(url) {
     let parser = document.createElement('a');
@@ -54,9 +54,9 @@ export function parse_url(url) {
  *     >> ts.parse_query('http://tld.com?param=value', true);
  *     <- '?param=value'
  *
- * @param url - URL string to parse.
- * @param as_string - Boolean whether to return query as string.
- * @returns Query parameters as object or string.
+ * @param {string} url - URL to parse.
+ * @param {boolean} as_string - Flag whether to return query as string.
+ * @returns {Object|string} Query parameters.
  */
 export function parse_query(url, as_string) {
     let parser = document.createElement('a');
@@ -89,9 +89,9 @@ export function parse_query(url, as_string) {
  *     >> ts.parse_path('http://tld.com/some/path?param=value', true);
  *     <- '/some/path?param=value'
  *
- * @param url - URL string to parse.
- * @param include_query - Boolean whether to include query.
- * @returns Path as string with or without query.
+ * @param {string} url - URL to parse.
+ * @param {boolean} include_query - Flag whether to include query.
+ * @returns {string} Path with or without query.
  */
 export function parse_path(url, include_query) {
     let parser = document.createElement('a');
