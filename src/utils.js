@@ -56,7 +56,7 @@ export function parse_url(url) {
  *
  * @param {string} url - URL to parse.
  * @param {boolean} as_string - Flag whether to return query as string.
- * @returns {Object|string} Query parameters.
+ * @returns {(Object|string)} Query parameters.
  */
 export function parse_query(url, as_string) {
     let parser = document.createElement('a');

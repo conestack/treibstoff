@@ -159,21 +159,21 @@ export class Ajax {
     /**
      * Perform XMLHttpRequest request.
      *
-     * By default it sends requests of type ``html`` and displays a
-     * ``ts.ajax.error`` message if request fails::
+     * By default it sends requests of type ``html`` with method ``get`` and
+     * displays a ``ts.ajax.error`` message if request fails::
      *
      *     >> ts.ajax.request({
-     *         success: function(data) {
-     *             // do something with data.
-     *         },
      *         url: 'https://tld.com/some/path',
      *         params: {
      *             a: 'a',
      *             b: 'b'
      *         },
      *         type: 'json',
-     *         error: function() {
-     *             ts.ajax.error('Request failed');
+     *         method: 'POST',
+     *         cache: true,
+     *         success: function(data, status, request) {
+     *         },
+     *         error: function(request, status, error) {
      *         }
      *     });
      *
@@ -185,11 +185,15 @@ export class Ajax {
      * automatically.
      *
      * @param {Object} opts - Request options.
-     * @param {function} opts.success - Callback if request is successful.
      * @param {string} opts.url - Request URL.
      * @param {Object} opts.params - Optional query parameters for request.
-     * @param {string} opts.type - ``xml``, ``json``, ``script``, or ``html``.
-     * @param {function} opts.error - Callback if request fails.
+     * @param {string} opts.type - Optional request type. Defaults to 'html'.
+     * @param {string} opts.method - Optional request method. Defaults to 'GET'.
+     * @param {boolean} opts.cache - Optional flag whether to cache the response.
+     * Defaults to False.
+     * @param {function} opts.success - Callback if request is successful.
+     * @param {function} opts.error - Optional callback if request fails.
+     * Default callback displays error message with response status.
      */
     request(opts) {
         if (opts.url.indexOf('?') !== -1) {
