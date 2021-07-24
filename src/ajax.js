@@ -8,7 +8,12 @@ import {
     Message,
     Dialog
 } from './overlay.js';
-import {uuid4} from './utils.js';
+import {
+    parse_path,
+    parse_query,
+    parse_url,
+    uuid4
+} from './utils.js';
 
 export class AjaxSpinner {
 
@@ -82,48 +87,26 @@ export class Ajax {
     }
 
     parseurl(url) {
-        let parser = document.createElement('a');
-        parser.href = url;
-        let path = parser.pathname;
-        if (path.indexOf('/') !== 0) {
-            // Internet Explorer 11 doesn't starts with '/'
-            path = '/' + path;
-        }
-        url = parser.protocol + '//' + parser.host + path;
-        if (url.charAt(url.length - 1) === '/') {
-            url = url.substring(0, url.length - 1);
-        }
-        return url;
+        console.log('ts.ajax.parseurl is deprecated. use ts.parse_url');
+        return parse_url(url);
     }
 
     parsequery(url, as_string) {
-        let parser = document.createElement('a');
-        parser.href = url;
-        let search = parser.search;
-        if (as_string) {
-            return search ? search : '';
-        }
-        let params = {};
-        if (search) {
-            let parameters = search.substring(1, search.length).split('&');
-            for (let i = 0; i < parameters.length; i++) {
-                let param = parameters[i].split('=');
-                params[param[0]] = param[1];
-            }
-        }
-        return params;
+        console.log('ts.ajax.parsequery is deprecated. use ts.parse_query');
+        return parse_query(url, as_string);
     }
 
     parsepath(url, include_query) {
-        let parser = document.createElement('a');
-        parser.href = url;
-        if (include_query) {
-            return parser.pathname + this.parsequery(url, true);
-        }
-        return parser.pathname;
+        console.log('ts.ajax.parsepath is deprecated. use ts.parse_path');
+        return parse_path(url, include_query);
     }
 
     parsetarget(target) {
+        console.log('ts.ajax.parsetarget is deprecated. use ts.ajax.parse_target');
+        return this.parse_target(target);
+    }
+
+    parse_target(target) {
         if (!target) {
             return {
                 url: undefined,

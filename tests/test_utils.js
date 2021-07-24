@@ -1,9 +1,12 @@
 import {
-    json_merge,
-    svg_ns,
-    set_svg_attrs,
     create_svg_elem,
+    json_merge,
+    parse_path,
+    parse_query,
     parse_svg,
+    parse_url,
+    set_svg_attrs,
+    svg_ns,
     uuid4
 } from '../src/utils.js';
 
@@ -13,6 +16,50 @@ QUnit.module('treibstoff.utils', hooks => {
         let uuid = uuid4();
         assert.strictEqual(uuid.length, 36, 'UUID length is 36');
         assert.strictEqual(typeof(uuid.length), 'number', 'typeof uuid4() is number');
+    });
+
+    QUnit.test('Test parse_url', assert => {
+        assert.deepEqual(parse_url('https://tld.com/'), 'https://tld.com');
+        assert.deepEqual(parse_url('https://tld.com?foo=bar'), 'https://tld.com');
+    });
+
+    QUnit.test('Test parse_query', assert => {
+        assert.deepEqual(parse_query('https://tld.com/'), {});
+        assert.deepEqual(parse_query('https://tld.com/', true), '');
+        assert.deepEqual(
+            parse_query('https://tld.com?foo=bar'),
+            {foo: 'bar'}
+        );
+        assert.deepEqual(
+            parse_query('https://tld.com?foo=bar', true),
+            '?foo=bar'
+        );
+    });
+
+    QUnit.test('Test parse_path', assert => {
+        assert.deepEqual(parse_path('https://tld.com'), '');
+        assert.deepEqual(parse_path('https://tld.com/'), '');
+
+        assert.deepEqual(parse_path('https://tld.com/sub'), '/sub');
+        assert.deepEqual(parse_path('https://tld.com/sub/'), '/sub');
+
+        assert.deepEqual(
+            parse_path('https://tld.com/?foo=bar', true),
+            '?foo=bar'
+        );
+        assert.deepEqual(
+            parse_path('https://tld.com?foo=bar', true),
+            '?foo=bar'
+        );
+
+        assert.deepEqual(
+            parse_path('https://tld.com/sub/?foo=bar', true),
+            '/sub?foo=bar'
+        );
+        assert.deepEqual(
+            parse_path('https://tld.com/sub?foo=bar', true),
+            '/sub?foo=bar'
+        );
     });
 
     QUnit.test('Test svg_ns', assert => {

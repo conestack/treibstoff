@@ -17,6 +17,8 @@ QUnit.module('treibstoff.ajax', hooks => {
 
     hooks.afterEach(() => {
         container.remove();
+        // Ajax binds popstate
+        $(window).off('popstate');
     });
 
     QUnit.test('Test AjaxSpinner', assert => {
@@ -111,5 +113,86 @@ QUnit.module('treibstoff.ajax', hooks => {
         parser.walk(container.get(0));
         assert.verifySteps(['prepare_ajax_form()']);
         container.empty();
+    });
+
+    QUnit.test('Test Ajax.register', assert => {
+        let ajax = new Ajax();
+
+        let binder = function(context) {
+            assert.step('binder called');
+        }
+
+        ajax.register(binder);
+        assert.verifySteps([]);
+        let count = 0;
+        for (let func_name in ajax.binders) {
+            count++;
+            assert.true(func_name.indexOf('binder_') > -1);
+        }
+        assert.deepEqual(count, 1);
+
+        ajax.register(binder, true);
+        assert.verifySteps(['binder called']);
+        count = 0;
+        for (let func_name in ajax.binders) {
+            count++;
+        }
+        assert.deepEqual(count, 2);
+    });
+
+    QUnit.test('Test Ajax.parse_target', assert => {
+        let ajax = new Ajax();
+
+        assert.deepEqual(ajax.parse_target(''), {
+            url: undefined,
+            params: {},
+            path: undefined,
+            query: undefined
+        });
+
+        assert.deepEqual(ajax.parse_target('https://tld.com'), {
+            url: 'https://tld.com',
+            params: {},
+            path: '',
+            query: ''
+        });
+
+        assert.deepEqual(ajax.parse_target('https://tld.com/sub?foo=bar'), {
+            url: 'https://tld.com/sub',
+            params: {foo: 'bar'},
+            path: '/sub',
+            query: '?foo=bar'
+        });
+    });
+
+    QUnit.test('Test deprecated parsers', assert => {
+        let ajax = new Ajax();
+
+        assert.deepEqual(
+            ajax.parseurl('https://tld.com/'),
+            'https://tld.com'
+        );
+
+        assert.deepEqual(
+            ajax.parsequery('https://tld.com?foo=bar'),
+            {foo: 'bar'}
+        );
+        assert.deepEqual(
+            ajax.parsequery('https://tld.com?foo=bar', true),
+            '?foo=bar'
+        );
+
+        assert.deepEqual(ajax.parsepath('https://tld.com/sub'), '/sub');
+        assert.deepEqual(
+            ajax.parsepath('https://tld.com/sub?foo=bar', true),
+            '/sub?foo=bar'
+        );
+
+        assert.deepEqual(ajax.parsetarget('https://tld.com/sub?foo=bar'), {
+            url: 'https://tld.com/sub',
+            params: {foo: 'bar'},
+            path: '/sub',
+            query: '?foo=bar'
+        });
     });
 });

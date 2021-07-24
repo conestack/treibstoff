@@ -16,6 +16,49 @@ export function json_merge(base, other) {
     return ret;
 }
 
+function _strip_trailing_char(str, chr) {
+    if (str.charAt(str.length - 1) === chr) {
+        str = str.substring(0, str.length - 1);
+    }
+    return str;
+}
+
+export function parse_url(url) {
+    let parser = document.createElement('a');
+    parser.href = url;
+    let path = parser.pathname;
+    url = parser.protocol + '//' + parser.host + path;
+    return _strip_trailing_char(url, '/');
+}
+
+export function parse_query(url, as_string) {
+    let parser = document.createElement('a');
+    parser.href = url;
+    let search = parser.search;
+    if (as_string) {
+        return search ? search : '';
+    }
+    let params = {};
+    if (search) {
+        let parameters = search.substring(1, search.length).split('&');
+        for (let i = 0; i < parameters.length; i++) {
+            let param = parameters[i].split('=');
+            params[param[0]] = param[1];
+        }
+    }
+    return params;
+}
+
+export function parse_path(url, include_query) {
+    let parser = document.createElement('a');
+    parser.href = url;
+    let path = _strip_trailing_char(parser.pathname, '/');
+    if (include_query) {
+        path += parse_query(url, true);
+    }
+    return path;
+}
+
 export const svg_ns = 'http://www.w3.org/2000/svg';
 
 export function set_svg_attrs(el, opts) {

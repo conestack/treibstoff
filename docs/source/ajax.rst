@@ -36,17 +36,15 @@ Following attributes are available:
     Show confirmation dialog before actually executing actions and trigger
     events.
 
-**ajax:overlay="actionname:selector:content_selector"**
-    Renders ajax action to overlay with selector. ``selector`` is optional and
-    defaults to ``#ajax-overlay``. ``content_selector`` is optional to
-    ``selector`` and defaults to ``.overlay_content``.
+**ajax:overlay="actionname"**
+    Renders ajax action to overlay.
 
 **ajax:overlay-css="additional-overlay-css-class"**
     Additional CSS class which is added when overlay is opened and removed
     as soon as overlay is closed.
 
-**ajax:form="True"**
-    Indicate AJAX form. Valid only on ``form`` elements. Value gets ignored.
+**ajax:form="true"**
+    Indicate AJAX form. Valid only on ``form`` elements. Value is ignored.
 
 **ajax:path="/some/path"**
     Sets the browser URL path and pushes history state if supported by browser.
@@ -617,14 +615,14 @@ This results in::
     '/some/path?param=value'
 
 
-parsetarget
-~~~~~~~~~~~
+parse_target
+~~~~~~~~~~~~
 
-Parse all information at once by calling ``parsetarget``:
+Parse all information at once by calling ``parse_target``:
 
 .. code-block:: js
 
-    ts.ajax.parsetarget('http://fubar.org/some/path?param=value');
+    ts.ajax.parse_target('http://fubar.org/some/path?param=value');
 
 This result in:
 
