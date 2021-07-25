@@ -255,7 +255,7 @@ export class Ajax {
     /**
      * Write browser history.
      *
-     * When performing ajax actions, it's desired to keep the browser history
+     * When performing ajax operations, it's desired to keep the browser history
      * sane. With this function it's possible to inject ajax definitions into
      * the browser history. When the user navigates via the browser's back or
      * forward buttons, ajax operations get executed as defined.
@@ -308,6 +308,61 @@ export class Ajax {
         }
     }
 
+    _history_handle(evt) {
+        evt.preventDefault();
+        let state = evt.originalEvent.state;
+        if (!state) {
+            return;
+        }
+        let target;
+        if (state.target.url) {
+            target = state.target;
+        } else {
+            target = this.parse_target(state.target);
+        }
+        target.params.popstate = '1';
+        if (state.action) {
+            this._ajax_action(target, state.action);
+        }
+        if (state.event) {
+            this._ajax_event(target, state.event);
+        }
+        if (state.overlay) {
+            this._ajax_overlay(
+                target,
+                state.overlay,
+                state.overlay_css
+            );
+        }
+        if (!state.action && !state.event && !state.overlay) {
+            this.win.location = target.url;
+        }
+    }
+
+    /**
+     * Perform Ajax action.
+     *
+     * Requests ``ajaxaction`` on server and modifies DOM with response
+     * according to mode and selector::
+     *
+     *     let target = ts.parse_target('http://tld.com/some/path?param=value');
+     *     ts.ajax.action({
+     *         name: 'content',
+     *         selector: '#content',
+     *         mode: 'inner',
+     *         url: target.url,
+     *         params: target.params
+     *     });
+     *
+     * @param {Object} opts - Ajax options.
+     * @param {string} opts.name - Action name.
+     * @param {string} opts.selector - CSS selector of DOM element to modify
+     * with response payload.
+     * @param {string} opts.mode - Mode for manipulation. Either ``inner`` or
+     * ``replace``.
+     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
+     * @param {Object} opts.params - Query parameters.
+     */
     action(opts) {
         opts.success = this._finish_ajax_action.bind(this);
         this._request_ajax_action(opts);
@@ -534,37 +589,6 @@ export class Ajax {
                     $(cdef.selector).html(cdef.payload);
                 }
             }
-        }
-    }
-
-    _history_handle(evt) {
-        evt.preventDefault();
-        let state = evt.originalEvent.state;
-        if (!state) {
-            return;
-        }
-        let target;
-        if (state.target.url) {
-            target = state.target;
-        } else {
-            target = this.parse_target(state.target);
-        }
-        target.params.popstate = '1';
-        if (state.action) {
-            this._ajax_action(target, state.action);
-        }
-        if (state.event) {
-            this._ajax_event(target, state.event);
-        }
-        if (state.overlay) {
-            this._ajax_overlay(
-                target,
-                state.overlay,
-                state.overlay_css
-            );
-        }
-        if (!state.action && !state.event && !state.overlay) {
-            this.win.location = target.url;
         }
     }
 

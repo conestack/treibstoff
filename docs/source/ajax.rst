@@ -572,36 +572,7 @@ XMLHTTPRequest convenience
 Perform action
 --------------
 
-Sometimes actions need to be performed inside JavaScript code.
-``ts.ajax.action`` provides this:
-
-.. code-block:: js
-
-    var target = ts.ajax.parsetarget('http://fubar.org?param=value');
-    ts.ajax.action({
-        name: 'content',
-        selector: '#content',
-        mode: 'inner',
-        url: target.url,
-        params: target.params
-    });
-
-Options:
-
-**name**
-    Action name
-
-**selector**
-    result selector
-
-**mode**
-    action mode
-
-**url**
-    target url
-
-**params**
-    query params
+.. js:autofunction:: Ajax#action
 
 
 Trigger events
