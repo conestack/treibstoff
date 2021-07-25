@@ -455,6 +455,40 @@ Overlays can be closed by setting special value ``CLOSE`` at
 JavaScript API
 --------------
 
+.. js:autofunction:: Ajax#parseurl
+
+|
+
+.. js:autofunction:: Ajax#parsequery
+
+|
+
+.. js:autofunction:: Ajax#parsepath
+
+|
+
+.. js:autofunction:: Ajax#parsetarget
+
+|
+
+.. js:autofunction:: Ajax#parse_target
+
+|
+
+.. js:autofunction:: Ajax#request
+
+|
+
+.. js:autofunction:: Ajax#action
+
+|
+
+.. js:autofunction:: Ajax#trigger
+
+|
+
+.. js:autofunction:: Ajax#path
+
 
 Messages, infos, warnings and errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -537,79 +571,6 @@ in options:
         message: 'I am an application Message'
     };
     ts.ajax.dialog(options, callback);
-
-
-Deprecated calls
-~~~~~~~~~~~~~~~~
-
-.. js:autofunction:: Ajax#parseurl
-
-|
-
-.. js:autofunction:: Ajax#parsequery
-
-|
-
-.. js:autofunction:: Ajax#parsepath
-
-|
-
-.. js:autofunction:: Ajax#parsetarget
-
-
-URL operations
-~~~~~~~~~~~~~~
-
-.. js:autofunction:: Ajax#parse_target
-
-
-XMLHTTPRequest convenience
---------------------------
-
-.. js:autofunction:: Ajax#request
-
-
-Perform action
---------------
-
-.. js:autofunction:: Ajax#action
-
-
-Trigger events
---------------
-
-Sometimes events need to be triggered manually. Since ajax singletin expects the
-attribute ``ajaxtarget`` on the received event a convenience is provided.
-
-Target might be a URL, then it gets parsed by the trigger function:
-
-.. code-block:: js
-
-    var url = 'http://fubar.org?param=value';
-    ts.ajax.trigger('contextchanged', '.contextsensitiv', url);
-
-Target might be object as returned from ``ts.ajax.parsetarget``:
-
-.. code-block:: js
-
-    var url = 'http://fubar.org?param=value';
-    var target = ts.ajax.parsetarget(url);
-    ts.ajax.trigger('contextchanged', '.contextsensitiv', target);
-
-Optionally, a data argument can be passed to ``ts.ajax.trigger``, which gets set
-at the ``ajaxdata`` attribute of the event:
-
-.. code-block:: js
-
-    var url = 'http://fubar.org?param=value';
-    var data = { opt: 'val' };
-    ts.ajax.trigger('contextchanged', '.contextsensitiv', url, data);
-
-
-Set URL path
-------------
-
-.. js:autofunction:: Ajax#path
 
 
 Ajax forms

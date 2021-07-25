@@ -404,27 +404,100 @@ export class Ajax {
         }
     }
 
-    trigger(name, selector, target, data) {
-        let create_event = function() {
-            let evt = $.Event(name);
-            if (target.url) {
-                evt.ajaxtarget = target;
-            } else {
-                evt.ajaxtarget = this.parse_target(target);
+    /**
+     * Trigger Ajax event.
+     *
+     * Creates an event providing ``ajaxtarget`` and ``ajaxdata`` properties
+     * and trigger it on DOM elements by selector.
+     *
+     * The ``ajaxtarget`` property on the event instance is an object containing
+     * ``url`` and ``params`` properties, as returned by ``Ajax.parse_target``::
+     *
+     *     let url = 'http://tls.com?param=value';
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: ts.ajax.parse_target(url);
+     *     });
+     *
+     * If given target is a URL string, it gets automatically parsed by the
+     * trigger function::
+     *
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: 'http://tls.com?param=value'
+     *     });
+     *
+     * Optionally a ``data`` option can be passed, which gets set at the
+     * ``ajaxdata`` attribute of the event::
+     *
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: 'http://tld.com?param=value',
+     *         data: {key: 'val'}
+     *     });
+     *
+     * **NOTE** - For B/C reasons, ``Ajax.event`` can be called with positional
+     * arguments (name, selector, target, data). This behavior is deprecated
+     * and will be removed in future versions.
+     *
+     * @param {Object} opts - Event options.
+     * @param {string} opts.name - Event name.
+     * @param {string} opts.selector - CSS selector of DOM elements on which to
+     * trigger events on.
+     * @param {string|Object} opts.target - Event target. Gets set as
+     * ``ajaxtarget`` property on event instance.
+     * @param {*} opts.data - Optional event data. Gets set as
+     * ``ajaxdata`` property on event instance.
+     */
+    trigger(opts) {
+        if (arguments.length > 1) {
+            console.log(
+                'Calling Ajax.event with positional arguments is ' +
+                'deprecated. Please pass options object instead.'
+            );
+            opts = {
+                name: arguments[0],
+                selector: arguments[1],
+                target: arguments[2],
+                data: arguments[3]
             }
-            evt.ajaxdata = data;
-            return evt;
-        }.bind(this);
-        // _dispatch_handle calls stopPropagation on event which is
-        // fine in order to prevent weird behavior on parent DOM elements,
-        // especially for standard events. Since upgrade to jQuery 1.9
-        // stopPropagation seem to react on the event instance instead of
-        // the trigger call for each element returned by selector, at least
-        // on custom events, thus we create a separate event instance for
-        // each elem returned by selector.
-        $(selector).each(function() {
-            $(this).trigger(create_event());
+        }
+        let create_event = this._create_event.bind(this);
+        $(opts.selector).each(function() {
+            $(this).trigger(create_event(opts.name, opts.target, opts.data));
         });
+    }
+
+    _create_event(name, target, data) {
+        let evt = $.Event(name);
+        if (target.url) {
+            evt.ajaxtarget = target;
+        } else {
+            evt.ajaxtarget = this.parse_target(target);
+        }
+        evt.ajaxdata = data;
+        return evt;
+    }
+
+    _event_target(elem, event) {
+        // Return ajax target. lookup ``ajaxtarget`` on event, fall back to
+        // ``ajax:target`` attribute on elem.
+        if (event.ajaxtarget) {
+            return event.ajaxtarget;
+        }
+        return this.parse_target(elem.attr('ajax:target'));
+    }
+
+    _ajax_event(target, event) {
+        let defs = this._defs_to_array(event);
+        for (let i = 0; i < defs.length; i++) {
+            let def = defs[i];
+            def = def.split(':');
+            this.trigger(def[0], def[1], target);
+        }
     }
 
     overlay(opts) {
@@ -644,21 +717,12 @@ export class Ajax {
         }
     }
 
-    _get_target(elem, event) {
-        // return ajax target. lookup ``ajaxtarget`` on event, fall back to
-        // ``ajax:target`` attribute on elem.
-        if (event.ajaxtarget) {
-            return event.ajaxtarget;
-        }
-        return this.parse_target(elem.attr('ajax:target'));
-    }
-
     _dispatch(opts) {
         let elem = opts.elem,
             event = opts.event;
         if (elem.attr('ajax:action')) {
             this._ajax_action(
-                this._get_target(elem, event),
+                this._event_target(elem, event),
                 elem.attr('ajax:action')
             );
         }
@@ -670,7 +734,7 @@ export class Ajax {
         }
         if (elem.attr('ajax:overlay')) {
             this._ajax_overlay(
-                this._get_target(elem, event),
+                this._event_target(elem, event),
                 elem.attr('ajax:overlay'),
                 elem.attr('ajax:overlay-css')
             );
@@ -699,7 +763,7 @@ export class Ajax {
             let href = elem.attr('href');
             path = parse_path(href, true);
         } else if (path === 'target') {
-            let tgt = this._get_target(elem, evt);
+            let tgt = this._event_target(elem, evt);
             path = tgt.path + tgt.query;
         }
         let target;
@@ -709,7 +773,7 @@ export class Ajax {
                 target = this.parse_target(target);
             }
         } else {
-            target = this._get_target(elem, evt);
+            target = this._event_target(elem, evt);
         }
         let action = this._attr_val_or_default(
             elem,
@@ -739,15 +803,6 @@ export class Ajax {
             overlay: overlay,
             overlay_css: overlay_css
         });
-    }
-
-    _ajax_event(target, event) {
-        let defs = this._defs_to_array(event);
-        for (let i = 0; i < defs.length; i++) {
-            let def = defs[i];
-            def = def.split(':');
-            this.trigger(def[0], def[1], target);
-        }
     }
 
     _ajax_overlay(target, overlay, css) {
