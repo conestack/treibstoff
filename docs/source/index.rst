@@ -136,13 +136,13 @@ knows about it's parent widget.
    :maxdepth: 2
    :caption: Contents:
 
-   Utils <utils>
    Ajax <ajax>
+   Overlay <overlay>
+   Utils <utils>
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

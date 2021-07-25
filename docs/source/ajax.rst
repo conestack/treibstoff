@@ -455,6 +455,10 @@ Overlays can be closed by setting special value ``CLOSE`` at
 JavaScript API
 --------------
 
+.. js:autofunction:: Ajax#register
+
+|
+
 .. js:autofunction:: Ajax#parseurl
 
 |
@@ -493,33 +497,27 @@ JavaScript API
 
 .. js:autofunction:: Ajax#overlay
 
+|
 
-Messages, infos, warnings and errors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. js:autofunction:: Ajax#message
 
-``ts.ajax.message`` displays a plain message. ``ts.ajax.info``,
-``ts.ajax.warning`` and ``ts.ajax.error`` decorates message with appropriate
-icon:
+|
 
-.. code-block:: js
+.. js:autofunction:: Ajax#info
 
-    ts.ajax.message('I am an application Message');
+|
 
+.. js:autofunction:: Ajax#warning
 
-Modal dialog
-~~~~~~~~~~~~
+|
 
-Render a modal dialog inside an overlay. The function expects an options object
-and a callback function, which gets executed if user confirms dialog. The
-callback gets passed the given options object as well. ``message`` is mandatory
-in options:
+.. js:autofunction:: Ajax#error
 
-.. code-block:: js
+|
 
-    var options = {
-        message: 'I am an application Message'
-    };
-    ts.ajax.dialog(options, callback);
+.. js:autofunction:: Ajax#dialog
+
+|
 
 
 Ajax forms
@@ -582,9 +580,3 @@ Optional continuation definitions can be given.
 
 Again, treibstoff does not provide any server side implementation, it's up to you
 providing this.
-
-
-3rd party javascript
---------------------
-
-.. js:autofunction:: Ajax#register

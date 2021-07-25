@@ -6,8 +6,11 @@ import {
 import {
     get_overlay,
     Overlay,
-    Message,
-    Dialog
+    show_dialog,
+    show_error,
+    show_info,
+    show_message,
+    show_warning
 } from './overlay.js';
 import {
     deprecate,
@@ -618,6 +621,7 @@ export class Ajax {
      * @param {string} opts.css - CSS class to add to overlay DOM element.
      * @param {string} opts.uid - The overlay UID.
      * @param {boolean} opts.close - Flag whether to close an open overlay.
+     * @returns {Overlay} Overlay instance.
      */
     overlay(opts) {
         let ol;
@@ -702,37 +706,49 @@ export class Ajax {
         });
     }
 
+    /**
+     * This function is deprecated. Use ``ts.show_message`` instead.
+     */
     message(message, flavor='') {
-        new Message({
-            title: 'Message',
-            message: message,
-            flavor: flavor,
-            on_open: function(inst) {
-                $('button', inst.elem).first().focus();
-            }
-        }).open();
+        deprecate('ts.ajax.message', 'ts.show_message', '1.0');
+        show_message({message: message, flavor: flavor});
     }
 
-    error(message) {
-        this.message(message, 'error');
-    }
-
+    /**
+     * This function is deprecated. Use ``ts.show_info`` instead.
+     */
     info(message) {
-        this.message(message, 'info');
+        deprecate('ts.ajax.info', 'ts.show_info', '1.0');
+        show_info(message);
     }
 
+    /**
+     * This function is deprecated. Use ``ts.show_warning`` instead.
+     */
     warning(message) {
-        this.message(message, 'warning');
+        deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
+        show_warning(message);
     }
 
+    /**
+     * This function is deprecated. Use ``ts.show_error`` instead.
+     */
+    error(message) {
+        deprecate('ts.ajax.error', 'ts.show_error', '1.0');
+        show_error(message);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_dialog`` instead.
+     */
     dialog(opts, callback) {
-        new Dialog({
-            title: 'Dialog',
+        deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
+        show_dialog({
             message: opts.message,
             on_confirm: function() {
                 callback(opts);
             }
-        }).open();
+        });
     }
 
     bind_dispatcher(node, evts) {

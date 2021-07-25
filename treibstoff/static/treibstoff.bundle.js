@@ -560,6 +560,37 @@ var ts = (function (exports, $) {
         `, this.footer);
         }
     }
+    function show_message(opts) {
+        new Message({
+            title: opts.title,
+            message: opts.message,
+            flavor: opts.flavor,
+            on_open: function(inst) {
+                $('button', inst.elem).first().focus();
+            }
+        }).open();
+    }
+    function show_info(message) {
+        show_message({
+            title: 'Info',
+            message: message,
+            flavor: 'info'
+        });
+    }
+    function show_warning(message) {
+        show_message({
+            title: 'Warning',
+            message: message,
+            flavor: 'warning'
+        });
+    }
+    function show_error(message) {
+        show_message({
+            title: 'Error',
+            message: message,
+            flavor: 'error'
+        });
+    }
     class Dialog extends Message {
         constructor(opts) {
             super(opts);
@@ -577,6 +608,13 @@ var ts = (function (exports, $) {
             this.close();
             this.trigger('on_confirm');
         }
+    }
+    function show_dialog(opts) {
+        new Dialog({
+            title: opts.title,
+            message: opts.message,
+            on_confirm: opts.on_confirm
+        }).open();
     }
 
     class AjaxSpinner {
@@ -954,32 +992,29 @@ var ts = (function (exports, $) {
             });
         }
         message(message, flavor='') {
-            new Message({
-                title: 'Message',
-                message: message,
-                flavor: flavor,
-                on_open: function(inst) {
-                    $('button', inst.elem).first().focus();
-                }
-            }).open();
-        }
-        error(message) {
-            this.message(message, 'error');
+            deprecate('ts.ajax.message', 'ts.show_message', '1.0');
+            show_message({message: message, flavor: flavor});
         }
         info(message) {
-            this.message(message, 'info');
+            deprecate('ts.ajax.info', 'ts.show_info', '1.0');
+            show_info(message);
         }
         warning(message) {
-            this.message(message, 'warning');
+            deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
+            show_warning(message);
+        }
+        error(message) {
+            deprecate('ts.ajax.error', 'ts.show_error', '1.0');
+            show_error(message);
         }
         dialog(opts, callback) {
-            new Dialog({
-                title: 'Dialog',
+            deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
+            show_dialog({
                 message: opts.message,
                 on_confirm: function() {
                     callback(opts);
                 }
-            }).open();
+            });
         }
         bind_dispatcher(node, evts) {
             $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
@@ -1210,6 +1245,11 @@ var ts = (function (exports, $) {
     exports.parse_svg = parse_svg;
     exports.parse_url = parse_url;
     exports.set_svg_attrs = set_svg_attrs;
+    exports.show_dialog = show_dialog;
+    exports.show_error = show_error;
+    exports.show_info = show_info;
+    exports.show_message = show_message;
+    exports.show_warning = show_warning;
     exports.svg_ns = svg_ns;
     exports.uuid4 = uuid4;
 

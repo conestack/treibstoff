@@ -59,6 +59,12 @@ export class Overlay extends Events {
     }
 }
 
+/**
+ * Return overlay instance by uid.
+ *
+ * @param {string} uid - Overlay UID.
+ * @returns {Overlay} Overlay instance or null if not found.
+ */
 export function get_overlay(uid) {
     let elem = $(`#${uid}`);
     if (!elem.length) {

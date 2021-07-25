@@ -1,9 +1,6 @@
 Utils
 =====
 
-URL operations
---------------
-
 .. js:autofunction:: parse_url
 
 |
