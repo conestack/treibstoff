@@ -59,6 +59,18 @@ export class Overlay extends Events {
     }
 }
 
+export function get_overlay(uid) {
+    let elem = $(`#${uid}`);
+    if (!elem.length) {
+        return null;
+    }
+    let ol = elem.data('overlay');
+    if (!ol) {
+        return null;
+    }
+    return ol;
+}
+
 export class Message extends Overlay {
 
     constructor(opts) {

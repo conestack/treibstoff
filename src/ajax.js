@@ -4,6 +4,7 @@ import {
     Parser
 } from './parser.js';
 import {
+    get_overlay,
     Overlay,
     Message,
     Dialog
@@ -61,7 +62,7 @@ export class Ajax {
         // That we assume at '/login'.
         this.default_403 = '/login';
         // Overlay defaults
-        this.overlay_content_selector = '.modal-body';
+        this.overlay_content_sel = '.modal-body';
         // Object for hooking up JS binding functions after ajax calls
         // B/C, use ``ajax.register`` instead of direct extension.
         this.binders = {};
@@ -548,13 +549,84 @@ export class Ajax {
         }
     }
 
+    /**
+     * Perform ajax action and load result into an overlay.
+     *
+     * Display ajax action in overlay. Contents of the ``title`` option gets
+     * displayed in the overlay header::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         url: 'https://tld.com',
+     *         params: {param: 'value'},
+     *         title: 'Overlay Title'
+     *     });
+     *
+     * Optional to ``url`` and ``params``, ``target`` can be passed as option.
+     * If both ``target`` and ``url``/``params`` given, ``target`` takes
+     * precedence::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value'
+     *     });
+     *
+     * If ``css`` option is given, it gets set on overlay DOM element. This
+     * way it's possible to add custom styles for a specific overlay::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value',
+     *         css: 'some-class'
+     *     });
+     *
+     * Overlays get a generated UID by default for later reference which gets
+     * passed as ``ajax:overlay-uid`` request parameter to the server.
+     * ``Ajax.overlay`` returns the overlay instance, from which this uid
+     * can be read::
+     *
+     *     let overlay = ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value'
+     *     });
+     *     let uid = overlay.uid;
+     *
+     * Already open ajax overlays can be closed by passing the ``close`` option
+     * and the overlay ``uid``::
+     *
+     *     ts.ajax.overlay({
+     *         close: true,
+     *         uid: uid
+     *     });
+     *
+     * A callback can be provided when overlay gets closed by passing it as
+     * ``on_close`` option::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'http://foobar.org?param=value',
+     *         on_close: function(inst) {
+     *             // inst is the overlay instance.
+     *         }
+     *     });
+     *
+     * @param {Object} opts - Overlay options.
+     * @param {string} opts.action - Ajax action name.
+     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
+     * @param {Object} opts.params - Query parameters.
+     * @param {string|Object} opts.target - Optional action target. Takes
+     * precedence over ``url`` and ``params``.
+     * @param {string} opts.title - Title to display in overlay header.
+     * @param {string} opts.css - CSS class to add to overlay DOM element.
+     * @param {string} opts.uid - The overlay UID.
+     * @param {boolean} opts.close - Flag whether to close an open overlay.
+     */
     overlay(opts) {
+        let ol;
         if (opts.close) {
-            // a uid must be passed if an overlay should be closed
-            let elem = $('#' + opts.uid),
-                overlay = elem.data('overlay');
-            if (overlay) {
-                overlay.close();
+            ol = get_overlay(opts.uid);
+            if (ol) {
+                ol.close();
             }
             return;
         }
@@ -572,10 +644,15 @@ export class Ajax {
         }
         let uid = opts.uid ? opts.uid : uuid4();
         params['ajax.overlay-uid'] = uid;
-        let selector = '#' + uid + ' ' + this.overlay_content_selector;
+        ol = new Overlay({
+            uid: uid,
+            css: opts.css,
+            title: opts.title,
+            on_close: opts.on_close
+        })
         this._request_ajax_action({
             name: opts.action,
-            selector: selector,
+            selector: `#${uid} ${this.overlay_content_sel}`,
             mode: 'inner',
             url: url,
             params: params,
@@ -586,20 +663,45 @@ export class Ajax {
                     this._finish_ajax_action(data);
                     return;
                 }
-                new Overlay({
-                    uid: uid,
-                    css: opts.css,
-                    title: opts.title,
-                    on_close: function() {
-                        if (opts.on_close) {
-                            opts.on_close();
-                        }
-                    }
-                }).open();
+                ol.open();
                 this._finish_ajax_action(data);
             }.bind(this)
         });
-        return uid;
+        return ol;
+    }
+
+    _ajax_overlay(target, overlay, css) {
+        // XXX: close needs an overlay uid
+        if (overlay.indexOf('CLOSE') > -1) {
+            let opts = {};
+            if (overlay.indexOf(':') > -1) {
+                opts.selector = overlay.split(':')[1];
+            }
+            opts.close = true;
+            this.overlay(opts);
+            return;
+        }
+        if (overlay.indexOf(':') > -1) {
+            let defs = overlay.split(':');
+            let opts = {
+                action: defs[0],
+                selector: defs[1],
+                url: target.url,
+                params: target.params,
+                css: css
+            };
+            if (defs.length === 3) {
+                opts.content_selector = defs[2];
+            }
+            this.overlay(opts);
+            return;
+        }
+        this.overlay({
+            action: overlay,
+            url: target.url,
+            params: target.params,
+            css: css
+        });
     }
 
     message(message, flavor='') {
@@ -803,40 +905,6 @@ export class Ajax {
         } else {
             return elem.attr(fallback);
         }
-    }
-
-    _ajax_overlay(target, overlay, css) {
-        // XXX: close needs an overlay uid
-        if (overlay.indexOf('CLOSE') > -1) {
-            let opts = {};
-            if (overlay.indexOf(':') > -1) {
-                opts.selector = overlay.split(':')[1];
-            }
-            opts.close = true;
-            this.overlay(opts);
-            return;
-        }
-        if (overlay.indexOf(':') > -1) {
-            let defs = overlay.split(':');
-            let opts = {
-                action: defs[0],
-                selector: defs[1],
-                url: target.url,
-                params: target.params,
-                css: css
-            };
-            if (defs.length === 3) {
-                opts.content_selector = defs[2];
-            }
-            this.overlay(opts);
-            return;
-        }
-        this.overlay({
-            action: overlay,
-            url: target.url,
-            params: target.params,
-            css: css
-        });
     }
 
     _defs_to_array(str) {

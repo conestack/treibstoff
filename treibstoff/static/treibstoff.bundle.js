@@ -528,6 +528,17 @@ var ts = (function (exports, $) {
             this.trigger('on_close');
         }
     }
+    function get_overlay(uid) {
+        let elem = $(`#${uid}`);
+        if (!elem.length) {
+            return null;
+        }
+        let ol = elem.data('overlay');
+        if (!ol) {
+            return null;
+        }
+        return ol;
+    }
     class Message extends Overlay {
         constructor(opts) {
             opts.content = opts.message ? opts.message : opts.content;
@@ -597,7 +608,7 @@ var ts = (function (exports, $) {
         constructor(win=window) {
             this.win = win;
             this.default_403 = '/login';
-            this.overlay_content_selector = '.modal-body';
+            this.overlay_content_sel = '.modal-body';
             this.binders = {};
             this.spinner = new AjaxSpinner();
             this._afr = null;
@@ -704,31 +715,168 @@ var ts = (function (exports, $) {
                 history.pushState(opts, '', path);
             }
         }
+        _history_handle(evt) {
+            evt.preventDefault();
+            let state = evt.originalEvent.state;
+            if (!state) {
+                return;
+            }
+            let target;
+            if (state.target.url) {
+                target = state.target;
+            } else {
+                target = this.parse_target(state.target);
+            }
+            target.params.popstate = '1';
+            if (state.action) {
+                this._ajax_action(target, state.action);
+            }
+            if (state.event) {
+                this._ajax_event(target, state.event);
+            }
+            if (state.overlay) {
+                this._ajax_overlay(
+                    target,
+                    state.overlay,
+                    state.overlay_css
+                );
+            }
+            if (!state.action && !state.event && !state.overlay) {
+                this.win.location = target.url;
+            }
+        }
+        _ajax_path(elem, evt) {
+            let path = elem.attr('ajax:path');
+            if (path === 'href') {
+                let href = elem.attr('href');
+                path = parse_path(href, true);
+            } else if (path === 'target') {
+                let tgt = this._event_target(elem, evt);
+                path = tgt.path + tgt.query;
+            }
+            let target;
+            if (this._has_attr(elem, 'ajax:path-target')) {
+                target = elem.attr('ajax:path-target');
+                if (target) {
+                    target = this.parse_target(target);
+                }
+            } else {
+                target = this._event_target(elem, evt);
+            }
+            let action = this._attr_val_or_default(
+                elem,
+                'ajax:path-action',
+                'ajax:action'
+            );
+            let event = this._attr_val_or_default(
+                elem,
+                'ajax:path-event',
+                'ajax:event'
+            );
+            let overlay = this._attr_val_or_default(
+                elem,
+                'ajax:path-overlay',
+                'ajax:overlay'
+            );
+            let overlay_css = this._attr_val_or_default(
+                elem,
+                'ajax:path-overlay-css',
+                'ajax:overlay-css'
+            );
+            this.path({
+                path: path,
+                target: target,
+                action: action,
+                event: event,
+                overlay: overlay,
+                overlay_css: overlay_css
+            });
+        }
         action(opts) {
             opts.success = this._finish_ajax_action.bind(this);
             this._request_ajax_action(opts);
         }
-        trigger(name, selector, target, data) {
-            let create_event = function() {
-                let evt = $.Event(name);
-                if (target.url) {
-                    evt.ajaxtarget = target;
-                } else {
-                    evt.ajaxtarget = this.parse_target(target);
-                }
-                evt.ajaxdata = data;
-                return evt;
-            }.bind(this);
-            $(selector).each(function() {
-                $(this).trigger(create_event());
+        _request_ajax_action(opts) {
+            opts.params['ajax.action'] = opts.name;
+            opts.params['ajax.mode'] = opts.mode;
+            opts.params['ajax.selector'] = opts.selector;
+            this.request({
+                url: parse_url(opts.url) + '/ajaxaction',
+                type: 'json',
+                params: opts.params,
+                success: opts.success
             });
         }
+        _finish_ajax_action(data) {
+            if (!data) {
+                this.error('Empty response');
+                this.spinner.hide();
+            } else {
+                this._fiddle(data.payload, data.selector, data.mode);
+                this._continuation(data.continuation);
+            }
+        }
+        _ajax_action(target, action) {
+            let actions = this._defs_to_array(action);
+            for (let i = 0; i < actions.length; i++) {
+                let defs = actions[i].split(':');
+                this.action({
+                    name: defs[0],
+                    selector: defs[1],
+                    mode: defs[2],
+                    url: target.url,
+                    params: target.params
+                });
+            }
+        }
+        trigger(opts) {
+            if (arguments.length > 1) {
+                console.log(
+                    'Calling Ajax.event with positional arguments is ' +
+                    'deprecated. Please pass options object instead.'
+                );
+                opts = {
+                    name: arguments[0],
+                    selector: arguments[1],
+                    target: arguments[2],
+                    data: arguments[3]
+                };
+            }
+            let create_event = this._create_event.bind(this);
+            $(opts.selector).each(function() {
+                $(this).trigger(create_event(opts.name, opts.target, opts.data));
+            });
+        }
+        _create_event(name, target, data) {
+            let evt = $.Event(name);
+            if (target.url) {
+                evt.ajaxtarget = target;
+            } else {
+                evt.ajaxtarget = this.parse_target(target);
+            }
+            evt.ajaxdata = data;
+            return evt;
+        }
+        _event_target(elem, event) {
+            if (event.ajaxtarget) {
+                return event.ajaxtarget;
+            }
+            return this.parse_target(elem.attr('ajax:target'));
+        }
+        _ajax_event(target, event) {
+            let defs = this._defs_to_array(event);
+            for (let i = 0; i < defs.length; i++) {
+                let def = defs[i];
+                def = def.split(':');
+                this.trigger(def[0], def[1], target);
+            }
+        }
         overlay(opts) {
+            let ol;
             if (opts.close) {
-                let elem = $('#' + opts.uid),
-                    overlay = elem.data('overlay');
-                if (overlay) {
-                    overlay.close();
+                ol = get_overlay(opts.uid);
+                if (ol) {
+                    ol.close();
                 }
                 return;
             }
@@ -746,10 +894,15 @@ var ts = (function (exports, $) {
             }
             let uid = opts.uid ? opts.uid : uuid4();
             params['ajax.overlay-uid'] = uid;
-            let selector = '#' + uid + ' ' + this.overlay_content_selector;
+            ol = new Overlay({
+                uid: uid,
+                css: opts.css,
+                title: opts.title,
+                on_close: opts.on_close
+            });
             this._request_ajax_action({
                 name: opts.action,
-                selector: selector,
+                selector: `#${uid} ${this.overlay_content_sel}`,
                 mode: 'inner',
                 url: url,
                 params: params,
@@ -758,20 +911,43 @@ var ts = (function (exports, $) {
                         this._finish_ajax_action(data);
                         return;
                     }
-                    new Overlay({
-                        uid: uid,
-                        css: opts.css,
-                        title: opts.title,
-                        on_close: function() {
-                            if (opts.on_close) {
-                                opts.on_close();
-                            }
-                        }
-                    }).open();
+                    ol.open();
                     this._finish_ajax_action(data);
                 }.bind(this)
             });
-            return uid;
+            return ol;
+        }
+        _ajax_overlay(target, overlay, css) {
+            if (overlay.indexOf('CLOSE') > -1) {
+                let opts = {};
+                if (overlay.indexOf(':') > -1) {
+                    opts.selector = overlay.split(':')[1];
+                }
+                opts.close = true;
+                this.overlay(opts);
+                return;
+            }
+            if (overlay.indexOf(':') > -1) {
+                let defs = overlay.split(':');
+                let opts = {
+                    action: defs[0],
+                    selector: defs[1],
+                    url: target.url,
+                    params: target.params,
+                    css: css
+                };
+                if (defs.length === 3) {
+                    opts.content_selector = defs[2];
+                }
+                this.overlay(opts);
+                return;
+            }
+            this.overlay({
+                action: overlay,
+                url: target.url,
+                params: target.params,
+                css: css
+            });
         }
         message(message, flavor='') {
             new Message({
@@ -904,36 +1080,6 @@ var ts = (function (exports, $) {
                 }
             }
         }
-        _history_handle(evt) {
-            evt.preventDefault();
-            let state = evt.originalEvent.state;
-            if (!state) {
-                return;
-            }
-            let target;
-            if (state.target.url) {
-                target = state.target;
-            } else {
-                target = this.parse_target(state.target);
-            }
-            target.params.popstate = '1';
-            if (state.action) {
-                this._ajax_action(target, state.action);
-            }
-            if (state.event) {
-                this._ajax_event(target, state.event);
-            }
-            if (state.overlay) {
-                this._ajax_overlay(
-                    target,
-                    state.overlay,
-                    state.overlay_css
-                );
-            }
-            if (!state.action && !state.event && !state.overlay) {
-                this.win.location = target.url;
-            }
-        }
         _dispatch_handle(event) {
             event.preventDefault();
             event.stopPropagation();
@@ -949,18 +1095,12 @@ var ts = (function (exports, $) {
                 this._dispatch(opts);
             }
         }
-        _get_target(elem, event) {
-            if (event.ajaxtarget) {
-                return event.ajaxtarget;
-            }
-            return this.parse_target(elem.attr('ajax:target'));
-        }
         _dispatch(opts) {
             let elem = opts.elem,
                 event = opts.event;
             if (elem.attr('ajax:action')) {
                 this._ajax_action(
-                    this._get_target(elem, event),
+                    this._event_target(elem, event),
                     elem.attr('ajax:action')
                 );
             }
@@ -972,7 +1112,7 @@ var ts = (function (exports, $) {
             }
             if (elem.attr('ajax:overlay')) {
                 this._ajax_overlay(
-                    this._get_target(elem, event),
+                    this._event_target(elem, event),
                     elem.attr('ajax:overlay'),
                     elem.attr('ajax:overlay-css')
                 );
@@ -991,126 +1131,6 @@ var ts = (function (exports, $) {
             } else {
                 return elem.attr(fallback);
             }
-        }
-        _ajax_path(elem, evt) {
-            let path = elem.attr('ajax:path');
-            if (path === 'href') {
-                let href = elem.attr('href');
-                path = parse_path(href, true);
-            } else if (path === 'target') {
-                let tgt = this._get_target(elem, evt);
-                path = tgt.path + tgt.query;
-            }
-            let target;
-            if (this._has_attr(elem, 'ajax:path-target')) {
-                target = elem.attr('ajax:path-target');
-                if (target) {
-                    target = this.parse_target(target);
-                }
-            } else {
-                target = this._get_target(elem, evt);
-            }
-            let action = this._attr_val_or_default(
-                elem,
-                'ajax:path-action',
-                'ajax:action'
-            );
-            let event = this._attr_val_or_default(
-                elem,
-                'ajax:path-event',
-                'ajax:event'
-            );
-            let overlay = this._attr_val_or_default(
-                elem,
-                'ajax:path-overlay',
-                'ajax:overlay'
-            );
-            let overlay_css = this._attr_val_or_default(
-                elem,
-                'ajax:path-overlay-css',
-                'ajax:overlay-css'
-            );
-            this.path({
-                path: path,
-                target: target,
-                action: action,
-                event: event,
-                overlay: overlay,
-                overlay_css: overlay_css
-            });
-        }
-        _ajax_event(target, event) {
-            let defs = this._defs_to_array(event);
-            for (let i = 0; i < defs.length; i++) {
-                let def = defs[i];
-                def = def.split(':');
-                this.trigger(def[0], def[1], target);
-            }
-        }
-        _request_ajax_action(opts) {
-            opts.params['ajax.action'] = opts.name;
-            opts.params['ajax.mode'] = opts.mode;
-            opts.params['ajax.selector'] = opts.selector;
-            this.request({
-                url: parse_url(opts.url) + '/ajaxaction',
-                type: 'json',
-                params: opts.params,
-                success: opts.success
-            });
-        }
-        _finish_ajax_action(data) {
-            if (!data) {
-                this.error('Empty response');
-                this.spinner.hide();
-            } else {
-                this._fiddle(data.payload, data.selector, data.mode);
-                this._continuation(data.continuation);
-            }
-        }
-        _ajax_action(target, action) {
-            let actions = this._defs_to_array(action);
-            for (let i = 0; i < actions.length; i++) {
-                let defs = actions[i].split(':');
-                this.action({
-                    name: defs[0],
-                    selector: defs[1],
-                    mode: defs[2],
-                    url: target.url,
-                    params: target.params
-                });
-            }
-        }
-        _ajax_overlay(target, overlay, css) {
-            if (overlay.indexOf('CLOSE') > -1) {
-                let opts = {};
-                if (overlay.indexOf(':') > -1) {
-                    opts.selector = overlay.split(':')[1];
-                }
-                opts.close = true;
-                this.overlay(opts);
-                return;
-            }
-            if (overlay.indexOf(':') > -1) {
-                let defs = overlay.split(':');
-                let opts = {
-                    action: defs[0],
-                    selector: defs[1],
-                    url: target.url,
-                    params: target.params,
-                    css: css
-                };
-                if (defs.length === 3) {
-                    opts.content_selector = defs[2];
-                }
-                this.overlay(opts);
-                return;
-            }
-            this.overlay({
-                action: overlay,
-                url: target.url,
-                params: target.params,
-                css: css
-            });
         }
         _defs_to_array(str) {
             let arr = str.replace(/\s+/g, ' ').split(' ');
@@ -1180,6 +1200,7 @@ var ts = (function (exports, $) {
     exports.compile_template = compile_template;
     exports.create_svg_elem = create_svg_elem;
     exports.extract_number = extract_number;
+    exports.get_overlay = get_overlay;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
     exports.parse_ajax = parse_ajax;

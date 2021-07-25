@@ -489,6 +489,10 @@ JavaScript API
 
 .. js:autofunction:: Ajax#path
 
+|
+
+.. js:autofunction:: Ajax#overlay
+
 
 Messages, infos, warnings and errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -500,61 +504,6 @@ icon:
 .. code-block:: js
 
     ts.ajax.message('I am an application Message');
-
-
-Overlay
-~~~~~~~
-
-Load ajax action contents into an overlay:
-
-.. code-block:: js
-
-    ts.ajax.overlay({
-        action: 'actionname',
-        target: 'http://foobar.org?param=value',
-        selector: '#ajax-overlay',
-        content_selector: '.overlay_ontent',
-        css: 'additional_overlay_css_class'
-    });
-
-``selector`` is optional and defaults to ``#ajax-overlay``.
-
-``content_selector`` is optional to ``selector`` and defaults to
-``overlay_ontent``.
-
-Default overlay and default overlay content selector can be overwritten at
-``ts.ajax.default_overlay_selector`` respective
-``ts.ajax.default_overlay_content_selector``.
-
-``css`` is optional and can be used to set a CSS class to overlay
-DOM element on open. This class gets removed as soon as overlay is closed.
-
-Optionally to ``target``, ``url`` and ``params`` can be given as options to
-the function. If both, ``target`` and ``url/params`` given, ``target`` is used.
-
-Ajax overlays can be closed by passing ``close`` option to ``ts.ajax.overlay``.
-When closing an overlay, overlay selector is considered as well from options
-if given, otherwise ``ts.ajax.default_overlay_selector`` is used.
-
-.. code-block:: js
-
-    ts.ajax.overlay({
-        close: true,
-        selector: '#ajax-overlay'
-    });
-
-``ts.ajax.overlay`` supports an ``on_close`` callback in options.
-
-.. code-block:: js
-
-    var on_close = function() {
-        // do something
-    }
-    ts.ajax.overlay({
-        action: 'actionname',
-        target: 'http://foobar.org?param=value',
-        on_close: on_close
-    });
 
 
 Modal dialog
