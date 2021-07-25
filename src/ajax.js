@@ -339,6 +339,54 @@ export class Ajax {
         }
     }
 
+    _ajax_path(elem, evt) {
+        let path = elem.attr('ajax:path');
+        if (path === 'href') {
+            let href = elem.attr('href');
+            path = parse_path(href, true);
+        } else if (path === 'target') {
+            let tgt = this._event_target(elem, evt);
+            path = tgt.path + tgt.query;
+        }
+        let target;
+        if (this._has_attr(elem, 'ajax:path-target')) {
+            target = elem.attr('ajax:path-target');
+            if (target) {
+                target = this.parse_target(target);
+            }
+        } else {
+            target = this._event_target(elem, evt);
+        }
+        let action = this._attr_val_or_default(
+            elem,
+            'ajax:path-action',
+            'ajax:action'
+        );
+        let event = this._attr_val_or_default(
+            elem,
+            'ajax:path-event',
+            'ajax:event'
+        );
+        let overlay = this._attr_val_or_default(
+            elem,
+            'ajax:path-overlay',
+            'ajax:overlay'
+        );
+        let overlay_css = this._attr_val_or_default(
+            elem,
+            'ajax:path-overlay-css',
+            'ajax:overlay-css'
+        );
+        this.path({
+            path: path,
+            target: target,
+            action: action,
+            event: event,
+            overlay: overlay,
+            overlay_css: overlay_css
+        });
+    }
+
     /**
      * Perform Ajax action.
      *
@@ -755,54 +803,6 @@ export class Ajax {
         } else {
             return elem.attr(fallback);
         }
-    }
-
-    _ajax_path(elem, evt) {
-        let path = elem.attr('ajax:path');
-        if (path === 'href') {
-            let href = elem.attr('href');
-            path = parse_path(href, true);
-        } else if (path === 'target') {
-            let tgt = this._event_target(elem, evt);
-            path = tgt.path + tgt.query;
-        }
-        let target;
-        if (this._has_attr(elem, 'ajax:path-target')) {
-            target = elem.attr('ajax:path-target');
-            if (target) {
-                target = this.parse_target(target);
-            }
-        } else {
-            target = this._event_target(elem, evt);
-        }
-        let action = this._attr_val_or_default(
-            elem,
-            'ajax:path-action',
-            'ajax:action'
-        );
-        let event = this._attr_val_or_default(
-            elem,
-            'ajax:path-event',
-            'ajax:event'
-        );
-        let overlay = this._attr_val_or_default(
-            elem,
-            'ajax:path-overlay',
-            'ajax:overlay'
-        );
-        let overlay_css = this._attr_val_or_default(
-            elem,
-            'ajax:path-overlay-css',
-            'ajax:overlay-css'
-        );
-        this.path({
-            path: path,
-            target: target,
-            action: action,
-            event: event,
-            overlay: overlay,
-            overlay_css: overlay_css
-        });
     }
 
     _ajax_overlay(target, overlay, css) {
