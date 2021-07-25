@@ -501,13 +501,26 @@ export class Ajax extends AjaxDeprecated {
         });
     }
 
+    _has_attr(elem, name) {
+        let attr = elem.attr(name);
+        return attr !== undefined && attr !== false;
+    }
+
+    _attr_val_or_default(elem, name, fallback) {
+        if (this._has_attr(elem, name)) {
+            return elem.attr(name);
+        } else {
+            return elem.attr(fallback);
+        }
+    }
+
     /**
      * Perform Ajax action.
      *
      * Requests ``ajaxaction`` on server and modifies DOM with response
      * according to mode and selector::
      *
-     *     let target = ts.parse_target('http://tld.com/some/path?param=value');
+     *     let target = ts.ajax.parse_target('http://tld.com/some/path?param=value');
      *     ts.ajax.action({
      *         name: 'content',
      *         selector: '#content',
@@ -944,19 +957,6 @@ export class Ajax extends AjaxDeprecated {
         }
         if (elem.attr('ajax:path')) {
             this._ajax_path(elem, event);
-        }
-    }
-
-    _has_attr(elem, name) {
-        let attr = elem.attr(name);
-        return attr !== undefined && attr !== false;
-    }
-
-    _attr_val_or_default(elem, name, fallback) {
-        if (this._has_attr(elem, name)) {
-            return elem.attr(name);
-        } else {
-            return elem.attr(fallback);
         }
     }
 }
