@@ -455,69 +455,71 @@ Overlays can be closed by setting special value ``CLOSE`` at
 JavaScript API
 --------------
 
-.. js:autofunction:: Ajax#register
+.. js:autoclass:: Ajax
+
+    .. js:autofunction:: register
+
+    |
+
+    .. js:autofunction:: parse_target
+
+    |
+
+    .. js:autofunction:: request
+
+    |
+
+    .. js:autofunction:: action
+
+    |
+
+    .. js:autofunction:: trigger
+
+    |
+
+    .. js:autofunction:: path
+
+    |
+
+    .. js:autofunction:: overlay
 
 |
 
-.. js:autofunction:: Ajax#parseurl
+.. js:autoclass:: AjaxDeprecated
 
-|
+    .. js:autofunction:: parseurl
 
-.. js:autofunction:: Ajax#parsequery
+    |
 
-|
+    .. js:autofunction:: parsequery
 
-.. js:autofunction:: Ajax#parsepath
+    |
 
-|
+    .. js:autofunction:: parsepath
 
-.. js:autofunction:: Ajax#parsetarget
+    |
 
-|
+    .. js:autofunction:: parsetarget
 
-.. js:autofunction:: Ajax#parse_target
+    |
 
-|
+    .. js:autofunction:: message
 
-.. js:autofunction:: Ajax#request
+    |
 
-|
+    .. js:autofunction:: info
 
-.. js:autofunction:: Ajax#action
+    |
 
-|
+    .. js:autofunction:: warning
 
-.. js:autofunction:: Ajax#trigger
+    |
 
-|
+    .. js:autofunction:: error
 
-.. js:autofunction:: Ajax#path
+    |
 
-|
-
-.. js:autofunction:: Ajax#overlay
-
-|
-
-.. js:autofunction:: Ajax#message
-
-|
-
-.. js:autofunction:: Ajax#info
-
-|
-
-.. js:autofunction:: Ajax#warning
-
-|
-
-.. js:autofunction:: Ajax#error
-
-|
-
-.. js:autofunction:: Ajax#dialog
-
-|
+    .. js:autofunction:: dialog
 
 
 Ajax forms
