@@ -1,6 +1,13 @@
 var ts = (function (exports, $) {
     'use strict';
 
+    function deprecate(dep, sub, as_of) {
+        console.log(
+            `DEPRECATED: ${dep} is deprecated ` +
+            `and will be removed as of ${as_of}. ` +
+            `Use ${sub} instead.`
+        );
+    }
     function uuid4() {
         return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
@@ -628,19 +635,19 @@ var ts = (function (exports, $) {
             }
         }
         parseurl(url) {
-            console.log('ts.ajax.parseurl is deprecated. use ts.parse_url');
+            deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
             return parse_url(url);
         }
         parsequery(url, as_string) {
-            console.log('ts.ajax.parsequery is deprecated. use ts.parse_query');
+            deprecate('ts.ajax.parsequery', 'ts.parse_query', '1.0');
             return parse_query(url, as_string);
         }
         parsepath(url, include_query) {
-            console.log('ts.ajax.parsepath is deprecated. use ts.parse_path');
+            deprecate('ts.ajax.parsepath', 'ts.parse_path', '1.0');
             return parse_path(url, include_query);
         }
         parsetarget(target) {
-            console.log('ts.ajax.parsetarget is deprecated. use ts.ajax.parse_target');
+            deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
             return this.parse_target(target);
         }
         parse_target(target) {
@@ -831,10 +838,7 @@ var ts = (function (exports, $) {
         }
         trigger(opts) {
             if (arguments.length > 1) {
-                console.log(
-                    'Calling Ajax.event with positional arguments is ' +
-                    'deprecated. Please pass options object instead.'
-                );
+                deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
                 opts = {
                     name: arguments[0],
                     selector: arguments[1],
@@ -980,16 +984,6 @@ var ts = (function (exports, $) {
         bind_dispatcher(node, evts) {
             $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
         }
-        bind_ajax_form(context) {
-            let bc_ajax_form = $('form.ajax', context);
-            if (bc_ajax_form.length) {
-                console.log(
-                    'B/C AJAX form found. Please use ``ajax:form`` ' +
-                    'attribute instead of ``ajax`` CSS class.'
-                );
-            }
-            this.prepare_ajax_form(bc_ajax_form);
-        }
         prepare_ajax_form(form) {
             if (!this._afr) {
                 compile_template(this, `
@@ -999,11 +993,13 @@ var ts = (function (exports, $) {
               </iframe>
             `, $('body'));
             }
-            form.append('<input type="hidden" name="ajax" value="1" />');
-            form.attr('target', 'ajaxformresponse');
-            form.off().on('submit', function(event) {
-                this.spinner.show();
-            }.bind(this));
+            $(form)
+                .append('<input type="hidden" name="ajax" value="1" />')
+                .attr('target', 'ajaxformresponse')
+                .off()
+                .on('submit', function(event) {
+                    this.spinner.show();
+                }.bind(this));
         }
         render_ajax_form(opts) {
             this.spinner.hide();
@@ -1153,7 +1149,12 @@ var ts = (function (exports, $) {
                 this.ajax.bind_dispatcher(node, evts);
             }
             if (attrs['ajax:form']) {
-                this.ajax.prepare_ajax_form($(node));
+                this.ajax.prepare_ajax_form(node);
+            }
+            if (node.tagName.toLowerCase() === 'form') {
+                if (node.className.split(' ').includes('ajax')) {
+                    this.ajax.prepare_ajax_form(node);
+                }
             }
         }
     }
@@ -1162,7 +1163,6 @@ var ts = (function (exports, $) {
         context.each(function() {
             parser.walk(this);
         });
-        ajax.bind_ajax_form(context);
         ajax.call_binders(context);
         return context;
     }
@@ -1199,6 +1199,7 @@ var ts = (function (exports, $) {
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
     exports.create_svg_elem = create_svg_elem;
+    exports.deprecate = deprecate;
     exports.extract_number = extract_number;
     exports.get_overlay = get_overlay;
     exports.json_merge = json_merge;

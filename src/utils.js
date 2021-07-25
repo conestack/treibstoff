@@ -1,5 +1,20 @@
 import $ from 'jquery';
 
+/**
+ * Log deprecation warning.
+ *
+ * @param dep - Deprecated object
+ * @param sub - Substitute for deprecated object.
+ * @param as_of - Version when deprecated object gets removed.
+ */
+export function deprecate(dep, sub, as_of) {
+    console.log(
+        `DEPRECATED: ${dep} is deprecated ` +
+        `and will be removed as of ${as_of}. ` +
+        `Use ${sub} instead.`
+    );
+}
+
 export function uuid4() {
     return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)

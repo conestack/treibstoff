@@ -10,6 +10,7 @@ import {
     Dialog
 } from './overlay.js';
 import {
+    deprecate,
     parse_path,
     parse_query,
     parse_url,
@@ -112,7 +113,7 @@ export class Ajax {
      * This function is deprecated. Use ``ts.parse_url`` instead.
      */
     parseurl(url) {
-        console.log('ts.ajax.parseurl is deprecated. use ts.parse_url');
+        deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
         return parse_url(url);
     }
 
@@ -120,7 +121,7 @@ export class Ajax {
      * This function is deprecated. Use ``ts.parse_query`` instead.
      */
     parsequery(url, as_string) {
-        console.log('ts.ajax.parsequery is deprecated. use ts.parse_query');
+        deprecate('ts.ajax.parsequery', 'ts.parse_query', '1.0');
         return parse_query(url, as_string);
     }
 
@@ -128,7 +129,7 @@ export class Ajax {
      * This function is deprecated. Use ``ts.parse_path`` instead.
      */
     parsepath(url, include_query) {
-        console.log('ts.ajax.parsepath is deprecated. use ts.parse_path');
+        deprecate('ts.ajax.parsepath', 'ts.parse_path', '1.0');
         return parse_path(url, include_query);
     }
 
@@ -136,7 +137,7 @@ export class Ajax {
      * This function is deprecated. Use ``ts.ajax.parse_target`` instead.
      */
     parsetarget(target) {
-        console.log('ts.ajax.parsetarget is deprecated. use ts.ajax.parse_target');
+        deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
         return this.parse_target(target);
     }
 
@@ -503,10 +504,7 @@ export class Ajax {
      */
     trigger(opts) {
         if (arguments.length > 1) {
-            console.log(
-                'Calling Ajax.event with positional arguments is ' +
-                'deprecated. Please pass options object instead.'
-            );
+            deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
             opts = {
                 name: arguments[0],
                 selector: arguments[1],
@@ -741,18 +739,6 @@ export class Ajax {
         $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
     }
 
-    // B/C: bind ajax form handling to all forms providing ajax css class
-    bind_ajax_form(context) {
-        let bc_ajax_form = $('form.ajax', context);
-        if (bc_ajax_form.length) {
-            console.log(
-                'B/C AJAX form found. Please use ``ajax:form`` ' +
-                'attribute instead of ``ajax`` CSS class.'
-            );
-        }
-        this.prepare_ajax_form(bc_ajax_form);
-    }
-
     // prepare form desired to be an ajax form
     prepare_ajax_form(form) {
         if (!this._afr) {
@@ -763,11 +749,13 @@ export class Ajax {
               </iframe>
             `, $('body'));
         }
-        form.append('<input type="hidden" name="ajax" value="1" />');
-        form.attr('target', 'ajaxformresponse');
-        form.off().on('submit', function(event) {
-            this.spinner.show();
-        }.bind(this));
+        $(form)
+            .append('<input type="hidden" name="ajax" value="1" />')
+            .attr('target', 'ajaxformresponse')
+            .off()
+            .on('submit', function(event) {
+                this.spinner.show();
+            }.bind(this));
     }
 
     // called by iframe response
@@ -934,7 +922,12 @@ export class AjaxParser extends Parser {
             this.ajax.bind_dispatcher(node, evts);
         }
         if (attrs['ajax:form']) {
-            this.ajax.prepare_ajax_form($(node));
+            this.ajax.prepare_ajax_form(node);
+        }
+        if (node.tagName.toLowerCase() === 'form') {
+            if (node.className.split(' ').includes('ajax')) {
+                this.ajax.prepare_ajax_form(node);
+            }
         }
     }
 }
@@ -944,8 +937,6 @@ export function parse_ajax(context) {
     context.each(function() {
         parser.walk(this);
     });
-    // B/C: Ajax forms have a dedicated ``ajax:form`` directive now.
-    ajax.bind_ajax_form(context);
     ajax.call_binders(context);
     return context;
 }
