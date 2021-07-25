@@ -13,6 +13,11 @@ var ts = (function (exports, $) {
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
         );
     }
+    function set_default(ob, name, val) {
+        if (ob[name] === undefined) {
+            ob[name] = val;
+        }
+    }
     function json_merge(base, other) {
         let ret = {};
         for (let ob of [base, other]) {
@@ -649,29 +654,95 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class Ajax {
-        constructor(win=window) {
-            this.win = win;
-            this.default_403 = '/login';
-            this.overlay_content_sel = '.modal-body';
-            this.binders = {};
-            this.spinner = new AjaxSpinner();
-            this._afr = null;
-            $(this.win).on('popstate', this._history_handle.bind(this));
+    class AjaxMixin {
+        parse_target(target) {
+            return {
+                url: target ? parse_url(target) : undefined,
+                params: target ? parse_query(target) : {},
+                path: target ? parse_path(target) : undefined,
+                query: target ? parse_query(target, true) : undefined
+            };
         }
-        register(func, instant) {
-            let func_name = 'binder_' + uuid4();
-            while (true) {
-                if (this.binders[func_name] === undefined) {
-                    break;
-                }
-                func_name = 'binder_' + uuid4();
+        parse_definition(val) {
+            return val.replace(/\s+/g, ' ').split(' ');
+        }
+        event_target(elem, evt) {
+            if (evt.ajaxtarget) {
+                return evt.ajaxtarget;
             }
-            this.binders[func_name] = func;
-            if (instant) {
-                func();
+            return this.parse_target(elem.attr('ajax:target'));
+        }
+    }
+    class AjaxPath {
+    }
+    class AjaxAction {
+    }
+    class AjaxEvent {
+    }
+    class AjaxOverlay {
+    }
+    class AjaxForm {
+    }
+    class AjaxDispatcher extends Events {
+        constructor(ajax) {
+            super();
+            this._ajax = ajax;
+        }
+        bind(node, evts) {
+            $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
+        }
+        dispatch_handle(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            let elem = $(evt.currentTarget),
+                opts = {
+                    elem: elem,
+                    event: evt
+                };
+            if (elem.attr('ajax:confirm')) {
+                show_dialog({
+                    message: elem.attr('ajax:confirm'),
+                    on_confirm: function(inst) {
+                        this.dispatch(opts);
+                    }.bind(this)
+                });
+            } else {
+                this.dispatch(opts);
             }
         }
+        dispatch(opts) {
+            console.log('### dispatch');
+            let elem = opts.elem,
+                event = opts.event;
+            if (elem.attr('ajax:action')) {
+                this.trigger('on_action', opts);
+                this._ajax._ajax_action(
+                    this._ajax.event_target(elem, event),
+                    elem.attr('ajax:action')
+                );
+            }
+            if (elem.attr('ajax:event')) {
+                this.trigger('on_event', opts);
+                this._ajax._ajax_event(
+                    elem.attr('ajax:target'),
+                    elem.attr('ajax:event')
+                );
+            }
+            if (elem.attr('ajax:overlay')) {
+                this.trigger('on_overlay', opts);
+                this._ajax._ajax_overlay(
+                    this._ajax.event_target(elem, event),
+                    elem.attr('ajax:overlay'),
+                    elem.attr('ajax:overlay-css')
+                );
+            }
+            if (elem.attr('ajax:path')) {
+                this.trigger('on_path', opts);
+                this._ajax._ajax_path(elem, event);
+            }
+        }
+    }
+    class AjaxDeprecated extends AjaxMixin {
         parseurl(url) {
             deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
             return parse_url(url);
@@ -688,13 +759,56 @@ var ts = (function (exports, $) {
             deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
             return this.parse_target(target);
         }
-        parse_target(target) {
-            return {
-                url: target ? parse_url(target) : undefined,
-                params: target ? parse_query(target) : {},
-                path: target ? parse_path(target) : undefined,
-                query: target ? parse_query(target, true) : undefined
-            };
+        message(message, flavor='') {
+            deprecate('ts.ajax.message', 'ts.show_message', '1.0');
+            show_message({message: message, flavor: flavor});
+        }
+        info(message) {
+            deprecate('ts.ajax.info', 'ts.show_info', '1.0');
+            show_info(message);
+        }
+        warning(message) {
+            deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
+            show_warning(message);
+        }
+        error(message) {
+            deprecate('ts.ajax.error', 'ts.show_error', '1.0');
+            show_error(message);
+        }
+        dialog(opts, callback) {
+            deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
+            show_dialog({
+                message: opts.message,
+                on_confirm: function() {
+                    callback(opts);
+                }
+            });
+        }
+    }
+    class Ajax extends AjaxDeprecated {
+        constructor(win=window) {
+            super();
+            this.win = win;
+            this.default_403 = '/login';
+            this.overlay_content_sel = '.modal-body';
+            this.binders = {};
+            this.spinner = new AjaxSpinner();
+            this.dispatcher = new AjaxDispatcher(this);
+            this._afr = null;
+            $(this.win).on('popstate', this._history_handle.bind(this));
+        }
+        register(func, instant) {
+            let func_name = 'binder_' + uuid4();
+            while (true) {
+                if (this.binders[func_name] === undefined) {
+                    break;
+                }
+                func_name = 'binder_' + uuid4();
+            }
+            this.binders[func_name] = func;
+            if (instant) {
+                func();
+            }
         }
         request(opts) {
             if (opts.url.indexOf('?') !== -1) {
@@ -705,12 +819,12 @@ var ts = (function (exports, $) {
                     opts.params[key] = params_[key];
                 }
             } else {
-                this._set_default_opt(opts, 'params', {});
+                set_default(opts, 'params', {});
             }
-            this._set_default_opt(opts, 'type', 'html');
-            this._set_default_opt(opts, 'method', 'GET');
-            this._set_default_opt(opts, 'cache', false);
-            this._set_default_opt(opts, 'error', function(request, status, error) {
+            set_default(opts, 'type', 'html');
+            set_default(opts, 'method', 'GET');
+            set_default(opts, 'cache', false);
+            set_default(opts, 'error', function(request, status, error) {
                 if (parseInt(status, 10) === 403) {
                     this.win.location.hash = '';
                     this.win.location.pathname = this.default_403;
@@ -749,8 +863,8 @@ var ts = (function (exports, $) {
                 return;
             }
             let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
-            this._set_default_opt(opts, 'target', this.win.location.origin + path);
-            this._set_default_opt(opts, 'replace', false);
+            set_default(opts, 'target', this.win.location.origin + path);
+            set_default(opts, 'replace', false);
             let replace = opts.replace;
             delete opts.path;
             delete opts.replace;
@@ -796,7 +910,7 @@ var ts = (function (exports, $) {
                 let href = elem.attr('href');
                 path = parse_path(href, true);
             } else if (path === 'target') {
-                let tgt = this._event_target(elem, evt);
+                let tgt = this.event_target(elem, evt);
                 path = tgt.path + tgt.query;
             }
             let target;
@@ -806,7 +920,7 @@ var ts = (function (exports, $) {
                     target = this.parse_target(target);
                 }
             } else {
-                target = this._event_target(elem, evt);
+                target = this.event_target(elem, evt);
             }
             let action = this._attr_val_or_default(
                 elem,
@@ -837,6 +951,17 @@ var ts = (function (exports, $) {
                 overlay_css: overlay_css
             });
         }
+        _has_attr(elem, name) {
+            let attr = elem.attr(name);
+            return attr !== undefined && attr !== false;
+        }
+        _attr_val_or_default(elem, name, fallback) {
+            if (this._has_attr(elem, name)) {
+                return elem.attr(name);
+            } else {
+                return elem.attr(fallback);
+            }
+        }
         action(opts) {
             opts.success = this._finish_ajax_action.bind(this);
             this._request_ajax_action(opts);
@@ -862,7 +987,7 @@ var ts = (function (exports, $) {
             }
         }
         _ajax_action(target, action) {
-            let actions = this._defs_to_array(action);
+            let actions = this.parse_definition(action);
             for (let i = 0; i < actions.length; i++) {
                 let defs = actions[i].split(':');
                 this.action({
@@ -899,14 +1024,8 @@ var ts = (function (exports, $) {
             evt.ajaxdata = data;
             return evt;
         }
-        _event_target(elem, event) {
-            if (event.ajaxtarget) {
-                return event.ajaxtarget;
-            }
-            return this.parse_target(elem.attr('ajax:target'));
-        }
         _ajax_event(target, event) {
-            let defs = this._defs_to_array(event);
+            let defs = this.parse_definition(event);
             for (let i = 0; i < defs.length; i++) {
                 let def = defs[i];
                 def = def.split(':');
@@ -991,34 +1110,6 @@ var ts = (function (exports, $) {
                 css: css
             });
         }
-        message(message, flavor='') {
-            deprecate('ts.ajax.message', 'ts.show_message', '1.0');
-            show_message({message: message, flavor: flavor});
-        }
-        info(message) {
-            deprecate('ts.ajax.info', 'ts.show_info', '1.0');
-            show_info(message);
-        }
-        warning(message) {
-            deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
-            show_warning(message);
-        }
-        error(message) {
-            deprecate('ts.ajax.error', 'ts.show_error', '1.0');
-            show_error(message);
-        }
-        dialog(opts, callback) {
-            deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
-            show_dialog({
-                message: opts.message,
-                on_confirm: function() {
-                    callback(opts);
-                }
-            });
-        }
-        bind_dispatcher(node, evts) {
-            $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
-        }
         prepare_ajax_form(form) {
             if (!this._afr) {
                 compile_template(this, `
@@ -1054,11 +1145,6 @@ var ts = (function (exports, $) {
                 } catch (err) {
                     console.log(err);
                 }
-            }
-        }
-        _set_default_opt(opts, name, val) {
-            if (!opts[name]) {
-                opts[name] = val;
             }
         }
         _fiddle(payload, selector, mode) {
@@ -1111,62 +1197,6 @@ var ts = (function (exports, $) {
                 }
             }
         }
-        _dispatch_handle(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            let elem = $(event.currentTarget),
-                opts = {
-                    elem: elem,
-                    event: event
-                };
-            if (elem.attr('ajax:confirm')) {
-                opts.message = elem.attr('ajax:confirm');
-                show_dialog(opts, this._dispatch.bind(this));
-            } else {
-                this._dispatch(opts);
-            }
-        }
-        _dispatch(opts) {
-            let elem = opts.elem,
-                event = opts.event;
-            if (elem.attr('ajax:action')) {
-                this._ajax_action(
-                    this._event_target(elem, event),
-                    elem.attr('ajax:action')
-                );
-            }
-            if (elem.attr('ajax:event')) {
-                this._ajax_event(
-                    elem.attr('ajax:target'),
-                    elem.attr('ajax:event')
-                );
-            }
-            if (elem.attr('ajax:overlay')) {
-                this._ajax_overlay(
-                    this._event_target(elem, event),
-                    elem.attr('ajax:overlay'),
-                    elem.attr('ajax:overlay-css')
-                );
-            }
-            if (elem.attr('ajax:path')) {
-                this._ajax_path(elem, event);
-            }
-        }
-        _has_attr(elem, name) {
-            let attr = elem.attr(name);
-            return attr !== undefined && attr !== false;
-        }
-        _attr_val_or_default(elem, name, fallback) {
-            if (this._has_attr(elem, name)) {
-                return elem.attr(name);
-            } else {
-                return elem.attr(fallback);
-            }
-        }
-        _defs_to_array(str) {
-            let arr = str.replace(/\s+/g, ' ').split(' ');
-            return arr;
-        }
     }
     let ajax = new Ajax();
     class AjaxParser extends Parser {
@@ -1181,7 +1211,7 @@ var ts = (function (exports, $) {
                 attrs['ajax:event'] ||
                 attrs['ajax:overlay'])) {
                 let evts = attrs['ajax:bind'];
-                this.ajax.bind_dispatcher(node, evts);
+                this.ajax.dispatcher.bind(node, evts);
             }
             if (attrs['ajax:form']) {
                 this.ajax.prepare_ajax_form(node);
@@ -1211,7 +1241,15 @@ var ts = (function (exports, $) {
     });
 
     exports.Ajax = Ajax;
+    exports.AjaxAction = AjaxAction;
+    exports.AjaxDeprecated = AjaxDeprecated;
+    exports.AjaxDispatcher = AjaxDispatcher;
+    exports.AjaxEvent = AjaxEvent;
+    exports.AjaxForm = AjaxForm;
+    exports.AjaxMixin = AjaxMixin;
+    exports.AjaxOverlay = AjaxOverlay;
     exports.AjaxParser = AjaxParser;
+    exports.AjaxPath = AjaxPath;
     exports.AjaxSpinner = AjaxSpinner;
     exports.AttrProperty = AttrProperty;
     exports.BoundProperty = BoundProperty;
@@ -1244,6 +1282,7 @@ var ts = (function (exports, $) {
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
     exports.parse_url = parse_url;
+    exports.set_default = set_default;
     exports.set_svg_attrs = set_svg_attrs;
     exports.show_dialog = show_dialog;
     exports.show_error = show_error;

@@ -20,6 +20,7 @@ import {
     set_default,
     uuid4
 } from './utils.js';
+import {Events} from './events.js';
 
 export class AjaxSpinner {
 
@@ -116,6 +117,85 @@ export class AjaxMixin {
     }
 }
 
+export class AjaxPath {
+}
+
+export class AjaxAction {
+}
+
+export class AjaxEvent {
+}
+
+export class AjaxOverlay {
+}
+
+export class AjaxForm {
+}
+
+export class AjaxDispatcher extends Events {
+
+    constructor(ajax) {
+        super();
+        this._ajax = ajax;
+    }
+
+    bind(node, evts) {
+        $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
+    }
+
+    dispatch_handle(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        let elem = $(evt.currentTarget),
+            opts = {
+                elem: elem,
+                event: evt
+            };
+        if (elem.attr('ajax:confirm')) {
+            show_dialog({
+                message: elem.attr('ajax:confirm'),
+                on_confirm: function(inst) {
+                    this.dispatch(opts);
+                }.bind(this)
+            });
+        } else {
+            this.dispatch(opts);
+        }
+    }
+
+    dispatch(opts) {
+        console.log('### dispatch');
+        let elem = opts.elem,
+            event = opts.event;
+        if (elem.attr('ajax:action')) {
+            this.trigger('on_action', opts);
+            this._ajax._ajax_action(
+                this._ajax.event_target(elem, event),
+                elem.attr('ajax:action')
+            );
+        }
+        if (elem.attr('ajax:event')) {
+            this.trigger('on_event', opts);
+            this._ajax._ajax_event(
+                elem.attr('ajax:target'),
+                elem.attr('ajax:event')
+            );
+        }
+        if (elem.attr('ajax:overlay')) {
+            this.trigger('on_overlay', opts);
+            this._ajax._ajax_overlay(
+                this._ajax.event_target(elem, event),
+                elem.attr('ajax:overlay'),
+                elem.attr('ajax:overlay-css')
+            );
+        }
+        if (elem.attr('ajax:path')) {
+            this.trigger('on_path', opts);
+            this._ajax._ajax_path(elem, event);
+        }
+    }
+}
+
 /**
  * Collection of deprecated ajax singleton functions.
  */
@@ -199,24 +279,6 @@ export class AjaxDeprecated extends AjaxMixin {
     }
 }
 
-export class AjaxPath {
-}
-
-export class AjaxAction {
-}
-
-export class AjaxEvent {
-}
-
-export class AjaxOverlay {
-}
-
-export class AjaxForm {
-}
-
-export class AjaxDispatcher {
-}
-
 /**
  * Ajax singleton.
  */
@@ -236,6 +298,8 @@ export class Ajax extends AjaxDeprecated {
         this.binders = {};
         // Ajax spinner.
         this.spinner = new AjaxSpinner();
+        // Ajax dispatcher
+        this.dispatcher = new AjaxDispatcher(this); // XXX: remove this
         // Ajax form response iframe
         this._afr = null;
         // Browser history handling
@@ -819,10 +883,6 @@ export class Ajax extends AjaxDeprecated {
         });
     }
 
-    bind_dispatcher(node, evts) {
-        $(node).off(evts).on(evts, this._dispatch_handle.bind(this));
-    }
-
     // prepare form desired to be an ajax form
     prepare_ajax_form(form) {
         if (!this._afr) {
@@ -916,49 +976,6 @@ export class Ajax extends AjaxDeprecated {
             }
         }
     }
-
-    _dispatch_handle(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        let elem = $(event.currentTarget),
-            opts = {
-                elem: elem,
-                event: event
-            };
-        if (elem.attr('ajax:confirm')) {
-            opts.message = elem.attr('ajax:confirm');
-            show_dialog(opts, this._dispatch.bind(this));
-        } else {
-            this._dispatch(opts);
-        }
-    }
-
-    _dispatch(opts) {
-        let elem = opts.elem,
-            event = opts.event;
-        if (elem.attr('ajax:action')) {
-            this._ajax_action(
-                this.event_target(elem, event),
-                elem.attr('ajax:action')
-            );
-        }
-        if (elem.attr('ajax:event')) {
-            this._ajax_event(
-                elem.attr('ajax:target'),
-                elem.attr('ajax:event')
-            );
-        }
-        if (elem.attr('ajax:overlay')) {
-            this._ajax_overlay(
-                this.event_target(elem, event),
-                elem.attr('ajax:overlay'),
-                elem.attr('ajax:overlay-css')
-            );
-        }
-        if (elem.attr('ajax:path')) {
-            this._ajax_path(elem, event);
-        }
-    }
 }
 
 let ajax = new Ajax();
@@ -978,7 +995,7 @@ export class AjaxParser extends Parser {
             attrs['ajax:event'] ||
             attrs['ajax:overlay'])) {
             let evts = attrs['ajax:bind'];
-            this.ajax.bind_dispatcher(node, evts);
+            this.ajax.dispatcher.bind(node, evts);
         }
         if (attrs['ajax:form']) {
             this.ajax.prepare_ajax_form(node);

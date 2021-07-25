@@ -2,6 +2,7 @@ import $ from 'jquery';
 import {
     ajax,
     Ajax,
+    AjaxDispatcher,
     AjaxParser,
     AjaxSpinner,
     parse_ajax
@@ -58,9 +59,15 @@ QUnit.module('treibstoff.ajax', hooks => {
     });
 
     QUnit.test('Test AjaxParser', assert => {
-        class TestAjax extends Ajax {
-            bind_dispatcher(node, evts) {
+        class TestAjaxDispatcher extends AjaxDispatcher {
+            bind(node, evts) {
                 assert.step('bind_dispatcher(): ' + evts);
+            }
+        }
+        class TestAjax extends Ajax {
+            constructor() {
+                super();
+                this.dispatcher = new TestAjaxDispatcher();
             }
             prepare_ajax_form(form) {
                 assert.step('prepare_ajax_form()');
