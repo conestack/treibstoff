@@ -455,13 +455,19 @@ Overlays can be closed by setting special value ``CLOSE`` at
 JavaScript API
 --------------
 
-.. js:autoclass:: Ajax
+.. js:autoclass:: AjaxMixin
 
-    .. js:autofunction:: register
+    .. js:autofunction:: parse_target
 
     |
 
-    .. js:autofunction:: parse_target
+    .. js:autofunction:: event_target
+
+|
+
+.. js:autoclass:: Ajax
+
+    .. js:autofunction:: register
 
     |
 

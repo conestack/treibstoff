@@ -57,6 +57,9 @@ export class AjaxSpinner {
     }
 }
 
+/**
+ * Mixin class for ajax operations.
+ */
 export class AjaxMixin {
 
     /**
@@ -80,6 +83,22 @@ export class AjaxMixin {
             path: target ? parse_path(target) : undefined,
             query: target ? parse_query(target, true) : undefined
         };
+    }
+
+    /**
+     * Get ajax target for event.
+     *
+     * Lookup ``ajaxtarget`` on event, fall back to ``ajax:target`` attribute
+     * on elem.
+     *
+     * @param {$} elem - jQuery wrapped DOM element.
+     * @param {$.Event} evt - jQuery event.
+     */
+    event_target(elem, evt) {
+        if (evt.ajaxtarget) {
+            return evt.ajaxtarget;
+        }
+        return this.parse_target(elem.attr('ajax:target'));
     }
 }
 
@@ -426,7 +445,7 @@ export class Ajax extends AjaxDeprecated {
             let href = elem.attr('href');
             path = parse_path(href, true);
         } else if (path === 'target') {
-            let tgt = this._event_target(elem, evt);
+            let tgt = this.event_target(elem, evt);
             path = tgt.path + tgt.query;
         }
         let target;
@@ -436,7 +455,7 @@ export class Ajax extends AjaxDeprecated {
                 target = this.parse_target(target);
             }
         } else {
-            target = this._event_target(elem, evt);
+            target = this.event_target(elem, evt);
         }
         let action = this._attr_val_or_default(
             elem,
@@ -606,15 +625,6 @@ export class Ajax extends AjaxDeprecated {
         }
         evt.ajaxdata = data;
         return evt;
-    }
-
-    _event_target(elem, event) {
-        // Return ajax target. lookup ``ajaxtarget`` on event, fall back to
-        // ``ajax:target`` attribute on elem.
-        if (event.ajaxtarget) {
-            return event.ajaxtarget;
-        }
-        return this.parse_target(elem.attr('ajax:target'));
     }
 
     _ajax_event(target, event) {
@@ -907,7 +917,7 @@ export class Ajax extends AjaxDeprecated {
             event = opts.event;
         if (elem.attr('ajax:action')) {
             this._ajax_action(
-                this._event_target(elem, event),
+                this.event_target(elem, event),
                 elem.attr('ajax:action')
             );
         }
@@ -919,7 +929,7 @@ export class Ajax extends AjaxDeprecated {
         }
         if (elem.attr('ajax:overlay')) {
             this._ajax_overlay(
-                this._event_target(elem, event),
+                this.event_target(elem, event),
                 elem.attr('ajax:overlay'),
                 elem.attr('ajax:overlay-css')
             );
