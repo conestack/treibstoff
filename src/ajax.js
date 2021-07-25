@@ -226,7 +226,7 @@ export class Ajax {
                 this.win.location.pathname = this.default_403;
                 return;
             }
-            this.error(`<strong>${status}</strong>${error}`);
+            show_error(`<strong>${status}</strong>${error}`);
         }.bind(this));
 
         let wrapped_success = function(data, status, request) {
@@ -435,7 +435,7 @@ export class Ajax {
 
     _finish_ajax_action(data) {
         if (!data) {
-            this.error('Empty response');
+            show_error('Empty response');
             this.spinner.hide();
         } else {
             this._fiddle(data.payload, data.selector, data.mode);
@@ -865,7 +865,7 @@ export class Ajax {
             };
         if (elem.attr('ajax:confirm')) {
             opts.message = elem.attr('ajax:confirm');
-            this.dialog(opts, this._dispatch.bind(this));
+            show_dialog(opts, this._dispatch.bind(this));
         } else {
             this._dispatch(opts);
         }
