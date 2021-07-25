@@ -58,6 +58,29 @@ export class AjaxSpinner {
 }
 
 export class AjaxMixin {
+
+    /**
+     * Parse URL, query and path from URL string::
+     *
+     *     >> ts.ajax.parse_target('http://tld.com/some/path?param=value');
+     *     -> {
+     *         url: 'http://tld.com/some/path',
+     *         params: { param: 'value' },
+     *         path: '/some/path',
+     *         query: '?param=value'
+     *     }
+     *
+     * @param {string} target - URL string to parse.
+     * @returns {Object} Containing ``url``, ``params``, ``path`` and ``query``.
+     */
+    parse_target(target) {
+        return {
+            url: target ? parse_url(target) : undefined,
+            params: target ? parse_query(target) : {},
+            path: target ? parse_path(target) : undefined,
+            query: target ? parse_query(target, true) : undefined
+        };
+    }
 }
 
 /**
@@ -218,29 +241,6 @@ export class Ajax extends AjaxDeprecated {
         if (instant) {
             func();
         }
-    }
-
-    /**
-     * Parse URL, query and path from URL string::
-     *
-     *     >> ts.ajax.parse_target('http://tld.com/some/path?param=value');
-     *     -> {
-     *         url: 'http://tld.com/some/path',
-     *         params: { param: 'value' },
-     *         path: '/some/path',
-     *         query: '?param=value'
-     *     }
-     *
-     * @param {string} target - URL string to parse.
-     * @returns {Object} Containing ``url``, ``params``, ``path`` and ``query``.
-     */
-    parse_target(target) {
-        return {
-            url: target ? parse_url(target) : undefined,
-            params: target ? parse_query(target) : {},
-            path: target ? parse_path(target) : undefined,
-            query: target ? parse_query(target, true) : undefined
-        };
     }
 
     /**
