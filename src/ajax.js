@@ -17,6 +17,7 @@ import {
     parse_path,
     parse_query,
     parse_url,
+    set_default,
     uuid4
 } from './utils.js';
 
@@ -323,12 +324,12 @@ export class Ajax extends AjaxDeprecated {
                 opts.params[key] = params_[key];
             }
         } else {
-            this._set_default_opt(opts, 'params', {});
+            set_default(opts, 'params', {});
         }
-        this._set_default_opt(opts, 'type', 'html');
-        this._set_default_opt(opts, 'method', 'GET');
-        this._set_default_opt(opts, 'cache', false);
-        this._set_default_opt(opts, 'error', function(request, status, error) {
+        set_default(opts, 'type', 'html');
+        set_default(opts, 'method', 'GET');
+        set_default(opts, 'cache', false);
+        set_default(opts, 'error', function(request, status, error) {
             if (parseInt(status, 10) === 403) {
                 this.win.location.hash = '';
                 this.win.location.pathname = this.default_403;
@@ -408,8 +409,8 @@ export class Ajax extends AjaxDeprecated {
             return;
         }
         let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
-        this._set_default_opt(opts, 'target', this.win.location.origin + path);
-        this._set_default_opt(opts, 'replace', false);
+        set_default(opts, 'target', this.win.location.origin + path);
+        set_default(opts, 'replace', false);
         let replace = opts.replace;
         // delete options which should not end up in state
         delete opts.path;
@@ -848,12 +849,6 @@ export class Ajax extends AjaxDeprecated {
             } catch (err) {
                 console.log(err);
             }
-        }
-    }
-
-    _set_default_opt(opts, name, val) {
-        if (!opts[name]) {
-            opts[name] = val;
         }
     }
 
