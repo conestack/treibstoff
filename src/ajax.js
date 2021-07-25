@@ -86,6 +86,19 @@ export class AjaxMixin {
     }
 
     /**
+     * Parse ajax operation definition from string into array.
+     *
+     * XXX: Fails if spaces in selector. Fix.
+     *
+     * @param {string} value - Definition string to parse.
+     * @returns {Array} Containing operation definitions.
+     */
+    parse_definition(value) {
+        let arr = value.replace(/\s+/g, ' ').split(' ');
+        return arr;
+    }
+
+    /**
      * Get ajax target for event.
      *
      * Lookup ``ajaxtarget`` on event, fall back to ``ajax:target`` attribute
@@ -93,6 +106,7 @@ export class AjaxMixin {
      *
      * @param {$} elem - jQuery wrapped DOM element.
      * @param {$.Event} evt - jQuery event.
+     * @returns {Object} Target for event.
      */
     event_target(elem, evt) {
         if (evt.ajaxtarget) {
@@ -539,7 +553,7 @@ export class Ajax extends AjaxDeprecated {
     }
 
     _ajax_action(target, action) {
-        let actions = this._defs_to_array(action);
+        let actions = this.parse_definition(action);
         for (let i = 0; i < actions.length; i++) {
             let defs = actions[i].split(':');
             this.action({
@@ -628,7 +642,7 @@ export class Ajax extends AjaxDeprecated {
     }
 
     _ajax_event(target, event) {
-        let defs = this._defs_to_array(event);
+        let defs = this.parse_definition(event);
         for (let i = 0; i < defs.length; i++) {
             let def = defs[i];
             def = def.split(':');
@@ -950,12 +964,6 @@ export class Ajax extends AjaxDeprecated {
         } else {
             return elem.attr(fallback);
         }
-    }
-
-    _defs_to_array(str) {
-        // XXX: if space in selector when receiving def str, this will fail
-        let arr = str.replace(/\s+/g, ' ').split(' ');
-        return arr;
     }
 }
 

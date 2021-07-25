@@ -461,6 +461,10 @@ JavaScript API
 
     |
 
+    .. js:autofunction:: parse_definition
+
+    |
+
     .. js:autofunction:: event_target
 
 |
