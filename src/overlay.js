@@ -88,6 +88,78 @@ export class Message extends Overlay {
     }
 }
 
+/**
+ * Display overlay message::
+ *
+ *     ts.show_message({
+ *         title: 'Message title',
+ *         message: 'Message text',
+ *         flavor: 'info'
+ *     });
+ *
+ * @param {Object} opts - Message options.
+ * @param {string} opts.title - Optional message title to display in overlay
+ * header.
+ * @param {string} opts.message - Message to display in overlay content.
+ * @param {string} opts.flavor - Optional message flavor. Either ``info``,
+ * ``warning`` or ``error``.
+ */
+export function show_message(opts) {
+    new Message({
+        title: opts.title,
+        message: opts.message,
+        flavor: opts.flavor,
+        on_open: function(inst) {
+            $('button', inst.elem).first().focus();
+        }
+    }).open();
+}
+
+/**
+ * Display info message in overlay::
+ *
+ *     ts.show_info('Info text');
+ *
+ * @param {string} message - Info message to display in overlay content.
+ */
+export function show_info(message) {
+    show_message({
+        title: 'Info',
+        message: message,
+        flavor: 'info'
+    });
+}
+
+/**
+ * Display warning message in overlay::
+ *
+ *     ts.show_warning('Warning text');
+ *
+ * @param {string} message - Warning message to display in overlay content.
+ */
+export function show_warning(message) {
+    show_message({
+        title: 'Warning',
+        message: message,
+        flavor: 'warning'
+    });
+}
+
+/**
+ * Display error message in overlay::
+ *
+ *     ts.show_error('Error text');
+ *
+ * @param {string} message - Error message to display in overlay content.
+ */
+export function show_error(message) {
+    show_message({
+        title: 'Error',
+        message: message,
+        flavor: 'error'
+    });
+}
+
 export class Dialog extends Message {
 
     constructor(opts) {
@@ -108,4 +180,28 @@ export class Dialog extends Message {
         this.close();
         this.trigger('on_confirm');
     }
+}
+
+/**
+ * Display confirmation dialog::
+ *
+ *     ts.show_dialog({
+ *         title: 'Dialog title',
+ *         message: 'Are you sure?',
+ *         on_confirm: function(inst) {
+ *             // inst is the dialog instance.
+ *         }
+ *     });
+ *
+ * @param {Object} opts - Dialog options.
+ * @param {string} opts.title - Optional dialog title to display in overlay header.
+ * @param {string} opts.message - Dialog message to display in overlay content.
+ * @param {function} opts.on_confirm - Callback if dialog gets confirmed.
+ */
+export function show_dialog(opts) {
+    new Dialog({
+        title: opts.title,
+        message: opts.message,
+        on_confirm: opts.on_confirm
+    }).open();
 }
