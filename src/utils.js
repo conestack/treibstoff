@@ -3,9 +3,9 @@ import $ from 'jquery';
 /**
  * Log deprecation warning.
  *
- * @param dep - Deprecated object
- * @param sub - Substitute for deprecated object.
- * @param as_of - Version when deprecated object gets removed.
+ * @param {string} dep - Deprecated object
+ * @param {string} sub - Substitute for deprecated object.
+ * @param {string} as_of - Version when deprecated object gets removed.
  */
 export function deprecate(dep, sub, as_of) {
     console.log(
@@ -15,10 +15,28 @@ export function deprecate(dep, sub, as_of) {
     );
 }
 
+/**
+ * Generate uuid 4.
+ *
+ * @returns {string} UUID string.
+ */
 export function uuid4() {
     return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
     );
+}
+
+/**
+ * Set property on object with default value if property is undefined.
+ *
+ * @param {Object} ob - Object to set property if undefined.
+ * @param {string} name - Property name.
+ * @param {*} val - Default value to set for property.
+ */
+export function set_default(ob, name, val) {
+    if (ob[name] === undefined) {
+        ob[name] = val;
+    }
 }
 
 export function json_merge(base, other) {

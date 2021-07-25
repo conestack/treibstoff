@@ -90,12 +90,11 @@ export class AjaxMixin {
      *
      * XXX: Fails if spaces in selector. Fix.
      *
-     * @param {string} value - Definition string to parse.
+     * @param {string} val - Definition string to parse.
      * @returns {Array} Containing operation definitions.
      */
-    parse_definition(value) {
-        let arr = value.replace(/\s+/g, ' ').split(' ');
-        return arr;
+    parse_definition(val) {
+        return val.replace(/\s+/g, ' ').split(' ');
     }
 
     /**

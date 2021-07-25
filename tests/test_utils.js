@@ -1,10 +1,12 @@
 import {
     create_svg_elem,
+    deprecate,
     json_merge,
     parse_path,
     parse_query,
     parse_svg,
     parse_url,
+    set_default,
     set_svg_attrs,
     svg_ns,
     uuid4
@@ -12,10 +14,30 @@ import {
 
 QUnit.module('treibstoff.utils', hooks => {
 
+    QUnit.test('Test deprecate', assert => {
+        let log_origin = console.log;
+        console.log = function(msg) {
+            assert.step(msg);
+        }
+        deprecate('deprecated_func', 'new_func', '1.0');
+        console.log = log_origin;
+        let expected = 'DEPRECATED: deprecated_func is deprecated and will ' +
+                       'be removed as of 1.0. Use new_func instead.';
+        assert.verifySteps([expected]);
+    });
+
     QUnit.test('Test uuid4', assert => {
         let uuid = uuid4();
         assert.strictEqual(uuid.length, 36, 'UUID length is 36');
         assert.strictEqual(typeof(uuid.length), 'number', 'typeof uuid4() is number');
+    });
+
+    QUnit.test('Test set_default', assert => {
+        let ob = {foo: 'foo'};
+        set_default(ob, 'foo', 'bar');
+        assert.deepEqual(ob.foo, 'foo');
+        set_default(ob, 'bar', 'bar');
+        assert.deepEqual(ob.bar, 'bar');
     });
 
     QUnit.test('Test parse_url', assert => {
