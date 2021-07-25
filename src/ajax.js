@@ -368,6 +368,42 @@ export class Ajax {
         this._request_ajax_action(opts);
     }
 
+    _request_ajax_action(opts) {
+        opts.params['ajax.action'] = opts.name;
+        opts.params['ajax.mode'] = opts.mode;
+        opts.params['ajax.selector'] = opts.selector;
+        this.request({
+            url: parse_url(opts.url) + '/ajaxaction',
+            type: 'json',
+            params: opts.params,
+            success: opts.success
+        });
+    }
+
+    _finish_ajax_action(data) {
+        if (!data) {
+            this.error('Empty response');
+            this.spinner.hide();
+        } else {
+            this._fiddle(data.payload, data.selector, data.mode);
+            this._continuation(data.continuation);
+        }
+    }
+
+    _ajax_action(target, action) {
+        let actions = this._defs_to_array(action);
+        for (let i = 0; i < actions.length; i++) {
+            let defs = actions[i].split(':');
+            this.action({
+                name: defs[0],
+                selector: defs[1],
+                mode: defs[2],
+                url: target.url,
+                params: target.params
+            });
+        }
+    }
+
     trigger(name, selector, target, data) {
         let create_event = function() {
             let evt = $.Event(name);
@@ -711,42 +747,6 @@ export class Ajax {
             let def = defs[i];
             def = def.split(':');
             this.trigger(def[0], def[1], target);
-        }
-    }
-
-    _request_ajax_action(opts) {
-        opts.params['ajax.action'] = opts.name;
-        opts.params['ajax.mode'] = opts.mode;
-        opts.params['ajax.selector'] = opts.selector;
-        this.request({
-            url: parse_url(opts.url) + '/ajaxaction',
-            type: 'json',
-            params: opts.params,
-            success: opts.success
-        });
-    }
-
-    _finish_ajax_action(data) {
-        if (!data) {
-            this.error('Empty response');
-            this.spinner.hide();
-        } else {
-            this._fiddle(data.payload, data.selector, data.mode);
-            this._continuation(data.continuation);
-        }
-    }
-
-    _ajax_action(target, action) {
-        let actions = this._defs_to_array(action);
-        for (let i = 0; i < actions.length; i++) {
-            let defs = actions[i].split(':');
-            this.action({
-                name: defs[0],
-                selector: defs[1],
-                mode: defs[2],
-                url: target.url,
-                params: target.params
-            });
         }
     }
 
