@@ -1168,9 +1168,10 @@ var ts = (function (exports, $) {
         }
     }
     class AjaxParser extends Parser {
-        constructor(ajax) {
+        constructor(opts) {
             super();
-            this.ajax = ajax;
+            this.dispatcher = opts.dispatcher;
+            this.form = opts.form;
         }
         parse(node) {
             let attrs = this.node_attrs(node);
@@ -1179,14 +1180,14 @@ var ts = (function (exports, $) {
                 attrs['ajax:event'] ||
                 attrs['ajax:overlay'])) {
                 let evts = attrs['ajax:bind'];
-                this.ajax.dispatcher.bind(node, evts);
+                this.dispatcher.bind(node, evts);
             }
             if (attrs['ajax:form']) {
-                this.ajax.form.bind(node);
+                this.form.bind(node);
             }
             if (node.tagName.toLowerCase() === 'form') {
                 if (node.className.split(' ').includes('ajax')) {
-                    this.ajax.form.bind(node);
+                    this.form.bind(node);
                 }
             }
         }
@@ -1231,7 +1232,10 @@ var ts = (function (exports, $) {
             }
         }
         bind(context) {
-            let parser = new AjaxParser(ajax);
+            let parser = new AjaxParser({
+                dispatcher: this.dispatcher,
+                form: this._form
+            });
             context.each(function() {
                 parser.walk(this);
             });
