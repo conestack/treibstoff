@@ -69,7 +69,9 @@ export class AjaxRequest {
 
     constructor(opts) {
         this.spinner = opts.spinner;
+        set_default(opts, 'win', window);
         this.win = opts.win;
+        set_default(opts, 'default_403', '/login');
         this.default_403 = opts.default_403;
     }
 
@@ -142,7 +144,7 @@ export class AjaxRequest {
 
         let wrapped_error = function(request, status, error) {
             if (request.status === 0) {
-                spinner.hide(true);
+                this.spinner.hide(true);
                 return;
             }
             status = request.status || status;
@@ -923,7 +925,7 @@ export class AjaxHandle extends AjaxUtil {
                 if (op.flavor) {
                     show_message({
                         message: op.payload,
-                        flavor: op.flavor,
+                        flavor: op.flavor
                     });
                 // no overlay message, set message payload at selector
                 } else {

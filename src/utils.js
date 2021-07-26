@@ -32,11 +32,13 @@ export function uuid4() {
  * @param {Object} ob - Object to set property if undefined.
  * @param {string} name - Property name.
  * @param {*} val - Default value to set for property.
+ * @returns {*} Actual value.
  */
 export function set_default(ob, name, val) {
     if (ob[name] === undefined) {
         ob[name] = val;
     }
+    return ob[name];
 }
 
 export function json_merge(base, other) {

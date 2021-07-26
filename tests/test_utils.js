@@ -34,10 +34,8 @@ QUnit.module('treibstoff.utils', hooks => {
 
     QUnit.test('Test set_default', assert => {
         let ob = {foo: 'foo'};
-        set_default(ob, 'foo', 'bar');
-        assert.deepEqual(ob.foo, 'foo');
-        set_default(ob, 'bar', 'bar');
-        assert.deepEqual(ob.bar, 'bar');
+        assert.deepEqual(set_default(ob, 'foo', 'bar'), 'foo');
+        assert.deepEqual(set_default(ob, 'bar', 'bar'), 'bar');
     });
 
     QUnit.test('Test parse_url', assert => {
