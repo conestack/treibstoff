@@ -124,7 +124,8 @@ export class AjaxPath extends AjaxMixin {
         this.win = win;
         this.dispatcher = dispatcher;
         $(win).on('popstate', this.history_handle.bind(this));
-        dispatcher.on('on_path', this.on_path.bind(this));
+        this._on_path_handle = this.on_path.bind(this)
+        dispatcher.on('on_path', this._on_path_handle);
     }
 
     execute(opts) {
@@ -241,18 +242,20 @@ export class AjaxPath extends AjaxMixin {
 
 export class AjaxAction extends AjaxMixin {
 
-    constructor(ajax) {
+    constructor(ajax, dispatcher) {
         super();
         this.ajax = ajax;
-        ajax.dispatcher.on('on_action', this.on_action.bind(this));
+        this.dispatcher = dispatcher;
+        this._on_action_handle = this.on_action.bind(this)
+        ajax.dispatcher.on('on_action', this._on_action.handle);
     }
 
     execute(opts) {
-        opts.success = this.finish_ajax_action.bind(this);
-        this.request_ajax_action(opts);
+        opts.success = this.complete.bind(this);
+        this.request(opts);
     }
 
-    request_ajax_action(opts) {
+    request(opts) {
         opts.params['ajax.action'] = opts.name;
         opts.params['ajax.mode'] = opts.mode;
         opts.params['ajax.selector'] = opts.selector;
@@ -264,13 +267,13 @@ export class AjaxAction extends AjaxMixin {
         });
     }
 
-    finish_ajax_action(data) {
+    complete(data) {
         if (!data) {
             show_error('Empty response');
             this.ajax.spinner.hide();
         } else {
-            this.ajax._fiddle(data.payload, data.selector, data.mode);
-            this.ajax._continuation(data.continuation);
+            this.ajax.update_dom(data.payload, data.selector, data.mode);
+            this.ajax.handle_next(data.continuation);
         }
     }
 
@@ -295,7 +298,9 @@ export class AjaxEvent extends AjaxMixin {
 
     constructor(dispatcher) {
         super();
-        dispatcher.on('on_event', this.on_event.bind(this));
+        this.dispatcher = dispatcher;
+        this._on_event_handle = this.on_event.bind(this)
+        dispatcher.on('on_event', this._on_event_handle);
     }
 
     execute(opts) {
@@ -332,7 +337,101 @@ export class AjaxEvent extends AjaxMixin {
     }
 }
 
-export class AjaxOverlay {
+export class AjaxOverlay extends AjaxAction {
+
+    constructor(ajax, dispatcher) {
+        super(ajax, dispatcher);
+        this.overlay_content_sel = '.modal-body';
+        this._on_overlay_handle = this.on_overlay.bind(this)
+        dispatcher.on('on_overlay', this._on_overlay_handle);
+        dispatcher.off('on_action', this._on_action_handle);
+    }
+
+    execute(opts) {
+        let ol;
+        if (opts.close) {
+            ol = get_overlay(opts.uid);
+            if (ol) {
+                ol.close();
+            }
+            return;
+        }
+        let url, params;
+        if (opts.target) {
+            let target = opts.target;
+            if (!target.url) {
+                target = this.parse_target(target);
+            }
+            url = target.url;
+            params = target.params;
+        } else {
+            url = opts.url;
+            params = opts.params;
+        }
+        let uid = opts.uid ? opts.uid : uuid4();
+        params['ajax.overlay-uid'] = uid;
+        ol = new Overlay({
+            uid: uid,
+            css: opts.css,
+            title: opts.title,
+            on_close: opts.on_close
+        })
+        this.request({
+            name: opts.action,
+            selector: `#${uid} ${this.overlay_content_sel}`,
+            mode: 'inner',
+            url: url,
+            params: params,
+            success: function(data) {
+                // overlays are not displayed if no payload is received.
+                if (!data.payload) {
+                    // ensure continuation gets performed anyway.
+                    this.complete(data);
+                    return;
+                }
+                ol.open();
+                this.complete(data);
+            }.bind(this)
+        });
+        return ol;
+    }
+
+    on_overlay(inst, opts) {
+        let target = opts.target,
+            overlay = opts.overlay,
+            css = opts.css;
+        // XXX: close needs an overlay uid
+        if (overlay.indexOf('CLOSE') > -1) {
+            let opts = {};
+            if (overlay.indexOf(':') > -1) {
+                opts.selector = overlay.split(':')[1];
+            }
+            opts.close = true;
+            this.execute(opts);
+            return;
+        }
+        if (overlay.indexOf(':') > -1) {
+            let defs = overlay.split(':');
+            let opts = {
+                action: defs[0],
+                selector: defs[1],
+                url: target.url,
+                params: target.params,
+                css: css
+            };
+            if (defs.length === 3) {
+                opts.content_selector = defs[2];
+            }
+            this.execute(opts);
+            return;
+        }
+        this.execute({
+            action: overlay,
+            url: target.url,
+            params: target.params,
+            css: css
+        });
+    }
 }
 
 export class AjaxForm {
@@ -498,26 +597,15 @@ export class Ajax extends AjaxDeprecated {
 
     constructor(win=window) {
         super();
-        // Custom window can be injected for tests.
         this.win = win;
-        // By default, we redirect to the login page on 403 error.
-        // That we assume at '/login'.
         this.default_403 = '/login';
-        // Overlay defaults
-        this.overlay_content_sel = '.modal-body';
-        // Object for hooking up JS binding functions after ajax calls
-        // B/C, use ``ajax.register`` instead of direct extension.
         this.binders = {};
-        // Ajax spinner.
         this.spinner = new AjaxSpinner();
-        // Ajax dispatcher
         this.dispatcher = new AjaxDispatcher();
-        // Ajax path
         this._path = new AjaxPath(this.win, this.dispatcher);
-        // Ajax action
-        this._action = new AjaxAction(this);
-        // Ajax event
+        this._action = new AjaxAction(this, this.dispatcher);
         this._event = new AjaxEvent(this.dispatcher);
+        this._overlay = new AjaxOverlay(this._action, this.dispatcher);
         // Ajax form response iframe
         this._afr = null;
     }
@@ -850,86 +938,7 @@ export class Ajax extends AjaxDeprecated {
      * @returns {Overlay} Overlay instance.
      */
     overlay(opts) {
-        let ol;
-        if (opts.close) {
-            ol = get_overlay(opts.uid);
-            if (ol) {
-                ol.close();
-            }
-            return;
-        }
-        let url, params;
-        if (opts.target) {
-            let target = opts.target;
-            if (!target.url) {
-                target = this.parse_target(target);
-            }
-            url = target.url;
-            params = target.params;
-        } else {
-            url = opts.url;
-            params = opts.params;
-        }
-        let uid = opts.uid ? opts.uid : uuid4();
-        params['ajax.overlay-uid'] = uid;
-        ol = new Overlay({
-            uid: uid,
-            css: opts.css,
-            title: opts.title,
-            on_close: opts.on_close
-        })
-        this._request_ajax_action({
-            name: opts.action,
-            selector: `#${uid} ${this.overlay_content_sel}`,
-            mode: 'inner',
-            url: url,
-            params: params,
-            success: function(data) {
-                // overlays are not displayed if no payload is received.
-                if (!data.payload) {
-                    // ensure continuation gets performed anyway.
-                    this._finish_ajax_action(data);
-                    return;
-                }
-                ol.open();
-                this._finish_ajax_action(data);
-            }.bind(this)
-        });
-        return ol;
-    }
-
-    _ajax_overlay(target, overlay, css) {
-        // XXX: close needs an overlay uid
-        if (overlay.indexOf('CLOSE') > -1) {
-            let opts = {};
-            if (overlay.indexOf(':') > -1) {
-                opts.selector = overlay.split(':')[1];
-            }
-            opts.close = true;
-            this.overlay(opts);
-            return;
-        }
-        if (overlay.indexOf(':') > -1) {
-            let defs = overlay.split(':');
-            let opts = {
-                action: defs[0],
-                selector: defs[1],
-                url: target.url,
-                params: target.params,
-                css: css
-            };
-            if (defs.length === 3) {
-                opts.content_selector = defs[2];
-            }
-            this.overlay(opts);
-            return;
-        }
-        this.overlay({
-            action: overlay,
-            url: target.url,
-            params: target.params,
-            css: css
-        });
+        this._overlay.execute(opts);
     }
 
     // prepare form desired to be an ajax form
@@ -959,9 +968,9 @@ export class Ajax extends AjaxDeprecated {
             this._afr = null;
         }
         if (opts.payload) {
-            this._fiddle(opts.payload, opts.selector, opts.mode);
+            this.update_dom(opts.payload, opts.selector, opts.mode);
         }
-        this._continuation(opts.next);
+        this.handle_next(opts.next);
     }
 
     call_binders(context) {
@@ -974,7 +983,7 @@ export class Ajax extends AjaxDeprecated {
         }
     }
 
-    _fiddle(payload, selector, mode) {
+    update_dom(payload, selector, mode) {
         if (mode === 'replace') {
             $(selector).replaceWith(payload);
             let context = $(selector);
@@ -989,7 +998,7 @@ export class Ajax extends AjaxDeprecated {
         }
     }
 
-    _continuation(next) {
+    handle_next(next) {
         if (!next) { return; }
         this.spinner.hide();
         for (let cdef of next) {
@@ -1003,7 +1012,7 @@ export class Ajax extends AjaxDeprecated {
                 cdef.params = target.params;
                 this.action(cdef);
             } else if (type === 'event') {
-                this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
+                this.trigger(cdef);
             } else if (type === 'overlay') {
                 let target = this.parse_target(cdef.target);
                 cdef.url = target.url;
@@ -1015,6 +1024,7 @@ export class Ajax extends AjaxDeprecated {
                     if (flavors.indexOf(cdef.flavor) === -1) {
                         throw "Continuation definition.flavor unknown";
                     }
+                    // XXX: message, warning, info, error -> use show_*
                     this[cdef.flavor](cdef.payload);
                 } else {
                     if (!cdef.selector) {
