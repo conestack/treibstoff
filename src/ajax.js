@@ -274,7 +274,7 @@ export class AjaxAction extends AjaxMixin {
         }
     }
 
-    on_action(target, action) {
+    on_action(inst, opts) {
         let target = opts.target,
             action = opts.action,
             actions = this.parse_definition(action);
@@ -291,7 +291,45 @@ export class AjaxAction extends AjaxMixin {
     }
 }
 
-export class AjaxEvent {
+export class AjaxEvent extends AjaxMixin {
+
+    constructor(dispatcher) {
+        super();
+        dispatcher.on('on_event', this.on_event.bind(this));
+    }
+
+    execute(opts) {
+        let create_event = this.create_event.bind(this);
+        $(opts.selector).each(function() {
+            $(this).trigger(create_event(opts.name, opts.target, opts.data));
+        });
+    }
+
+    create_event(name, target, data) {
+        let evt = $.Event(name);
+        if (target.url) {
+            evt.ajaxtarget = target;
+        } else {
+            evt.ajaxtarget = this.parse_target(target);
+        }
+        evt.ajaxdata = data;
+        return evt;
+    }
+
+    on_event(inst, opts) {
+        let target = opts.target,
+            event = opts.event,
+            defs = this.parse_definition(event);
+        for (let i = 0; i < defs.length; i++) {
+            let def = defs[i];
+            def = def.split(':');
+            this.execute({
+                name: def[0],
+                selector: def[1],
+                target: target
+            });
+        }
+    }
 }
 
 export class AjaxOverlay {
@@ -478,6 +516,8 @@ export class Ajax extends AjaxDeprecated {
         this._path = new AjaxPath(this.win, this.dispatcher);
         // Ajax action
         this._action = new AjaxAction(this);
+        // Ajax event
+        this._event = new AjaxEvent(this.dispatcher);
         // Ajax form response iframe
         this._afr = null;
     }
@@ -733,30 +773,7 @@ export class Ajax extends AjaxDeprecated {
                 data: arguments[3]
             }
         }
-        let create_event = this._create_event.bind(this);
-        $(opts.selector).each(function() {
-            $(this).trigger(create_event(opts.name, opts.target, opts.data));
-        });
-    }
-
-    _create_event(name, target, data) {
-        let evt = $.Event(name);
-        if (target.url) {
-            evt.ajaxtarget = target;
-        } else {
-            evt.ajaxtarget = this.parse_target(target);
-        }
-        evt.ajaxdata = data;
-        return evt;
-    }
-
-    _ajax_event(target, event) {
-        let defs = this.parse_definition(event);
-        for (let i = 0; i < defs.length; i++) {
-            let def = defs[i];
-            def = def.split(':');
-            this.trigger(def[0], def[1], target);
-        }
+        this._event.execute(opts);
     }
 
     /**
