@@ -22,6 +22,9 @@ import {
 } from './utils.js';
 import {Events} from './events.js';
 
+/**
+ * Ajax spinner.
+ */
 export class AjaxSpinner {
 
     constructor() {
@@ -117,6 +120,9 @@ export class AjaxMixin extends Events {
     }
 }
 
+/**
+ * Handle for ajax path operation.
+ */
 export class AjaxPath extends AjaxMixin {
 
     constructor(ajax) {
@@ -240,12 +246,17 @@ export class AjaxPath extends AjaxMixin {
     }
 }
 
+/**
+ * Handle for ajax action operation.
+ */
 export class AjaxAction extends AjaxMixin {
 
     constructor(ajax) {
         super();
         this.ajax = ajax;
         this.dispatcher = ajax.dispatcher;
+        this.handle = ajax.handle;
+        this.spinner = ajax.spinner;
         this._on_action_handle = this.on_action.bind(this)
         ajax.dispatcher.on('on_action', this._on_action.handle);
     }
@@ -270,10 +281,10 @@ export class AjaxAction extends AjaxMixin {
     complete(data) {
         if (!data) {
             show_error('Empty response');
-            this.ajax.spinner.hide();
+            this.spinner.hide();
         } else {
-            this.ajax.update_dom(data.payload, data.selector, data.mode);
-            this.ajax.handle_next(data.continuation);
+            this.handle.update(data);
+            this.handle.next(data.continuation);
         }
     }
 
@@ -294,6 +305,9 @@ export class AjaxAction extends AjaxMixin {
     }
 }
 
+/**
+ * Handle for ajax event operation.
+ */
 export class AjaxEvent extends AjaxMixin {
 
     constructor(ajax) {
@@ -337,6 +351,9 @@ export class AjaxEvent extends AjaxMixin {
     }
 }
 
+/**
+ * Handle for ajax overlay operation.
+ */
 export class AjaxOverlay extends AjaxAction {
 
     constructor(ajax) {
@@ -434,11 +451,15 @@ export class AjaxOverlay extends AjaxAction {
     }
 }
 
+/**
+ * Handle for ajax form operation.
+ */
 export class AjaxForm {
 
     constructor(ajax, spinner) {
         this.ajax = ajax;
-        this.spinner = spinner;
+        this.handle = ajax.handle;
+        this.spinner = ajax.spinner;
         this.afr = null;
     }
 
@@ -467,12 +488,15 @@ export class AjaxForm {
             this.afr = null;
         }
         if (opts.payload) {
-            this.ajax.update_dom(opts.payload, opts.selector, opts.mode);
+            this.handle.update(opts);
         }
-        this.ajax.handle_next(opts.next);
+        this.handle.next(opts.next);
     }
 }
 
+/**
+ * DOM event handle for elements defining Ajax operations.
+ */
 export class AjaxDispatcher extends AjaxMixin {
 
     bind(node, evts) {
@@ -543,6 +567,74 @@ export class AjaxDispatcher extends AjaxMixin {
     }
 }
 
+/**
+ * Handle for DOM manipulation and Ajax continuation operations.
+ */
+export class AjaxHandle extends AjaxMixin {
+
+    constructor(ajax) {
+        this.ajax = ajax;
+        this.spinner = ajax.spinner;
+    }
+
+    update(opts) {
+        let payload = opts.payload,
+            selector = opts.selector,
+            mode = opts.mode,
+            context;
+        if (mode === 'replace') {
+            $(selector).replaceWith(payload);
+            context = $(selector);
+            if (context.length) {
+                this.ajax.bind(context.parent());
+            } else {
+                this.ajax.bind($(document));
+            }
+        } else if (mode === 'inner') {
+            context = $(selector);
+            context.html(payload);
+            this.ajax.bind(context);
+        }
+    }
+
+    next(operations) {
+        if (!operations) {
+            return;
+        }
+        this.spinner.hide();
+        for (let op of operations) {
+            let type = op.type;
+            delete op.type;
+            if (type === 'path') {
+                this.ajax.path(op);
+            } else if (type === 'action') {
+                let target = this.parse_target(op.target);
+                op.url = target.url;
+                op.params = target.params;
+                this.ajax.action(op);
+            } else if (type === 'event') {
+                this.ajax.trigger(op);
+            } else if (type === 'overlay') {
+                let target = this.parse_target(op.target);
+                op.url = target.url;
+                op.params = target.params;
+                this.ajax.overlay(op);
+            } else if (type === 'message') {
+                // if flavor given, message rendered in overlay
+                if (op.flavor) {
+                    show_message({
+                        message: op.payload,
+                        flavor: op.flavor,
+                    });
+                // no overlay message, set message payload at selector
+                } else {
+                    $(op.selector).html(op.payload);
+                }
+            }
+        }
+    }
+}
+
 export class AjaxParser extends Parser {
 
     constructor(ajax) {
@@ -582,6 +674,7 @@ export class Ajax extends AjaxMixin {
         this.binders = {};
         this.spinner = new AjaxSpinner();
         this.dispatcher = new AjaxDispatcher();
+        this.handle = new AjaxHandle(this);
         this._path = new AjaxPath(this);
         this._action = new AjaxAction(this);
         this._event = new AjaxEvent(this);
@@ -938,59 +1031,6 @@ export class Ajax extends AjaxMixin {
     // called by iframe response
     form(opts) {
         this.form.render(opts);
-    }
-
-    update_dom(payload, selector, mode) {
-        if (mode === 'replace') {
-            $(selector).replaceWith(payload);
-            let context = $(selector);
-            if (context.length) {
-                context.parent().tsajax();
-            } else {
-                $(document).tsajax();
-            }
-        } else if (mode === 'inner') {
-            $(selector).html(payload);
-            $(selector).tsajax();
-        }
-    }
-
-    handle_next(next) {
-        if (!next) { return; }
-        this.spinner.hide();
-        for (let cdef of next) {
-            let type = cdef.type;
-            delete cdef.type;
-            if (type === 'path') {
-                this.path(cdef);
-            } else if (type === 'action') {
-                let target = this.parse_target(cdef.target);
-                cdef.url = target.url;
-                cdef.params = target.params;
-                this.action(cdef);
-            } else if (type === 'event') {
-                this.trigger(cdef);
-            } else if (type === 'overlay') {
-                let target = this.parse_target(cdef.target);
-                cdef.url = target.url;
-                cdef.params = target.params;
-                this.overlay(cdef);
-            } else if (type === 'message') {
-                if (cdef.flavor) {
-                    let flavors = ['message', 'info', 'warning', 'error'];
-                    if (flavors.indexOf(cdef.flavor) === -1) {
-                        throw "Continuation definition.flavor unknown";
-                    }
-                    // XXX: message, warning, info, error -> use show_*
-                    this[cdef.flavor](cdef.payload);
-                } else {
-                    if (!cdef.selector) {
-                        throw "Continuation definition.selector expected";
-                    }
-                    $(cdef.selector).html(cdef.payload);
-                }
-            }
-        }
     }
 
     /**

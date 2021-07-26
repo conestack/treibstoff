@@ -33,8 +33,7 @@ Following attributes are available:
     by treibstoff or browser event).
 
 **ajax:confirm="Do you really want to do this?"**
-    Show confirmation dialog before actually executing actions and trigger
-    events.
+    Show confirmation dialog before executing ajax operations.
 
 **ajax:overlay="actionname"**
     Renders ajax action to overlay.
@@ -84,7 +83,7 @@ Following attributes are available:
 
     Bdajax appends the request parameter ``popstate=1`` to requests made by
     history browsing. This is useful to determine on server side whether to
-    skip setting ajax path as continuation definition.
+    skip setting ajax path as continuation operation.
 
 **ajax:path-target="http://fubar.org?param=value"**
     Can be used in conjunction with ``ajax:path``.
@@ -210,7 +209,7 @@ parameters. Three additional arguments are passed:
 **ajax.selector**
     given selector must be added to response. Can be ``NONE``, which means
     that no markup is manipulated after action (useful i.e. in combination with
-    continuation actions and events).
+    continuation operations).
 
 **ajax.mode**
     the manipulation mode. Either ``inner`` or ``replace`` or ``NONE``
@@ -225,7 +224,7 @@ response in the format as follows:
         mode: 'inner',             // the passed mode
         selector: '#someid',       // the passed selector
         payload: '<div>...</div>', // markup rendered by the action
-        continuation: [{}],        // continuation definitions
+        continuation: [{}],        // continuation operations
     }
 
 
@@ -234,7 +233,7 @@ Action continuation
 
 The ``continuation`` value defines an array of tasks which should
 be performed after an ajax action returns. Available continuation
-definitions are described below.
+operations are described below.
 
 **actions**:
 
@@ -378,11 +377,10 @@ In this example on click event ``contextchanged`` is triggered, action
 ``rendersomething`` is performed and URL path ``/some/path`` get set.
 
 
-Confirm actions
----------------
+Confirm operations
+------------------
 
-Bdajax can display a confirmation dialog before performing actions or trigger
-events:
+Bdajax can display a confirmation dialog before performing ajax operations:
 
 .. code-block:: html
 
@@ -577,11 +575,18 @@ triggered to. The server side must return a response like so on form submit:
             child = child.nextSibling;
         }
 
-        // call ``ts.ajax.render_ajax_form`` on parent frame (remember, we're in
-        // iframe here). ``render_ajax_form`` expects the result DOM element,
-        // the ``selector``, the fiddle ``mode`` and ``continuation``
-        // definitions which may be used to perform ajax continuation.
-        parent.ts.ajax.render_ajax_form(child, '#my_ajax_form', 'replace', {});
+        // call ``ts.ajax.form`` on parent frame (remember, we're in
+        // iframe here). ``form`` expects the result DOM element,
+        // the ``selector``, the fiddle ``mode``, ``continuation`` operations
+        // which may be used to perform ajax continuation. and a flag wgether
+        // an error occured while form processing.
+        parent.ts.ajax.form({
+            payload: child,
+            selector: '#my_ajax_form',
+            mode: 'replace',
+            next: {},
+            error: false
+        });
 
     </script>
 
