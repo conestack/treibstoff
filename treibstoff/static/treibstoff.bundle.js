@@ -1197,26 +1197,26 @@ var ts = (function (exports, $) {
             super();
             this.win = win;
             this.binders = {};
-            let spinner = this.spinner = new AjaxSpinner();
-            let dispatcher = this.dispatcher = new AjaxDispatcher();
-            let handle = this.handle = new AjaxHandle(this);
-            let request = this._request = new AjaxRequest({
-                spinner: spinner,
+            let spn = this.spinner = new AjaxSpinner();
+            let dsp = this.dispatcher = new AjaxDispatcher();
+            let req = this._request = new AjaxRequest({
+                spinner: spn,
                 win: win,
                 default_403: '/login'
             });
-            this._path = new AjaxPath({dispatcher: dispatcher, win: win});
+            this._path = new AjaxPath({dispatcher: dsp, win: win});
+            this._event = new AjaxEvent({dispatcher: dsp});
+            let hdl = new AjaxHandle(this);
             let action_opts = {
-                dispatcher: dispatcher,
+                dispatcher: dsp,
                 win: win,
-                handle: handle,
-                spinner: spinner,
-                request: request
+                handle: hdl,
+                spinner: spn,
+                request: req
             };
             this._action = new AjaxAction(action_opts);
-            this._event = new AjaxEvent({dispatcher: dispatcher});
             this._overlay = new AjaxOverlay(action_opts);
-            this._form = new AjaxForm({handle: handle, spinner: spinner});
+            this._form = new AjaxForm({handle: hdl, spinner: spn});
         }
         register(func, instant) {
             let func_name = 'binder_' + uuid4();
