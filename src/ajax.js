@@ -119,10 +119,10 @@ export class AjaxMixin extends Events {
 
 export class AjaxPath extends AjaxMixin {
 
-    constructor(win, dispatcher) {
+    constructor(ajax) {
         super();
-        this.win = win;
-        this.dispatcher = dispatcher;
+        this.win = ajax.win;
+        this.dispatcher = ajax.dispatcher;
         $(win).on('popstate', this.history_handle.bind(this));
         this._on_path_handle = this.on_path.bind(this)
         dispatcher.on('on_path', this._on_path_handle);
@@ -242,10 +242,10 @@ export class AjaxPath extends AjaxMixin {
 
 export class AjaxAction extends AjaxMixin {
 
-    constructor(ajax, dispatcher) {
+    constructor(ajax) {
         super();
         this.ajax = ajax;
-        this.dispatcher = dispatcher;
+        this.dispatcher = ajax.dispatcher;
         this._on_action_handle = this.on_action.bind(this)
         ajax.dispatcher.on('on_action', this._on_action.handle);
     }
@@ -296,9 +296,9 @@ export class AjaxAction extends AjaxMixin {
 
 export class AjaxEvent extends AjaxMixin {
 
-    constructor(dispatcher) {
+    constructor(ajax) {
         super();
-        this.dispatcher = dispatcher;
+        this.dispatcher = ajax.dispatcher;
         this._on_event_handle = this.on_event.bind(this)
         dispatcher.on('on_event', this._on_event_handle);
     }
@@ -339,12 +339,12 @@ export class AjaxEvent extends AjaxMixin {
 
 export class AjaxOverlay extends AjaxAction {
 
-    constructor(ajax, dispatcher) {
-        super(ajax, dispatcher);
-        this.overlay_content_sel = '.modal-body';
+    constructor(ajax) {
+        super(ajax);
+        this.dispatcher.off('on_action', this._on_action_handle);
         this._on_overlay_handle = this.on_overlay.bind(this)
-        dispatcher.on('on_overlay', this._on_overlay_handle);
-        dispatcher.off('on_action', this._on_action_handle);
+        this.dispatcher.on('on_overlay', this._on_overlay_handle);
+        this.overlay_content_sel = '.modal-body';
     }
 
     execute(opts) {
@@ -543,6 +543,33 @@ export class AjaxDispatcher extends AjaxMixin {
     }
 }
 
+export class AjaxParser extends Parser {
+
+    constructor(ajax) {
+        super();
+        this.ajax = ajax;
+    }
+
+    parse(node) {
+        let attrs = this.node_attrs(node);
+        if (attrs['ajax:bind'] && (
+            attrs['ajax:action'] ||
+            attrs['ajax:event'] ||
+            attrs['ajax:overlay'])) {
+            let evts = attrs['ajax:bind'];
+            this.ajax.dispatcher.bind(node, evts);
+        }
+        if (attrs['ajax:form']) {
+            this.ajax.form.bind(node);
+        }
+        if (node.tagName.toLowerCase() === 'form') {
+            if (node.className.split(' ').includes('ajax')) {
+                this.ajax.form.bind(node);
+            }
+        }
+    }
+}
+
 /**
  * Collection of deprecated ajax singleton functions.
  */
@@ -638,10 +665,10 @@ export class Ajax extends AjaxDeprecated {
         this.binders = {};
         this.spinner = new AjaxSpinner();
         this.dispatcher = new AjaxDispatcher();
-        this._path = new AjaxPath(this.win, this.dispatcher);
-        this._action = new AjaxAction(this, this.dispatcher);
-        this._event = new AjaxEvent(this.dispatcher);
-        this._overlay = new AjaxOverlay(this._action, this.dispatcher);
+        this._path = new AjaxPath(this);
+        this._action = new AjaxAction(this);
+        this._event = new AjaxEvent(this);
+        this._overlay = new AjaxOverlay(this);
         this.form = new AjaxForm();
     }
 
@@ -976,12 +1003,11 @@ export class Ajax extends AjaxDeprecated {
         this._overlay.execute(opts);
     }
 
-    // called by iframe response
-    render_ajax_form(opts) {
-        this.form.render();
-    }
-
-    call_binders(context) {
+    bind(context) {
+        let parser = new AjaxParser(ajax);
+        context.each(function() {
+            parser.walk(this);
+        });
         for (let func_name in this.binders) {
             try {
                 this.binders[func_name](context)
@@ -989,6 +1015,12 @@ export class Ajax extends AjaxDeprecated {
                 console.log(err);
             }
         }
+        return context;
+    }
+
+    // called by iframe response
+    render_ajax_form(opts) {
+        this.form.render(opts);
     }
 
     update_dom(payload, selector, mode) {
@@ -1048,42 +1080,7 @@ export class Ajax extends AjaxDeprecated {
 let ajax = new Ajax();
 export {ajax};
 
-export class AjaxParser extends Parser {
-
-    constructor(ajax) {
-        super();
-        this.ajax = ajax;
-    }
-
-    parse(node) {
-        let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind'] && (
-            attrs['ajax:action'] ||
-            attrs['ajax:event'] ||
-            attrs['ajax:overlay'])) {
-            let evts = attrs['ajax:bind'];
-            this.ajax.dispatcher.bind(node, evts);
-        }
-        if (attrs['ajax:form']) {
-            this.ajax.form.bind(node);
-        }
-        if (node.tagName.toLowerCase() === 'form') {
-            if (node.className.split(' ').includes('ajax')) {
-                this.ajax.form.bind(node);
-            }
-        }
-    }
-}
-
-export function parse_ajax(context) {
-    let parser = new AjaxParser(ajax);
-    context.each(function() {
-        parser.walk(this);
-    });
-    ajax.call_binders(context);
-    return context;
-}
-
 $.fn.tsajax = function() {
-    parse_ajax(this);
+    ajax.bind(this);
+    return this;
 }
