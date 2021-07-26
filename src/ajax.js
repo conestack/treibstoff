@@ -571,92 +571,9 @@ export class AjaxParser extends Parser {
 }
 
 /**
- * Collection of deprecated ajax singleton functions.
- */
-export class AjaxDeprecated extends AjaxMixin {
-
-    /**
-     * This function is deprecated. Use ``ts.parse_url`` instead.
-     */
-    parseurl(url) {
-        deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
-        return parse_url(url);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.parse_query`` instead.
-     */
-    parsequery(url, as_string) {
-        deprecate('ts.ajax.parsequery', 'ts.parse_query', '1.0');
-        return parse_query(url, as_string);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.parse_path`` instead.
-     */
-    parsepath(url, include_query) {
-        deprecate('ts.ajax.parsepath', 'ts.parse_path', '1.0');
-        return parse_path(url, include_query);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.ajax.parse_target`` instead.
-     */
-    parsetarget(target) {
-        deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
-        return this.parse_target(target);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.show_message`` instead.
-     */
-    message(message, flavor='') {
-        deprecate('ts.ajax.message', 'ts.show_message', '1.0');
-        show_message({message: message, flavor: flavor});
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.show_info`` instead.
-     */
-    info(message) {
-        deprecate('ts.ajax.info', 'ts.show_info', '1.0');
-        show_info(message);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.show_warning`` instead.
-     */
-    warning(message) {
-        deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
-        show_warning(message);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.show_error`` instead.
-     */
-    error(message) {
-        deprecate('ts.ajax.error', 'ts.show_error', '1.0');
-        show_error(message);
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.show_dialog`` instead.
-     */
-    dialog(opts, callback) {
-        deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
-        show_dialog({
-            message: opts.message,
-            on_confirm: function() {
-                callback(opts);
-            }
-        });
-    }
-}
-
-/**
  * Ajax singleton.
  */
-export class Ajax extends AjaxDeprecated {
+export class Ajax extends AjaxMixin {
 
     constructor(win=window) {
         super();
@@ -704,6 +621,21 @@ export class Ajax extends AjaxDeprecated {
         if (instant) {
             func();
         }
+    }
+
+    bind(context) {
+        let parser = new AjaxParser(ajax);
+        context.each(function() {
+            parser.walk(this);
+        });
+        for (let func_name in this.binders) {
+            try {
+                this.binders[func_name](context)
+            } catch (err) {
+                console.log(err);
+            }
+        }
+        return context;
     }
 
     /**
@@ -1003,23 +935,8 @@ export class Ajax extends AjaxDeprecated {
         this._overlay.execute(opts);
     }
 
-    bind(context) {
-        let parser = new AjaxParser(ajax);
-        context.each(function() {
-            parser.walk(this);
-        });
-        for (let func_name in this.binders) {
-            try {
-                this.binders[func_name](context)
-            } catch (err) {
-                console.log(err);
-            }
-        }
-        return context;
-    }
-
     // called by iframe response
-    render_ajax_form(opts) {
+    form(opts) {
         this.form.render(opts);
     }
 
@@ -1074,6 +991,91 @@ export class Ajax extends AjaxDeprecated {
                 }
             }
         }
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.parse_url`` instead.
+     */
+    parseurl(url) {
+        deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
+        return parse_url(url);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.parse_query`` instead.
+     */
+    parsequery(url, as_string) {
+        deprecate('ts.ajax.parsequery', 'ts.parse_query', '1.0');
+        return parse_query(url, as_string);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.parse_path`` instead.
+     */
+    parsepath(url, include_query) {
+        deprecate('ts.ajax.parsepath', 'ts.parse_path', '1.0');
+        return parse_path(url, include_query);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.ajax.parse_target`` instead.
+     */
+    parsetarget(target) {
+        deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
+        return this.parse_target(target);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_message`` instead.
+     */
+    message(message, flavor='') {
+        deprecate('ts.ajax.message', 'ts.show_message', '1.0');
+        show_message({message: message, flavor: flavor});
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_info`` instead.
+     */
+    info(message) {
+        deprecate('ts.ajax.info', 'ts.show_info', '1.0');
+        show_info(message);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_warning`` instead.
+     */
+    warning(message) {
+        deprecate('ts.ajax.warning', 'ts.show_warning', '1.0');
+        show_warning(message);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_error`` instead.
+     */
+    error(message) {
+        deprecate('ts.ajax.error', 'ts.show_error', '1.0');
+        show_error(message);
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.show_dialog`` instead.
+     */
+    dialog(opts, callback) {
+        deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
+        show_dialog({
+            message: opts.message,
+            on_confirm: function() {
+                callback(opts);
+            }
+        });
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.ajax.form`` instead.
+     */
+    render_ajax_form(opts) {
+        deprecate('ts.ajax.render_ajax_form', 'ts.ajax.form', '1.0');
+        this.form(opts);
     }
 }
 
