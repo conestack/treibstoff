@@ -654,7 +654,61 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxMixin {
+    class AjaxRequest {
+        constructor(opts) {
+            this.spinner = opts.spinner;
+            this.win = opts.win;
+            this.default_403 = opts.default_403;
+        }
+        execute(opts) {
+            if (opts.url.indexOf('?') !== -1) {
+                let params_ = opts.params;
+                opts.params = parse_query(opts.url);
+                opts.url = parse_url(opts.url);
+                for (let key in params_) {
+                    opts.params[key] = params_[key];
+                }
+            } else {
+                set_default(opts, 'params', {});
+            }
+            set_default(opts, 'type', 'html');
+            set_default(opts, 'method', 'GET');
+            set_default(opts, 'cache', false);
+            set_default(opts, 'error', function(request, status, error) {
+                if (parseInt(status, 10) === 403) {
+                    this.win.location.hash = '';
+                    this.win.location.pathname = this.default_403;
+                    return;
+                }
+                show_error(`<strong>${status}</strong>${error}`);
+            }.bind(this));
+            let wrapped_success = function(data, status, request) {
+                opts.success(data, status, request);
+                this.spinner.hide();
+            }.bind(this);
+            let wrapped_error = function(request, status, error) {
+                if (request.status === 0) {
+                    spinner.hide(true);
+                    return;
+                }
+                status = request.status || status;
+                error = request.statusText || error;
+                opts.error(request, status, error);
+                this.spinner.hide(true);
+            }.bind(this);
+            this.spinner.show();
+            $.ajax({
+                url: opts.url,
+                dataType: opts.type,
+                data: opts.params,
+                method: opts.method,
+                success: wrapped_success,
+                error: wrapped_error,
+                cache: opts.cache
+            });
+        }
+    }
+    class AjaxUtil extends Events {
         parse_target(target) {
             return {
                 url: target ? parse_url(target) : undefined,
@@ -673,12 +727,26 @@ var ts = (function (exports, $) {
             return this.parse_target(elem.attr('ajax:target'));
         }
     }
-    class AjaxPath extends AjaxMixin {
-        constructor(dispatcher, win) {
+    class AjaxOperation extends AjaxUtil {
+        constructor(opts) {
             super();
-            this.win = win;
-            dispatcher.on('on_path', this.on_path.bind(this));
-            $(win).on('popstate', this.history_handle.bind(this));
+            this.event = opts.event;
+            this.dispatcher = opts.dispatcher;
+            this.dispatcher.on(this.event, this.handle.bind(this));
+        }
+        execute(opts) {
+            throw 'Abstract AjaxOperation does not implement execute';
+        }
+        handle(inst, opts) {
+            throw 'Abstract AjaxOperation does not implement handle';
+        }
+    }
+    class AjaxPath extends AjaxOperation {
+        constructor(opts) {
+            opts.event = 'on_path';
+            super(opts);
+            this.win = opts.win;
+            $(this.win).on('popstate', this.state_handle.bind(this));
         }
         execute(opts) {
             let history = this.win.history;
@@ -697,7 +765,7 @@ var ts = (function (exports, $) {
                 history.pushState(opts, '', path);
             }
         }
-        history_handle(evt) {
+        state_handle(evt) {
             evt.preventDefault();
             let state = evt.originalEvent.state;
             if (!state) {
@@ -711,25 +779,29 @@ var ts = (function (exports, $) {
             }
             target.params.popstate = '1';
             if (state.action) {
-                this._ajax_action(target, state.action);
+                this.dispatcher.trigger('on_action', {
+                    target: target,
+                    action: state.action
+                });
             }
             if (state.event) {
-                this._ajax_event(target, state.event);
+                this.dispatcher.trigger('on_event', {
+                    target: target,
+                    event: state.event
+                });
             }
             if (state.overlay) {
-                this._ajax_overlay(
-                    target,
-                    state.overlay,
-                    state.overlay_css
-                );
+                this.dispatcher.trigger('on_overlay', {
+                    target: target,
+                    overlay: state.overlay,
+                    css: state.overlay_css
+                });
             }
             if (!state.action && !state.event && !state.overlay) {
                 this.win.location = target.url;
             }
         }
-        on_path(inst, opts) {
-            console.log('# on_path');
-            console.log(this);
+        handle(inst, opts) {
             let elem = opts.elem,
                 evt = opts.event,
                 path = elem.attr('ajax:path');
@@ -775,19 +847,214 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxAction {
+    class AjaxAction extends AjaxOperation {
+        constructor(opts) {
+            set_default(opts, 'event', 'on_action');
+            super(opts);
+            this.handle = opts.handle;
+            this.spinner = opts.spinner;
+            this._request = opts.request;
+        }
+        execute(opts) {
+            opts.success = this.complete.bind(this);
+            this.request(opts);
+        }
+        request(opts) {
+            opts.params['ajax.action'] = opts.name;
+            opts.params['ajax.mode'] = opts.mode;
+            opts.params['ajax.selector'] = opts.selector;
+            this._request.execute({
+                url: parse_url(opts.url) + '/ajaxaction',
+                type: 'json',
+                params: opts.params,
+                success: opts.success
+            });
+        }
+        complete(data) {
+            if (!data) {
+                show_error('Empty response');
+                this.spinner.hide();
+            } else {
+                this.handle.update(data);
+                this.handle.next(data.continuation);
+            }
+        }
+        handle(inst, opts) {
+            let target = opts.target,
+                action = opts.action,
+                actions = this.parse_definition(action);
+            for (let i = 0; i < actions.length; i++) {
+                let defs = actions[i].split(':');
+                this.execute({
+                    name: defs[0],
+                    selector: defs[1],
+                    mode: defs[2],
+                    url: target.url,
+                    params: target.params
+                });
+            }
+        }
     }
-    class AjaxEvent {
+    class AjaxEvent extends AjaxOperation {
+        constructor(opts) {
+            opts.event = 'on_event';
+            super(opts);
+        }
+        execute(opts) {
+            let create_event = this.create_event.bind(this);
+            $(opts.selector).each(function() {
+                $(this).trigger(create_event(opts.name, opts.target, opts.data));
+            });
+        }
+        create_event(name, target, data) {
+            let evt = $.Event(name);
+            if (target.url) {
+                evt.ajaxtarget = target;
+            } else {
+                evt.ajaxtarget = this.parse_target(target);
+            }
+            evt.ajaxdata = data;
+            return evt;
+        }
+        handle(inst, opts) {
+            let target = opts.target,
+                event = opts.event,
+                defs = this.parse_definition(event);
+            for (let i = 0; i < defs.length; i++) {
+                let def = defs[i];
+                def = def.split(':');
+                this.execute({
+                    name: def[0],
+                    selector: def[1],
+                    target: target
+                });
+            }
+        }
     }
-    class AjaxOverlay {
+    class AjaxOverlay extends AjaxAction {
+        constructor(opts) {
+            opts.event = 'on_overlay';
+            super(opts);
+            this.overlay_content_sel = '.modal-body';
+        }
+        execute(opts) {
+            let ol;
+            if (opts.close) {
+                ol = get_overlay(opts.uid);
+                if (ol) {
+                    ol.close();
+                }
+                return;
+            }
+            let url, params;
+            if (opts.target) {
+                let target = opts.target;
+                if (!target.url) {
+                    target = this.parse_target(target);
+                }
+                url = target.url;
+                params = target.params;
+            } else {
+                url = opts.url;
+                params = opts.params;
+            }
+            let uid = opts.uid ? opts.uid : uuid4();
+            params['ajax.overlay-uid'] = uid;
+            ol = new Overlay({
+                uid: uid,
+                css: opts.css,
+                title: opts.title,
+                on_close: opts.on_close
+            });
+            this.request({
+                name: opts.action,
+                selector: `#${uid} ${this.overlay_content_sel}`,
+                mode: 'inner',
+                url: url,
+                params: params,
+                success: function(data) {
+                    if (!data.payload) {
+                        this.complete(data);
+                        return;
+                    }
+                    ol.open();
+                    this.complete(data);
+                }.bind(this)
+            });
+            return ol;
+        }
+        handle(inst, opts) {
+            let target = opts.target,
+                overlay = opts.overlay,
+                css = opts.css;
+            if (overlay.indexOf('CLOSE') > -1) {
+                let opts = {};
+                if (overlay.indexOf(':') > -1) {
+                    opts.selector = overlay.split(':')[1];
+                }
+                opts.close = true;
+                this.execute(opts);
+                return;
+            }
+            if (overlay.indexOf(':') > -1) {
+                let defs = overlay.split(':');
+                let opts = {
+                    action: defs[0],
+                    selector: defs[1],
+                    url: target.url,
+                    params: target.params,
+                    css: css
+                };
+                if (defs.length === 3) {
+                    opts.content_selector = defs[2];
+                }
+                this.execute(opts);
+                return;
+            }
+            this.execute({
+                action: overlay,
+                url: target.url,
+                params: target.params,
+                css: css
+            });
+        }
     }
     class AjaxForm {
-    }
-    class AjaxDispatcher extends Events {
-        constructor(ajax) {
-            super();
-            this._ajax = ajax;
+        constructor(opts) {
+            this.handle = opts.handle;
+            this.spinner = opts.spinner;
+            this.afr = null;
         }
+        bind(form) {
+            if (!this.afr) {
+                compile_template(this, `
+              <iframe t-elem="afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
+            }
+            $(form)
+                .append('<input type="hidden" name="ajax" value="1" />')
+                .attr('target', 'ajaxformresponse')
+                .off()
+                .on('submit', function(event) {
+                    this.spinner.show();
+                }.bind(this));
+        }
+        render(opts) {
+            this.spinner.hide();
+            if (!opts.error) {
+                this.afr.remove();
+                this.afr = null;
+            }
+            if (opts.payload) {
+                this.handle.update(opts);
+            }
+            this.handle.next(opts.next);
+        }
+    }
+    class AjaxDispatcher extends AjaxUtil {
         bind(node, evts) {
             $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
         }
@@ -811,39 +1078,199 @@ var ts = (function (exports, $) {
             }
         }
         dispatch(opts) {
-            console.log('### dispatch');
             let elem = opts.elem,
                 event = opts.event;
             if (elem.attr('ajax:action')) {
-                this.trigger('on_action', opts);
-                this._ajax._ajax_action(
-                    this._ajax.event_target(elem, event),
-                    elem.attr('ajax:action')
-                );
+                this.trigger('on_action', {
+                    target: this.event_target(elem, event),
+                    action: elem.attr('ajax:action')
+                });
             }
             if (elem.attr('ajax:event')) {
-                this.trigger('on_event', opts);
-                this._ajax._ajax_event(
-                    elem.attr('ajax:target'),
-                    elem.attr('ajax:event')
-                );
+                this.trigger('on_event', {
+                    target: elem.attr('ajax:target'),
+                    event: elem.attr('ajax:event')
+                });
             }
             if (elem.attr('ajax:overlay')) {
-                this.trigger('on_overlay', opts);
-                this._ajax._ajax_overlay(
-                    this._ajax.event_target(elem, event),
-                    elem.attr('ajax:overlay'),
-                    elem.attr('ajax:overlay-css')
-                );
+                this.trigger('on_overlay', {
+                    target: this.event_target(elem, event),
+                    overlay: elem.attr('ajax:overlay'),
+                    css: elem.attr('ajax:overlay-css')
+                });
             }
             if (elem.attr('ajax:path')) {
-                console.log('# trigger on_path');
-                console.log(this);
-                this.trigger('on_path', opts);
+                this.trigger('on_path', {
+                    elem: elem,
+                    event: event
+                });
             }
         }
     }
-    class AjaxDeprecated extends AjaxMixin {
+    class AjaxHandle extends AjaxUtil {
+        constructor(ajax) {
+            super();
+            this.ajax = ajax;
+            this.spinner = ajax.spinner;
+        }
+        update(opts) {
+            let payload = opts.payload,
+                selector = opts.selector,
+                mode = opts.mode,
+                context;
+            if (mode === 'replace') {
+                $(selector).replaceWith(payload);
+                context = $(selector);
+                if (context.length) {
+                    this.ajax.bind(context.parent());
+                } else {
+                    this.ajax.bind($(document));
+                }
+            } else if (mode === 'inner') {
+                context = $(selector);
+                context.html(payload);
+                this.ajax.bind(context);
+            }
+        }
+        next(operations) {
+            if (!operations) {
+                return;
+            }
+            this.spinner.hide();
+            for (let op of operations) {
+                let type = op.type;
+                delete op.type;
+                if (type === 'path') {
+                    this.ajax.path(op);
+                } else if (type === 'action') {
+                    let target = this.parse_target(op.target);
+                    op.url = target.url;
+                    op.params = target.params;
+                    this.ajax.action(op);
+                } else if (type === 'event') {
+                    this.ajax.trigger(op);
+                } else if (type === 'overlay') {
+                    let target = this.parse_target(op.target);
+                    op.url = target.url;
+                    op.params = target.params;
+                    this.ajax.overlay(op);
+                } else if (type === 'message') {
+                    if (op.flavor) {
+                        show_message({
+                            message: op.payload,
+                            flavor: op.flavor,
+                        });
+                    } else {
+                        $(op.selector).html(op.payload);
+                    }
+                }
+            }
+        }
+    }
+    class AjaxParser extends Parser {
+        constructor(ajax) {
+            super();
+            this.ajax = ajax;
+        }
+        parse(node) {
+            let attrs = this.node_attrs(node);
+            if (attrs['ajax:bind'] && (
+                attrs['ajax:action'] ||
+                attrs['ajax:event'] ||
+                attrs['ajax:overlay'])) {
+                let evts = attrs['ajax:bind'];
+                this.ajax.dispatcher.bind(node, evts);
+            }
+            if (attrs['ajax:form']) {
+                this.ajax.form.bind(node);
+            }
+            if (node.tagName.toLowerCase() === 'form') {
+                if (node.className.split(' ').includes('ajax')) {
+                    this.ajax.form.bind(node);
+                }
+            }
+        }
+    }
+    class Ajax extends AjaxUtil {
+        constructor(win=window) {
+            super();
+            this.win = win;
+            this.binders = {};
+            let spinner = this.spinner = new AjaxSpinner();
+            let dispatcher = this.dispatcher = new AjaxDispatcher();
+            let handle = this.handle = new AjaxHandle(this);
+            let request = this._request = new AjaxRequest({
+                spinner: spinner,
+                win: win,
+                default_403: '/login'
+            });
+            this._path = new AjaxPath({dispatcher: dispatcher, win: win});
+            let action_opts = {
+                dispatcher: dispatcher,
+                win: win,
+                handle: handle,
+                spinner: spinner,
+                request: request
+            };
+            this._action = new AjaxAction(action_opts);
+            this._event = new AjaxEvent({dispatcher: dispatcher});
+            this._overlay = new AjaxOverlay(action_opts);
+            this._form = new AjaxForm({handle: handle, spinner: spinner});
+        }
+        register(func, instant) {
+            let func_name = 'binder_' + uuid4();
+            while (true) {
+                if (this.binders[func_name] === undefined) {
+                    break;
+                }
+                func_name = 'binder_' + uuid4();
+            }
+            this.binders[func_name] = func;
+            if (instant) {
+                func();
+            }
+        }
+        bind(context) {
+            let parser = new AjaxParser(ajax);
+            context.each(function() {
+                parser.walk(this);
+            });
+            for (let func_name in this.binders) {
+                try {
+                    this.binders[func_name](context);
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+            return context;
+        }
+        request(opts) {
+            this._request.execute(opts);
+        }
+        path(opts) {
+            this._path.execute(opts);
+        }
+        action(opts) {
+            this._action.execute(opts);
+        }
+        trigger(opts) {
+            if (arguments.length > 1) {
+                deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
+                opts = {
+                    name: arguments[0],
+                    selector: arguments[1],
+                    target: arguments[2],
+                    data: arguments[3]
+                };
+            }
+            this._event.execute(opts);
+        }
+        overlay(opts) {
+            this._overlay.execute(opts);
+        }
+        form(opts) {
+            this._form.render(opts);
+        }
         parseurl(url) {
             deprecate('ts.ajax.parseurl', 'ts.parse_url', '1.0');
             return parse_url(url);
@@ -885,353 +1312,15 @@ var ts = (function (exports, $) {
                 }
             });
         }
-    }
-    class Ajax extends AjaxDeprecated {
-        constructor(win=window) {
-            super();
-            this.win = win;
-            this.default_403 = '/login';
-            this.overlay_content_sel = '.modal-body';
-            this.binders = {};
-            this.spinner = new AjaxSpinner();
-            this.dispatcher = new AjaxDispatcher(this);
-            this._path = new AjaxPath(this.dispatcher, this.win);
-            this._afr = null;
-        }
-        register(func, instant) {
-            let func_name = 'binder_' + uuid4();
-            while (true) {
-                if (this.binders[func_name] === undefined) {
-                    break;
-                }
-                func_name = 'binder_' + uuid4();
-            }
-            this.binders[func_name] = func;
-            if (instant) {
-                func();
-            }
-        }
-        request(opts) {
-            if (opts.url.indexOf('?') !== -1) {
-                let params_ = opts.params;
-                opts.params = parse_query(opts.url);
-                opts.url = parse_url(opts.url);
-                for (let key in params_) {
-                    opts.params[key] = params_[key];
-                }
-            } else {
-                set_default(opts, 'params', {});
-            }
-            set_default(opts, 'type', 'html');
-            set_default(opts, 'method', 'GET');
-            set_default(opts, 'cache', false);
-            set_default(opts, 'error', function(request, status, error) {
-                if (parseInt(status, 10) === 403) {
-                    this.win.location.hash = '';
-                    this.win.location.pathname = this.default_403;
-                    return;
-                }
-                show_error(`<strong>${status}</strong>${error}`);
-            }.bind(this));
-            let wrapped_success = function(data, status, request) {
-                opts.success(data, status, request);
-                this.spinner.hide();
-            }.bind(this);
-            let wrapped_error = function(request, status, error) {
-                if (request.status === 0) {
-                    this.spinner.hide(true);
-                    return;
-                }
-                status = request.status || status;
-                error = request.statusText || error;
-                opts.error(request, status, error);
-                this.spinner.hide(true);
-            }.bind(this);
-            this.spinner.show();
-            $.ajax({
-                url: opts.url,
-                dataType: opts.type,
-                data: opts.params,
-                method: opts.method,
-                success: wrapped_success,
-                error: wrapped_error,
-                cache: opts.cache
-            });
-        }
-        path(opts) {
-            this._path.execute(opts);
-        }
-        action(opts) {
-            opts.success = this._finish_ajax_action.bind(this);
-            this._request_ajax_action(opts);
-        }
-        _request_ajax_action(opts) {
-            opts.params['ajax.action'] = opts.name;
-            opts.params['ajax.mode'] = opts.mode;
-            opts.params['ajax.selector'] = opts.selector;
-            this.request({
-                url: parse_url(opts.url) + '/ajaxaction',
-                type: 'json',
-                params: opts.params,
-                success: opts.success
-            });
-        }
-        _finish_ajax_action(data) {
-            if (!data) {
-                show_error('Empty response');
-                this.spinner.hide();
-            } else {
-                this._fiddle(data.payload, data.selector, data.mode);
-                this._continuation(data.continuation);
-            }
-        }
-        _ajax_action(target, action) {
-            let actions = this.parse_definition(action);
-            for (let i = 0; i < actions.length; i++) {
-                let defs = actions[i].split(':');
-                this.action({
-                    name: defs[0],
-                    selector: defs[1],
-                    mode: defs[2],
-                    url: target.url,
-                    params: target.params
-                });
-            }
-        }
-        trigger(opts) {
-            if (arguments.length > 1) {
-                deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
-                opts = {
-                    name: arguments[0],
-                    selector: arguments[1],
-                    target: arguments[2],
-                    data: arguments[3]
-                };
-            }
-            let create_event = this._create_event.bind(this);
-            $(opts.selector).each(function() {
-                $(this).trigger(create_event(opts.name, opts.target, opts.data));
-            });
-        }
-        _create_event(name, target, data) {
-            let evt = $.Event(name);
-            if (target.url) {
-                evt.ajaxtarget = target;
-            } else {
-                evt.ajaxtarget = this.parse_target(target);
-            }
-            evt.ajaxdata = data;
-            return evt;
-        }
-        _ajax_event(target, event) {
-            let defs = this.parse_definition(event);
-            for (let i = 0; i < defs.length; i++) {
-                let def = defs[i];
-                def = def.split(':');
-                this.trigger(def[0], def[1], target);
-            }
-        }
-        overlay(opts) {
-            let ol;
-            if (opts.close) {
-                ol = get_overlay(opts.uid);
-                if (ol) {
-                    ol.close();
-                }
-                return;
-            }
-            let url, params;
-            if (opts.target) {
-                let target = opts.target;
-                if (!target.url) {
-                    target = this.parse_target(target);
-                }
-                url = target.url;
-                params = target.params;
-            } else {
-                url = opts.url;
-                params = opts.params;
-            }
-            let uid = opts.uid ? opts.uid : uuid4();
-            params['ajax.overlay-uid'] = uid;
-            ol = new Overlay({
-                uid: uid,
-                css: opts.css,
-                title: opts.title,
-                on_close: opts.on_close
-            });
-            this._request_ajax_action({
-                name: opts.action,
-                selector: `#${uid} ${this.overlay_content_sel}`,
-                mode: 'inner',
-                url: url,
-                params: params,
-                success: function(data) {
-                    if (!data.payload) {
-                        this._finish_ajax_action(data);
-                        return;
-                    }
-                    ol.open();
-                    this._finish_ajax_action(data);
-                }.bind(this)
-            });
-            return ol;
-        }
-        _ajax_overlay(target, overlay, css) {
-            if (overlay.indexOf('CLOSE') > -1) {
-                let opts = {};
-                if (overlay.indexOf(':') > -1) {
-                    opts.selector = overlay.split(':')[1];
-                }
-                opts.close = true;
-                this.overlay(opts);
-                return;
-            }
-            if (overlay.indexOf(':') > -1) {
-                let defs = overlay.split(':');
-                let opts = {
-                    action: defs[0],
-                    selector: defs[1],
-                    url: target.url,
-                    params: target.params,
-                    css: css
-                };
-                if (defs.length === 3) {
-                    opts.content_selector = defs[2];
-                }
-                this.overlay(opts);
-                return;
-            }
-            this.overlay({
-                action: overlay,
-                url: target.url,
-                params: target.params,
-                css: css
-            });
-        }
-        prepare_ajax_form(form) {
-            if (!this._afr) {
-                compile_template(this, `
-              <iframe t-elem="_afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `, $('body'));
-            }
-            $(form)
-                .append('<input type="hidden" name="ajax" value="1" />')
-                .attr('target', 'ajaxformresponse')
-                .off()
-                .on('submit', function(event) {
-                    this.spinner.show();
-                }.bind(this));
-        }
         render_ajax_form(opts) {
-            this.spinner.hide();
-            if (!opts.error) {
-                this._afr.remove();
-                this._afr = null;
-            }
-            if (opts.payload) {
-                this._fiddle(opts.payload, opts.selector, opts.mode);
-            }
-            this._continuation(opts.next);
-        }
-        call_binders(context) {
-            for (let func_name in this.binders) {
-                try {
-                    this.binders[func_name](context);
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-        }
-        _fiddle(payload, selector, mode) {
-            if (mode === 'replace') {
-                $(selector).replaceWith(payload);
-                let context = $(selector);
-                if (context.length) {
-                    context.parent().tsajax();
-                } else {
-                    $(document).tsajax();
-                }
-            } else if (mode === 'inner') {
-                $(selector).html(payload);
-                $(selector).tsajax();
-            }
-        }
-        _continuation(next) {
-            if (!next) { return; }
-            this.spinner.hide();
-            for (let cdef of next) {
-                let type = cdef.type;
-                delete cdef.type;
-                if (type === 'path') {
-                    this.path(cdef);
-                } else if (type === 'action') {
-                    let target = this.parse_target(cdef.target);
-                    cdef.url = target.url;
-                    cdef.params = target.params;
-                    this.action(cdef);
-                } else if (type === 'event') {
-                    this.trigger(cdef.name, cdef.selector, cdef.target, cdef.data);
-                } else if (type === 'overlay') {
-                    let target = this.parse_target(cdef.target);
-                    cdef.url = target.url;
-                    cdef.params = target.params;
-                    this.overlay(cdef);
-                } else if (type === 'message') {
-                    if (cdef.flavor) {
-                        let flavors = ['message', 'info', 'warning', 'error'];
-                        if (flavors.indexOf(cdef.flavor) === -1) {
-                            throw "Continuation definition.flavor unknown";
-                        }
-                        this[cdef.flavor](cdef.payload);
-                    } else {
-                        if (!cdef.selector) {
-                            throw "Continuation definition.selector expected";
-                        }
-                        $(cdef.selector).html(cdef.payload);
-                    }
-                }
-            }
+            deprecate('ts.ajax.render_ajax_form', 'ts.ajax.form', '1.0');
+            this.form(opts);
         }
     }
     let ajax = new Ajax();
-    class AjaxParser extends Parser {
-        constructor(ajax) {
-            super();
-            this.ajax = ajax;
-        }
-        parse(node) {
-            let attrs = this.node_attrs(node);
-            if (attrs['ajax:bind'] && (
-                attrs['ajax:action'] ||
-                attrs['ajax:event'] ||
-                attrs['ajax:overlay'])) {
-                let evts = attrs['ajax:bind'];
-                this.ajax.dispatcher.bind(node, evts);
-            }
-            if (attrs['ajax:form']) {
-                this.ajax.prepare_ajax_form(node);
-            }
-            if (node.tagName.toLowerCase() === 'form') {
-                if (node.className.split(' ').includes('ajax')) {
-                    this.ajax.prepare_ajax_form(node);
-                }
-            }
-        }
-    }
-    function parse_ajax(context) {
-        let parser = new AjaxParser(ajax);
-        context.each(function() {
-            parser.walk(this);
-        });
-        ajax.call_binders(context);
-        return context;
-    }
     $.fn.tsajax = function() {
-        parse_ajax(this);
+        ajax.bind(this);
+        return this;
     };
 
     $(function() {
@@ -1241,15 +1330,17 @@ var ts = (function (exports, $) {
 
     exports.Ajax = Ajax;
     exports.AjaxAction = AjaxAction;
-    exports.AjaxDeprecated = AjaxDeprecated;
     exports.AjaxDispatcher = AjaxDispatcher;
     exports.AjaxEvent = AjaxEvent;
     exports.AjaxForm = AjaxForm;
-    exports.AjaxMixin = AjaxMixin;
+    exports.AjaxHandle = AjaxHandle;
+    exports.AjaxOperation = AjaxOperation;
     exports.AjaxOverlay = AjaxOverlay;
     exports.AjaxParser = AjaxParser;
     exports.AjaxPath = AjaxPath;
+    exports.AjaxRequest = AjaxRequest;
     exports.AjaxSpinner = AjaxSpinner;
+    exports.AjaxUtil = AjaxUtil;
     exports.AttrProperty = AttrProperty;
     exports.BoundProperty = BoundProperty;
     exports.ButtonProperty = ButtonProperty;
@@ -1276,7 +1367,6 @@ var ts = (function (exports, $) {
     exports.get_overlay = get_overlay;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
-    exports.parse_ajax = parse_ajax;
     exports.parse_path = parse_path;
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
