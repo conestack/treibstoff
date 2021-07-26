@@ -437,11 +437,39 @@ XMLHttpRequest
     :members: execute
 
 
-Ajax Operations
-~~~~~~~~~~~~~~~
+Ajax Operation
+~~~~~~~~~~~~~~
 
 .. js:autoclass:: AjaxOperation
     :members: constructor, execute, handle
+
+
+Path Operation
+~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxPath
+    :members: execute
+
+
+Action Operation
+~~~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxAction
+    :members: execute
+
+
+Event Operation
+~~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxEvent
+    :members: execute
+
+
+Overlay Operation
+~~~~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxOverlay
+    :members: execute
 
 
 Ajax Utilities
@@ -455,4 +483,20 @@ Ajax Singleton
 ~~~~~~~~~~~~~~
 
 .. js:autoclass:: Ajax
-    :members: register, request, action, trigger, path, overlay, bind, parseurl, parsequery, parsepath, parsetarget, message, info, warning, error, dialog
+    :members:
+        register,
+        request,
+        action,
+        trigger,
+        path,
+        overlay,
+        bind,
+        parseurl,
+        parsequery,
+        parsepath,
+        parsetarget,
+        message,
+        info,
+        warning,
+        error,
+        dialog
