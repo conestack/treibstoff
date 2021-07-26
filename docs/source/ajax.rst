@@ -1,161 +1,92 @@
 Ajax
 ====
 
-``treibstoff`` provides a singleton for AJAX operations driven by
-XML-attributes. Attributes are defined in its own XML namespace, placed in
-the XHTML markup.
+Overview
+--------
+
+Treibstoff provides an Ajax mechanism to integrate server side rendering into
+a SPA Application driven by XML-Attributes on the HTML markup. These attributes
+are defined in its own XML namespace.
+
+Therefor a set of Ajax operations is provided. The actual server side rendering
+is done by a resource named ``ajaxaction``, which gets called with information
+provided via the Ajax related DOM attributes.
 
 
-Attributes
-----------
+Define Namespace
+~~~~~~~~~~~~~~~~
 
-Following attributes are available:
-
-**ajax:bind="evt1 evt2"**
-    Indicate ajax behavior on DOM element and the event(s) triggering
-    it/them.
-
-**ajax:event="evt1:sel1 evt2:sel2"**
-    Trigger event(s) on selector. The triggered event gets the target
-    as additional parameter on event.ajaxtarget.
-
-**ajax:action="name1:selector1:mode1 name2:selector2:mode2"**
-    Perform AJAX action(s) on selector with mode. An AJAX action performs a
-    request to the server, which may return a HTML snippet. Selector points to
-    target DOM element, mode defines how to modify the DOM tree. Possible
-    mode values are ``inner`` and ``replace``.
-
-**ajax:target="http://fubar.org?param=value"**
-    AJAX target definition. Consists out of target context URL and a
-    query string used for requests on the target context.
-    ``ajax:target`` is mandatory when ``ajax:event`` is defined, and
-    optional when ``ajax:action`` is defined (depends on if event is triggered
-    by treibstoff or browser event).
-
-**ajax:confirm="Do you really want to do this?"**
-    Show confirmation dialog before executing ajax operations.
-
-**ajax:overlay="actionname"**
-    Renders ajax action to overlay.
-
-**ajax:overlay-css="additional-overlay-css-class"**
-    Additional CSS class which is added when overlay is opened and removed
-    as soon as overlay is closed.
-
-**ajax:form="true"**
-    Indicate AJAX form. Valid only on ``form`` elements. Value is ignored.
-
-**ajax:path="/some/path"**
-    Sets the browser URL path and pushes history state if supported by browser.
-    If value is ``href``, path gets taken from ``href`` attribute. If value is
-    ``target`` path gets taken from event ``ajaxtarget`` or ``ajax:target``
-    attribute. Otherwise value is taken as defined.
-
-    On ``popstate`` event treibstoff executes the definitions written to state
-    object. The state object consists of ``target``, ``action`` and ``event``
-    attributes. Execution behaves the way described at ``ajax:action`` and
-    ``ajax:event``.
-
-    Target gets taken from ``ajax:path-target`` if set, otherwise falls back
-    to target from event ``ajaxtarget`` or ``ajax:target``. If
-    ``ajax:path-target`` set with empty value, target gets taken from ``path``.
-
-    Action gets taken from ``ajax:path-action`` if set, otherwise falls back
-    to ``ajax:action``. If ``ajax:path-action`` set with empty value, action
-    execution on history state change can be suppressed even if ``ajax:action``
-    is set.
-
-    Event gets taken from ``ajax:path-event`` if set, otherwise falls back
-    to ``ajax:event``. If ``ajax:path-event`` set with empty value, event
-    triggering on history state change can be suppressed even if ``ajax:event``
-    is set.
-
-    Overlay gets taken from ``ajax:path-overlay`` if set, otherwise falls back
-    to ``ajax:overlay``. If ``ajax:path-overlay`` set with empty value, overlay
-    triggering on history state change can be suppressed even if
-    ``ajax:overlay`` is set.
-
-    Additional CSS class for overlay gets taken from ``ajax:path-overlay-css``
-    if set, otherwise falls back to ``ajax:overlay-css``.
-
-    If no action and no event and no overlay defined on history state change,
-    treibstoff performs a redirect to target.
-
-    Bdajax appends the request parameter ``popstate=1`` to requests made by
-    history browsing. This is useful to determine on server side whether to
-    skip setting ajax path as continuation operation.
-
-**ajax:path-target="http://fubar.org?param=value"**
-    Can be used in conjunction with ``ajax:path``.
-
-**ajax:path-action="name1:selector1:mode1"**
-    Can be used in conjunction with ``ajax:path``.
-
-**ajax:path-event="evt1:sel1"**
-    Can be used in conjunction with ``ajax:path``.
-
-**ajax:path-overlay="actionname:selector:content_selector"**
-    Can be used in conjunction with ``ajax:path``.
-
-**ajax:path-overlay-css="actionname:selector:content_selector"**
-    Can be used in conjunction with ``ajax:path``.
-
-.. note::
-
-    No selectors containing spaces are supported!
-
-
-Define namespace
-----------------
-
-In order to keep your XHTML valid when using the XML namespace extension define
-this namespace in the XHTML document:
+To keep your HTML valid when using the XML namespace extension define this
+namespace on the HTML document:
 
 .. code-block:: html
 
     <html xmlns="http://www.w3.org/1999/xhtml"
           xmlns:ajax="http://namespaces.conestack.org/ajax">
-        ...
     </html>
 
 
-Event binding
--------------
+Bind Operations
+~~~~~~~~~~~~~~~
 
-Indicate AJAX behavior on DOM element:
-
-.. code-block:: html
-
-    <a href="http://fubar.com"
-       ajax:bind="keydown click">
-      fubar
-    </a>
-
-Binds this element to events ``keydown`` and ``click``.
-
-
-Trigger events
---------------
-
-Bind event behavior to DOM element:
+Ajax operations are bound to DOM elements by adding ``ajax:bind`` attribute
+containing a space separated list of event names to bind. These can be
+DOM events or any kind of custom event:
 
 .. code-block:: html
 
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:event="contextchanged:.contextsensitiv"
-       ajax:target="http://fubar.com/baz?a=a">
-      fubar
+    <a ajax:bind="click">
+      Click me!
     </a>
 
-This causes the ``contextchanged`` event to be triggered on all DOM elements
-defining ``contextsensitiv`` css class. The extra attribute ``ajaxtarget`` gets
-written to the event before it is triggered, containing definitions from
-``ajax:target``.
+All following Ajax related DOM attributes have no effect (except ``ajax:form``,
+see Forms), without getting bound to one or more events.
 
 
-Set URL path
-------------
+Define a Target
+~~~~~~~~~~~~~~~
+
+The ``ajax:target`` attribute contains the base URL on which the server side
+``ajaxaction`` is called, and may include query parameters which get passed to
+the server:
+
+.. code-block:: html
+
+    <a ajax:bind="click"
+       ajax:target="https://tld.com/resource?param=value">
+      Click me!
+    </a>
+
+When performing Ajax actions, this target results in URL
+``https://tld.com/resource/ajacaction?param=value``. The user needs to make
+sure to provide the appropriate server endpoint, e.g. via URL dispatching or
+traversal.
+
+
+Trigger Events
+~~~~~~~~~~~~~~
+
+When adding ``ajax:event`` attribute, an event gets triggered to all elements
+defined by selector including the defined target.
+
+.. code-block:: html
+
+    <a ajax:bind="click"
+       ajax:event="some_event:.listen_to_some_event"
+       ajax:target="http://tld.com/resource?param=value">
+      Click me!
+    </a>
+
+This causes ``some_event`` being triggered on all DOM elements with
+``listen_to_some_event`` CSS class set when the link gets clicked. The target
+gets written on the event at attribute ``ajaxtarget`` before it is triggered.
+
+This feature is useful when defining actions which can be triggered from several
+places in the application.
+
+
+Browser History
+---------------
 
 Set path directly, triggers event on history state change:
 
@@ -193,27 +124,30 @@ Take path from href attribute, trigger overlay:
     </a>
 
 
-Perform actions
+Perform Actions
 ---------------
 
 An action performs a JSON request to the server and modifies the DOM tree as
 defined.
 
-treibstoff expects a resource (i.e a zope/pyramid view or some script) named
+Treibstoff expects a resource (i.e a zope/pyramid view or some script) named
 ``ajaxaction`` on server. Resource is called on target url with target query
-parameters. Three additional arguments are passed:
+parameters. The following additional arguments are passed:
 
 **ajax.action**
-    name of the action
+    Name of the action.
 
 **ajax.selector**
-    given selector must be added to response. Can be ``NONE``, which means
+    Given selector must be added to response. Can be ``NONE``, which means
     that no markup is manipulated after action (useful i.e. in combination with
     continuation operations).
 
 **ajax.mode**
-    the manipulation mode. Either ``inner`` or ``replace`` or ``NONE``
+    The DOM manipulation mode. Either ``inner`` or ``replace`` or ``NONE``
     (see above).
+
+**ajax.overlay-uid**
+    This parameter gets additionally set if performing an overlay operation.
 
 The resource is responsible to return the requested resource as a JSON
 response in the format as follows:
@@ -228,11 +162,11 @@ response in the format as follows:
     }
 
 
-Action continuation
-~~~~~~~~~~~~~~~~~~~
+Continuation Operations
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``continuation`` value defines an array of tasks which should
-be performed after an ajax action returns. Available continuation
+be performed after an Ajax action returns. Available continuation
 operations are described below.
 
 **actions**:
@@ -280,19 +214,14 @@ operations are described below.
     {
         'type': 'overlay',
         'action': 'actionname',
-        'selector': '#ajax-overlay',
-        'content_selector': '.overlay_content',
         'css': 'some-css-class',
         'target': 'http://example.com',
-        'close': false
+        'close': false,
+        'uid': '1234'
     }
 
-Overlays dynamically get a close button. In order to keep overlay contents
-easily alterable inside the overlay element an element exists acting as overlay
-content container. ``content_selector`` defines the selector of this container.
-
-Setting close to ``true`` closes overlay at ``selector``. In this case
-``action`` and target are ignored.
+Setting close to ``true`` closes overlay with ``uid``. The UID gets passed as
+``ajax.overlay-uid`` request parameter.
 
 **messages**:
 
@@ -305,21 +234,20 @@ Setting close to ``true`` closes overlay at ``selector``. In this case
         'selector': null,
     }
 
-Either ``flavor`` or ``selector`` must be given.
-Flavor could be one of 'message', 'info', 'warning', 'error' and map to the
-corresponding ``ts.ajax`` UI helper functions. Selector indicates to hook
-returned payload at a custom location in DOM tree instead of displaying a
-message. In this case, payload is set as contents of DOM element returned by
-selector.
+Either ``flavor`` or ``selector`` must be given. Flavor could be one of
+'message', 'info', 'warning' or 'error'. Selector indicates to hook
+returned payload at a custom location in DOM tree instead of displaying an
+overlay message. In this case, payload is set as contents of DOM element
+returned by selector.
 
 If both ``flavor`` and ``selector`` are set, ``selector`` is ignored.
 
-Be aware that you can provoke infinite loops with continuation actions and
-events, use this feature sparingly.
+**note** - Be aware that you can provoke infinite loops with continuation
+actions and events, use this feature with care.
 
 
-Trigger actions directly
-~~~~~~~~~~~~~~~~~~~~~~~~
+Direct Actions
+~~~~~~~~~~~~~~
 
 Bind an action which is triggered directly:
 
@@ -333,16 +261,15 @@ Bind an action which is triggered directly:
     </a>
 
 On click the DOM element with id ``fubar`` will be replaced by the results of
-action ``renderfubar``. Request context and request params are taken from
+action ``renderfubar``. Request context and parameters are taken from
 ``ajax:target`` definition.
 
 
-Trigger actions as event listener
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Actions by Event
+~~~~~~~~~~~~~~~~
 
-Bind an action acting as event listener. See section 'Trigger events'.
-A triggered event indicates change of context on target with params.
-Hereupon perform some action:
+Bind an action as event listener. See section 'Trigger events'.
+A triggered event indicates change of context on target with parameters.
 
 .. code-block:: html
 
@@ -350,17 +277,16 @@ Hereupon perform some action:
          class="contextsensitiv"
          ajax:bind="contextchanged"
          ajax:action="rendercontent:#content:inner">
-      ...
     </div>
 
-Note: If binding actions as event listeners, there's no need to define a target
+**note** - If binding actions as event listeners, there's no need to define a target
 since it is passed along with the event.
 
 
-Multiple behaviors
-------------------
+Multiple Operations
+-------------------
 
-Bind multiple behaviors to the same DOM element:
+Bind multiple operations on the same DOM element:
 
 .. code-block:: html
 
@@ -370,17 +296,17 @@ Bind multiple behaviors to the same DOM element:
        ajax:action="rendersomething:.#something:replace"
        ajax:target="http://fubar.com/baz?a=a"
        ajax:path="/some/path">
-      fubar
+      foo
     </a>
 
-In this example on click event ``contextchanged`` is triggered, action
-``rendersomething`` is performed and URL path ``/some/path`` get set.
+In this example, click event ``contextchanged`` gets triggered, action
+``rendersomething`` is performed and URL path ``/some/path`` gets set.
 
 
-Confirm operations
-------------------
+Confirming Operations
+---------------------
 
-Bdajax can display a confirmation dialog before performing ajax operations:
+Treibstoff can display a confirmation dialog before performing ajax operations:
 
 .. code-block:: html
 
@@ -393,14 +319,14 @@ Bdajax can display a confirmation dialog before performing ajax operations:
       fubar
     </a>
 
-If ``ajax:confirm`` is set, a modal dialog is displayed before dispatching is
-performed.
+If ``ajax:confirm`` is set, a modal dialog gets displayed before dispatching
+operations.
 
 
 Overlays
 --------
 
-Ajax actions can be rendered to overlay directly by using ``ajax:overlay``:
+Ajax actions can be rendered to and overlay directly by using ``ajax:overlay``:
 
 .. code-block:: html
 
@@ -414,127 +340,24 @@ Ajax actions can be rendered to overlay directly by using ``ajax:overlay``:
 This causes treibstoff to perform action ``acionname`` on context defined in
 ``ajax:target`` and renders the result to an overlay element.
 
-In addition a selector for the overlay can be defined. This is useful if
-someone needs to display multiple overlays:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:overlay="acionname:#custom-overlay">
-      fubar
-    </a>
-
-Optional to a custom overlay selector a content container selector can be
-defined:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:overlay="acionname:#custom-overlay:.custom_overlay_content">
-      fubar
-    </a>
-
 Overlays can be closed by setting special value ``CLOSE`` at
-``ajax:overlay``, optionally with colon seperated overlay selector:
+``ajax:overlay``, colon seperated followed by the overlay UID (which gets
+passed as ``ajax.overlay-uid`` request parameter):
 
 .. code-block:: html
 
-    <a href="http://fubar.com/baz?a=a"
+    <a href="#"
        ajax:bind="click"
-       ajax:overlay="CLOSE:#custom-overlay">
-      fubar
+       ajax:overlay="CLOSE:12345">
+      foo
     </a>
 
 
-JavaScript API
---------------
+Forms
+-----
 
-.. js:autoclass:: AjaxMixin
-
-    .. js:autofunction:: parse_target
-
-    |
-
-    .. js:autofunction:: parse_definition
-
-    |
-
-    .. js:autofunction:: event_target
-
-|
-
-.. js:autoclass:: Ajax
-
-    .. js:autofunction:: register
-
-    |
-
-    .. js:autofunction:: request
-
-    |
-
-    .. js:autofunction:: action
-
-    |
-
-    .. js:autofunction:: trigger
-
-    |
-
-    .. js:autofunction:: path
-
-    |
-
-    .. js:autofunction:: overlay
-
-|
-
-.. js:autoclass:: AjaxDeprecated
-
-    .. js:autofunction:: parseurl
-
-    |
-
-    .. js:autofunction:: parsequery
-
-    |
-
-    .. js:autofunction:: parsepath
-
-    |
-
-    .. js:autofunction:: parsetarget
-
-    |
-
-    .. js:autofunction:: message
-
-    |
-
-    .. js:autofunction:: info
-
-    |
-
-    .. js:autofunction:: warning
-
-    |
-
-    .. js:autofunction:: error
-
-    |
-
-    .. js:autofunction:: dialog
-
-
-Ajax forms
-----------
-
-Forms must have ``ajax:form`` attribute or CSS class ``ajax`` (deprecated)
-set in order to be handled by ajax singleton:
+Forms must have ``ajax:form`` attribute or CSS class ``ajax``
+set in order to be handled:
 
 .. code-block:: html
 
@@ -543,11 +366,10 @@ set in order to be handled by ajax singleton:
           method="post"
           action="http://example.com/myformaction"
           enctype="multipart/form-data">
-      ...
     </form>
 
 Ajax form processing is done using a hidden iframe where the form gets
-triggered to. The server side must return a response like so on form submit:
+triggered to. The server side must return a response in the following format:
 
 .. code-block:: html
 
@@ -559,7 +381,6 @@ triggered to. The server side must return a response like so on form submit:
               method="post"
               action="http://example.com/myformaction"
               enctype="multipart/form-data">
-          ...
         </form>
 
     </div>
@@ -577,9 +398,9 @@ triggered to. The server side must return a response like so on form submit:
 
         // call ``ts.ajax.form`` on parent frame (remember, we're in
         // iframe here). ``form`` expects the result DOM element,
-        // the ``selector``, the fiddle ``mode``, ``continuation`` operations
-        // which may be used to perform ajax continuation. and a flag wgether
-        // an error occured while form processing.
+        // the ``selector``, the DOM manipulation ``mode``, ``continuation``
+        // operations and a flag wgether an error occured while form processing
+        // (error not means a form validation error).
         parent.ts.ajax.form({
             payload: child,
             selector: '#my_ajax_form',
@@ -592,8 +413,46 @@ triggered to. The server side must return a response like so on form submit:
 
 If ``div`` with id ``ajaxform`` contains markup, it gets rendered to
 ``selector`` (#my_ajax_form) with ``mode`` (replace). This makes it possible
-to rerender forms on validation error or display a success page or similar.
-Optional continuation definitions can be given.
+to re-render forms on validation error or display a success page or similar.
+Optional continuation operations can be given.
 
-Again, treibstoff does not provide any server side implementation, it's up to you
-providing this.
+Treibstoff not ships a server side implementation, it's up to the user
+providing one.
+
+
+API
+---
+
+Spinner Animation
+~~~~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxSpinner
+    :members: show, hide
+
+
+XMLHttpRequest
+~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxRequest
+    :members: execute
+
+
+Ajax Operations
+~~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxOperation
+    :members: constructor, execute, handle
+
+
+Ajax Utilities
+~~~~~~~~~~~~~~
+
+.. js:autoclass:: AjaxUtil
+    :members: parse_target, parse_definition, event_target
+
+
+Ajax Singleton
+~~~~~~~~~~~~~~
+
+.. js:autoclass:: Ajax
+    :members: register, request, action, trigger, path, overlay, bind, parseurl, parsequery, parsepath, parsetarget, message, info, warning, error, dialog
