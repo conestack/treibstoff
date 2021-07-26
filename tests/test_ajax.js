@@ -175,7 +175,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         });
     });
 
-    QUnit.test('Test deprecated parsers', assert => {
+    QUnit.test('Test AjaxDeprecated', assert => {
         let ajax = new Ajax();
 
         assert.deepEqual(
@@ -425,7 +425,6 @@ QUnit.module('treibstoff.ajax', hooks => {
                 assert.step(`url: ${url}`);
             }
         }
-
         let ajax = new Ajax({
             history: {},
             location: {

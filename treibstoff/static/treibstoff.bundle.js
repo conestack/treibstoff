@@ -673,7 +673,107 @@ var ts = (function (exports, $) {
             return this.parse_target(elem.attr('ajax:target'));
         }
     }
-    class AjaxPath {
+    class AjaxPath extends AjaxMixin {
+        constructor(dispatcher, win) {
+            super();
+            this.win = win;
+            dispatcher.on('on_path', this.on_path.bind(this));
+            $(win).on('popstate', this.history_handle.bind(this));
+        }
+        execute(opts) {
+            let history = this.win.history;
+            if (history.pushState === undefined) {
+                return;
+            }
+            let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
+            set_default(opts, 'target', this.win.location.origin + path);
+            set_default(opts, 'replace', false);
+            let replace = opts.replace;
+            delete opts.path;
+            delete opts.replace;
+            if (replace) {
+                history.replaceState(opts, '', path);
+            } else {
+                history.pushState(opts, '', path);
+            }
+        }
+        history_handle(evt) {
+            evt.preventDefault();
+            let state = evt.originalEvent.state;
+            if (!state) {
+                return;
+            }
+            let target;
+            if (state.target.url) {
+                target = state.target;
+            } else {
+                target = this.parse_target(state.target);
+            }
+            target.params.popstate = '1';
+            if (state.action) {
+                this._ajax_action(target, state.action);
+            }
+            if (state.event) {
+                this._ajax_event(target, state.event);
+            }
+            if (state.overlay) {
+                this._ajax_overlay(
+                    target,
+                    state.overlay,
+                    state.overlay_css
+                );
+            }
+            if (!state.action && !state.event && !state.overlay) {
+                this.win.location = target.url;
+            }
+        }
+        on_path(inst, opts) {
+            console.log('# on_path');
+            console.log(this);
+            let elem = opts.elem,
+                evt = opts.event,
+                path = elem.attr('ajax:path');
+            if (path === 'href') {
+                let href = elem.attr('href');
+                path = parse_path(href, true);
+            } else if (path === 'target') {
+                let tgt = this.event_target(elem, evt);
+                path = tgt.path + tgt.query;
+            }
+            let target;
+            if (this.has_attr(elem, 'ajax:path-target')) {
+                target = elem.attr('ajax:path-target');
+                if (target) {
+                    target = this.parse_target(target);
+                }
+            } else {
+                target = this.event_target(elem, evt);
+            }
+            let p_opts = {
+                path: path,
+                target: target
+            };
+            p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
+            p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
+            p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
+            p_opts.overlay_css = this.attr_val(
+                elem,
+                'ajax:path-overlay-css',
+                'ajax:overlay-css'
+            );
+            this.execute(p_opts);
+        }
+        has_attr(elem, name) {
+            let attr = elem.attr(name);
+            return attr !== undefined && attr !== false;
+        }
+        attr_val(elem, name, fallback) {
+            if (this.has_attr(elem, name)) {
+                return elem.attr(name);
+            } else {
+                return elem.attr(fallback);
+            }
+        }
     }
     class AjaxAction {
     }
@@ -737,8 +837,9 @@ var ts = (function (exports, $) {
                 );
             }
             if (elem.attr('ajax:path')) {
+                console.log('# trigger on_path');
+                console.log(this);
                 this.trigger('on_path', opts);
-                this._ajax._ajax_path(elem, event);
             }
         }
     }
@@ -794,8 +895,8 @@ var ts = (function (exports, $) {
             this.binders = {};
             this.spinner = new AjaxSpinner();
             this.dispatcher = new AjaxDispatcher(this);
+            this._path = new AjaxPath(this.dispatcher, this.win);
             this._afr = null;
-            $(this.win).on('popstate', this._history_handle.bind(this));
         }
         register(func, instant) {
             let func_name = 'binder_' + uuid4();
@@ -858,109 +959,7 @@ var ts = (function (exports, $) {
             });
         }
         path(opts) {
-            let history = this.win.history;
-            if (history.pushState === undefined) {
-                return;
-            }
-            let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
-            set_default(opts, 'target', this.win.location.origin + path);
-            set_default(opts, 'replace', false);
-            let replace = opts.replace;
-            delete opts.path;
-            delete opts.replace;
-            if (replace) {
-                history.replaceState(opts, '', path);
-            } else {
-                history.pushState(opts, '', path);
-            }
-        }
-        _history_handle(evt) {
-            evt.preventDefault();
-            let state = evt.originalEvent.state;
-            if (!state) {
-                return;
-            }
-            let target;
-            if (state.target.url) {
-                target = state.target;
-            } else {
-                target = this.parse_target(state.target);
-            }
-            target.params.popstate = '1';
-            if (state.action) {
-                this._ajax_action(target, state.action);
-            }
-            if (state.event) {
-                this._ajax_event(target, state.event);
-            }
-            if (state.overlay) {
-                this._ajax_overlay(
-                    target,
-                    state.overlay,
-                    state.overlay_css
-                );
-            }
-            if (!state.action && !state.event && !state.overlay) {
-                this.win.location = target.url;
-            }
-        }
-        _ajax_path(elem, evt) {
-            let path = elem.attr('ajax:path');
-            if (path === 'href') {
-                let href = elem.attr('href');
-                path = parse_path(href, true);
-            } else if (path === 'target') {
-                let tgt = this.event_target(elem, evt);
-                path = tgt.path + tgt.query;
-            }
-            let target;
-            if (this._has_attr(elem, 'ajax:path-target')) {
-                target = elem.attr('ajax:path-target');
-                if (target) {
-                    target = this.parse_target(target);
-                }
-            } else {
-                target = this.event_target(elem, evt);
-            }
-            let action = this._attr_val_or_default(
-                elem,
-                'ajax:path-action',
-                'ajax:action'
-            );
-            let event = this._attr_val_or_default(
-                elem,
-                'ajax:path-event',
-                'ajax:event'
-            );
-            let overlay = this._attr_val_or_default(
-                elem,
-                'ajax:path-overlay',
-                'ajax:overlay'
-            );
-            let overlay_css = this._attr_val_or_default(
-                elem,
-                'ajax:path-overlay-css',
-                'ajax:overlay-css'
-            );
-            this.path({
-                path: path,
-                target: target,
-                action: action,
-                event: event,
-                overlay: overlay,
-                overlay_css: overlay_css
-            });
-        }
-        _has_attr(elem, name) {
-            let attr = elem.attr(name);
-            return attr !== undefined && attr !== false;
-        }
-        _attr_val_or_default(elem, name, fallback) {
-            if (this._has_attr(elem, name)) {
-                return elem.attr(name);
-            } else {
-                return elem.attr(fallback);
-            }
+            this._path.execute(opts);
         }
         action(opts) {
             opts.success = this._finish_ajax_action.bind(this);

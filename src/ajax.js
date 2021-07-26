@@ -62,7 +62,7 @@ export class AjaxSpinner {
 /**
  * Mixin class for ajax operations.
  */
-export class AjaxMixin {
+export class AjaxMixin extends Events {
 
     /**
      * Parse URL, query and path from URL string::
@@ -117,7 +117,126 @@ export class AjaxMixin {
     }
 }
 
-export class AjaxPath {
+export class AjaxPath extends AjaxMixin {
+
+    constructor(win, dispatcher) {
+        super();
+        this.win = win;
+        this.dispatcher = dispatcher;
+        $(win).on('popstate', this.history_handle.bind(this));
+        dispatcher.on('on_path', this.on_path.bind(this));
+    }
+
+    execute(opts) {
+        let history = this.win.history;
+        if (history.pushState === undefined) {
+            return;
+        }
+        let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
+        set_default(opts, 'target', this.win.location.origin + path);
+        set_default(opts, 'replace', false);
+        let replace = opts.replace;
+        // delete options which should not end up in state
+        delete opts.path;
+        delete opts.replace;
+        if (replace) {
+            history.replaceState(opts, '', path);
+        } else {
+            history.pushState(opts, '', path);
+        }
+    }
+
+    history_handle(evt) {
+        evt.preventDefault();
+        let state = evt.originalEvent.state;
+        if (!state) {
+            return;
+        }
+        let target;
+        if (state.target.url) {
+            target = state.target;
+        } else {
+            target = this.parse_target(state.target);
+        }
+        target.params.popstate = '1';
+        if (state.action) {
+            this.dispatcher.trigger('on_action', {
+                target: target,
+                action: state.action
+            });
+            // this._ajax_action(target, state.action);
+        }
+        if (state.event) {
+            this.dispatcher.trigger('on_event', {
+                target: target,
+                event: state.event
+            });
+            // this._ajax_event(target, state.event);
+        }
+        if (state.overlay) {
+            this.dispatcher.trigger('on_overlay', {
+                target: target,
+                overlay: state.overlay,
+                css: state.overlay_css
+            });
+            // this._ajax_overlay(
+            //     target,
+            //     state.overlay,
+            //     state.overlay_css
+            // );
+        }
+        if (!state.action && !state.event && !state.overlay) {
+            this.win.location = target.url;
+        }
+    }
+
+    on_path(inst, opts) {
+        let elem = opts.elem,
+            evt = opts.event,
+            path = elem.attr('ajax:path');
+        if (path === 'href') {
+            let href = elem.attr('href');
+            path = parse_path(href, true);
+        } else if (path === 'target') {
+            let tgt = this.event_target(elem, evt);
+            path = tgt.path + tgt.query;
+        }
+        let target;
+        if (this.has_attr(elem, 'ajax:path-target')) {
+            target = elem.attr('ajax:path-target');
+            if (target) {
+                target = this.parse_target(target);
+            }
+        } else {
+            target = this.event_target(elem, evt);
+        }
+        let p_opts = {
+            path: path,
+            target: target
+        }
+        p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
+        p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
+        p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
+        p_opts.overlay_css = this.attr_val(
+            elem,
+            'ajax:path-overlay-css',
+            'ajax:overlay-css'
+        );
+        this.execute(p_opts);
+    }
+
+    has_attr(elem, name) {
+        let attr = elem.attr(name);
+        return attr !== undefined && attr !== false;
+    }
+
+    attr_val(elem, name, fallback) {
+        if (this.has_attr(elem, name)) {
+            return elem.attr(name);
+        } else {
+            return elem.attr(fallback);
+        }
+    }
 }
 
 export class AjaxAction {
@@ -132,12 +251,7 @@ export class AjaxOverlay {
 export class AjaxForm {
 }
 
-export class AjaxDispatcher extends Events {
-
-    constructor(ajax) {
-        super();
-        this._ajax = ajax;
-    }
+export class AjaxDispatcher extends AjaxMixin {
 
     bind(node, evts) {
         $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
@@ -164,34 +278,45 @@ export class AjaxDispatcher extends Events {
     }
 
     dispatch(opts) {
-        console.log('### dispatch');
         let elem = opts.elem,
             event = opts.event;
         if (elem.attr('ajax:action')) {
-            this.trigger('on_action', opts);
-            this._ajax._ajax_action(
-                this._ajax.event_target(elem, event),
-                elem.attr('ajax:action')
-            );
+            this.trigger('on_action', {
+                target: this.event_target(elem, event),
+                action: elem.attr('ajax:action')
+            });
+            // this._ajax_action(
+            //     this.event_target(elem, event),
+            //     elem.attr('ajax:action')
+            // );
         }
         if (elem.attr('ajax:event')) {
-            this.trigger('on_event', opts);
-            this._ajax._ajax_event(
-                elem.attr('ajax:target'),
-                elem.attr('ajax:event')
-            );
+            this.trigger('on_event', {
+                target: elem.attr('ajax:target'),
+                event: elem.attr('ajax:event')
+            });
+            // this._ajax_event(
+            //     elem.attr('ajax:target'),
+            //     elem.attr('ajax:event')
+            // );
         }
         if (elem.attr('ajax:overlay')) {
-            this.trigger('on_overlay', opts);
-            this._ajax._ajax_overlay(
-                this._ajax.event_target(elem, event),
-                elem.attr('ajax:overlay'),
-                elem.attr('ajax:overlay-css')
-            );
+            this.trigger('on_overlay', {
+                target: this.event_target(elem, event),
+                overlay: elem.attr('ajax:overlay'),
+                css: elem.attr('ajax:overlay-css')
+            });
+            // this._ajax_overlay(
+            //     this.event_target(elem, event),
+            //     elem.attr('ajax:overlay'),
+            //     elem.attr('ajax:overlay-css')
+            // );
         }
         if (elem.attr('ajax:path')) {
-            this.trigger('on_path', opts);
-            this._ajax._ajax_path(elem, event);
+            this.trigger('on_path', {
+                elem: elem,
+                event: event
+            });
         }
     }
 }
@@ -299,11 +424,11 @@ export class Ajax extends AjaxDeprecated {
         // Ajax spinner.
         this.spinner = new AjaxSpinner();
         // Ajax dispatcher
-        this.dispatcher = new AjaxDispatcher(this); // XXX: remove this
+        this.dispatcher = new AjaxDispatcher();
+        // Ajax path
+        this._path = new AjaxPath(this.win, this.dispatcher);
         // Ajax form response iframe
         this._afr = null;
-        // Browser history handling
-        $(this.win).on('popstate', this._history_handle.bind(this));
     }
 
     /**
@@ -468,114 +593,7 @@ export class Ajax extends AjaxDeprecated {
      * @param {boolean} opts.replace - Flag whether to reset browser history.
      */
     path(opts) {
-        let history = this.win.history;
-        if (history.pushState === undefined) {
-            return;
-        }
-        let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
-        set_default(opts, 'target', this.win.location.origin + path);
-        set_default(opts, 'replace', false);
-        let replace = opts.replace;
-        // delete options which should not end up in state
-        delete opts.path;
-        delete opts.replace;
-        if (replace) {
-            history.replaceState(opts, '', path);
-        } else {
-            history.pushState(opts, '', path);
-        }
-    }
-
-    _history_handle(evt) {
-        evt.preventDefault();
-        let state = evt.originalEvent.state;
-        if (!state) {
-            return;
-        }
-        let target;
-        if (state.target.url) {
-            target = state.target;
-        } else {
-            target = this.parse_target(state.target);
-        }
-        target.params.popstate = '1';
-        if (state.action) {
-            this._ajax_action(target, state.action);
-        }
-        if (state.event) {
-            this._ajax_event(target, state.event);
-        }
-        if (state.overlay) {
-            this._ajax_overlay(
-                target,
-                state.overlay,
-                state.overlay_css
-            );
-        }
-        if (!state.action && !state.event && !state.overlay) {
-            this.win.location = target.url;
-        }
-    }
-
-    _ajax_path(elem, evt) {
-        let path = elem.attr('ajax:path');
-        if (path === 'href') {
-            let href = elem.attr('href');
-            path = parse_path(href, true);
-        } else if (path === 'target') {
-            let tgt = this.event_target(elem, evt);
-            path = tgt.path + tgt.query;
-        }
-        let target;
-        if (this._has_attr(elem, 'ajax:path-target')) {
-            target = elem.attr('ajax:path-target');
-            if (target) {
-                target = this.parse_target(target);
-            }
-        } else {
-            target = this.event_target(elem, evt);
-        }
-        let action = this._attr_val_or_default(
-            elem,
-            'ajax:path-action',
-            'ajax:action'
-        );
-        let event = this._attr_val_or_default(
-            elem,
-            'ajax:path-event',
-            'ajax:event'
-        );
-        let overlay = this._attr_val_or_default(
-            elem,
-            'ajax:path-overlay',
-            'ajax:overlay'
-        );
-        let overlay_css = this._attr_val_or_default(
-            elem,
-            'ajax:path-overlay-css',
-            'ajax:overlay-css'
-        );
-        this.path({
-            path: path,
-            target: target,
-            action: action,
-            event: event,
-            overlay: overlay,
-            overlay_css: overlay_css
-        });
-    }
-
-    _has_attr(elem, name) {
-        let attr = elem.attr(name);
-        return attr !== undefined && attr !== false;
-    }
-
-    _attr_val_or_default(elem, name, fallback) {
-        if (this._has_attr(elem, name)) {
-            return elem.attr(name);
-        } else {
-            return elem.attr(fallback);
-        }
+        this._path.execute(opts);
     }
 
     /**
