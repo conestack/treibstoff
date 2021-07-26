@@ -239,7 +239,56 @@ export class AjaxPath extends AjaxMixin {
     }
 }
 
-export class AjaxAction {
+export class AjaxAction extends AjaxMixin {
+
+    constructor(ajax) {
+        super();
+        this.ajax = ajax;
+        ajax.dispatcher.on('on_action', this.on_action.bind(this));
+    }
+
+    execute(opts) {
+        opts.success = this.finish_ajax_action.bind(this);
+        this.request_ajax_action(opts);
+    }
+
+    request_ajax_action(opts) {
+        opts.params['ajax.action'] = opts.name;
+        opts.params['ajax.mode'] = opts.mode;
+        opts.params['ajax.selector'] = opts.selector;
+        this.ajax.request({
+            url: parse_url(opts.url) + '/ajaxaction',
+            type: 'json',
+            params: opts.params,
+            success: opts.success
+        });
+    }
+
+    finish_ajax_action(data) {
+        if (!data) {
+            show_error('Empty response');
+            this.ajax.spinner.hide();
+        } else {
+            this.ajax._fiddle(data.payload, data.selector, data.mode);
+            this.ajax._continuation(data.continuation);
+        }
+    }
+
+    on_action(target, action) {
+        let target = opts.target,
+            action = opts.action,
+            actions = this.parse_definition(action);
+        for (let i = 0; i < actions.length; i++) {
+            let defs = actions[i].split(':');
+            this.execute({
+                name: defs[0],
+                selector: defs[1],
+                mode: defs[2],
+                url: target.url,
+                params: target.params
+            });
+        }
+    }
 }
 
 export class AjaxEvent {
@@ -427,6 +476,8 @@ export class Ajax extends AjaxDeprecated {
         this.dispatcher = new AjaxDispatcher();
         // Ajax path
         this._path = new AjaxPath(this.win, this.dispatcher);
+        // Ajax action
+        this._action = new AjaxAction(this);
         // Ajax form response iframe
         this._afr = null;
     }
@@ -621,44 +672,7 @@ export class Ajax extends AjaxDeprecated {
      * @param {Object} opts.params - Query parameters.
      */
     action(opts) {
-        opts.success = this._finish_ajax_action.bind(this);
-        this._request_ajax_action(opts);
-    }
-
-    _request_ajax_action(opts) {
-        opts.params['ajax.action'] = opts.name;
-        opts.params['ajax.mode'] = opts.mode;
-        opts.params['ajax.selector'] = opts.selector;
-        this.request({
-            url: parse_url(opts.url) + '/ajaxaction',
-            type: 'json',
-            params: opts.params,
-            success: opts.success
-        });
-    }
-
-    _finish_ajax_action(data) {
-        if (!data) {
-            show_error('Empty response');
-            this.spinner.hide();
-        } else {
-            this._fiddle(data.payload, data.selector, data.mode);
-            this._continuation(data.continuation);
-        }
-    }
-
-    _ajax_action(target, action) {
-        let actions = this.parse_definition(action);
-        for (let i = 0; i < actions.length; i++) {
-            let defs = actions[i].split(':');
-            this.action({
-                name: defs[0],
-                selector: defs[1],
-                mode: defs[2],
-                url: target.url,
-                params: target.params
-            });
-        }
+        this._action.execute(opts);
     }
 
     /**
