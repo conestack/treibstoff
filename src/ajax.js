@@ -435,6 +435,42 @@ export class AjaxOverlay extends AjaxAction {
 }
 
 export class AjaxForm {
+
+    constructor(ajax, spinner) {
+        this.ajax = ajax;
+        this.spinner = spinner;
+        this.afr = null;
+    }
+
+    bind(form) {
+        if (!this.afr) {
+            compile_template(this, `
+              <iframe t-elem="afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
+        }
+        $(form)
+            .append('<input type="hidden" name="ajax" value="1" />')
+            .attr('target', 'ajaxformresponse')
+            .off()
+            .on('submit', function(event) {
+                this.spinner.show();
+            }.bind(this));
+    }
+
+    render(opts) {
+        this.spinner.hide();
+        if (!opts.error) {
+            this.afr.remove();
+            this.afr = null;
+        }
+        if (opts.payload) {
+            this.ajax.update_dom(opts.payload, opts.selector, opts.mode);
+        }
+        this.ajax.handle_next(opts.next);
+    }
 }
 
 export class AjaxDispatcher extends AjaxMixin {
@@ -606,8 +642,7 @@ export class Ajax extends AjaxDeprecated {
         this._action = new AjaxAction(this, this.dispatcher);
         this._event = new AjaxEvent(this.dispatcher);
         this._overlay = new AjaxOverlay(this._action, this.dispatcher);
-        // Ajax form response iframe
-        this._afr = null;
+        this.form = new AjaxForm();
     }
 
     /**
@@ -941,36 +976,9 @@ export class Ajax extends AjaxDeprecated {
         this._overlay.execute(opts);
     }
 
-    // prepare form desired to be an ajax form
-    prepare_ajax_form(form) {
-        if (!this._afr) {
-            compile_template(this, `
-              <iframe t-elem="_afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `, $('body'));
-        }
-        $(form)
-            .append('<input type="hidden" name="ajax" value="1" />')
-            .attr('target', 'ajaxformresponse')
-            .off()
-            .on('submit', function(event) {
-                this.spinner.show();
-            }.bind(this));
-    }
-
     // called by iframe response
     render_ajax_form(opts) {
-        this.spinner.hide();
-        if (!opts.error) {
-            this._afr.remove();
-            this._afr = null;
-        }
-        if (opts.payload) {
-            this.update_dom(opts.payload, opts.selector, opts.mode);
-        }
-        this.handle_next(opts.next);
+        this.form.render();
     }
 
     call_binders(context) {
@@ -1057,11 +1065,11 @@ export class AjaxParser extends Parser {
             this.ajax.dispatcher.bind(node, evts);
         }
         if (attrs['ajax:form']) {
-            this.ajax.prepare_ajax_form(node);
+            this.ajax.form.bind(node);
         }
         if (node.tagName.toLowerCase() === 'form') {
             if (node.className.split(' ').includes('ajax')) {
-                this.ajax.prepare_ajax_form(node);
+                this.ajax.form.bind(node);
             }
         }
     }
