@@ -395,7 +395,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         });
         assert.verifySteps([
             'pushState',
-            'state: {"target":"https://tld.com/foo"}',
+            'state: {"target":"https://tld.com/foo","_t_ajax":true}',
             'url: /foo'
         ]);
 
@@ -414,7 +414,8 @@ QUnit.module('treibstoff.ajax', hooks => {
                 '"action":"layout:#layout:replace",' +
                 '"event":"contextchanged:#layout",' +
                 '"overlay":"actionname",' +
-                '"overlay_css":"additional-overlay-css-class"' +
+                '"overlay_css":"additional-overlay-css-class",' +
+                '"_t_ajax":true' +
             '}',
             'url: /some/path'
         ]);
@@ -429,7 +430,8 @@ QUnit.module('treibstoff.ajax', hooks => {
             'replaceState',
             'state: {' +
                 '"target":"http://example.com/some/path",' +
-                '"action":"layout:#layout:replace"' +
+                '"action":"layout:#layout:replace",' +
+                '"_t_ajax":true' +
             '}',
             'url: /some/path'
         ]);
