@@ -198,7 +198,7 @@ How the path is extracted from ``ajax:path`` follow these rules:
   defined. This is in particular useful if the operation target contains
   request parameters but the path should not.
 
-The following example add an ajax action operation to the browser histroy stack:
+The following example add an Ajax action operation to the browser histroy stack:
 
 .. code-block:: html
 
@@ -213,7 +213,7 @@ For a full documentation about the path operation related attributes, see
 ``AjaxPath`` docs.
 
 
-Operation execution order
+Operation Execution Order
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When defining multiple Ajax operations on a single DOM element, they get
@@ -226,8 +226,40 @@ executed in the following order:
 5. Path operation gets dispatched if defined.
 
 
+Ajax Forms
+~~~~~~~~~~
+
+Forms can be "ajaxified" by adding either ``ajax:form`` attribute or the CSS
+class ``ajax`` to the ``form`` DOM element. The value of ``ajax:form`` can
+be arbitrary:
+
+.. code-block:: html
+
+    <form ajax:form="true"
+          id="someform"
+          method="post"
+          action="http://example.com/some/path/formendpoint"
+          enctype="multipart/form-data">
+    </form>
+
+Unlike the other operations, Ajax forms are no "real" Ajax operation in terms
+of the implementation. Under the hood, Ajax forms are posted to a hidden
+``iframe``, and a defined response format is expected from the server
+implementation processing the form. This approach is chosen to avoid common
+problems with file uploads and Ajax forms.
+
+The form ``action`` URL gets called as is, it's up to the user to provide the
+Server implementation rendering the expected response.
+
+See Server Side Documentation for details how to proper implement
+Ajax form responses.
+
+
+Server Side
+-----------
+
 Perform Actions
----------------
+~~~~~~~~~~~~~~~
 
 An action performs a JSON request to the server and modifies the DOM tree as
 defined.
@@ -349,19 +381,7 @@ actions and events, use this feature with care.
 
 
 Forms
------
-
-Forms must have ``ajax:form`` attribute or CSS class ``ajax``
-set in order to be handled:
-
-.. code-block:: html
-
-    <form ajax:form="True"
-          id="my_ajax_form"
-          method="post"
-          action="http://example.com/myformaction"
-          enctype="multipart/form-data">
-    </form>
+~~~~~
 
 Ajax form processing is done using a hidden iframe where the form gets
 triggered to. The server side must return a response in the following format:
