@@ -396,16 +396,22 @@ action and event operations, use this features with care.
 Forms
 ~~~~~
 
-Ajax form processing is done using a hidden iframe where the form gets
-triggered to. The server side must return a response in the following format:
+Ajax form processing is done by posting the form to a hidden iframe on the
+client. Treibstoff not expects a form processing endpoint with a specific name
+but in a defined response format:
 
 .. code-block:: html
 
+    <!--
+      This is the rendered form payload container. If it's desired
+      to stick to the form after sucessful form processing or if a
+      validation error occurs, the content of the container is
+      taken to rerender the form on the client.
+    -->
     <div id="ajaxform">
 
-        <!-- this is the rendering payload -->
-        <form ajax:form="True"
-              id="my_ajax_form"
+        <form ajax:form="true"
+              id="someform"
               method="post"
               action="http://example.com/myformaction"
               enctype="multipart/form-data">
@@ -413,39 +419,41 @@ triggered to. The server side must return a response in the following format:
 
     </div>
 
+    <!--
+      This script block reads the form payload from the container
+      and passes it among other options to the Ajax singleton.
+      Note that this code is executed inside the hidden iframe,
+      so the Ajax singleton needs to be accessed via ``parent``.
+    -->
     <script language="javascript" type="text/javascript">
 
-        // get response result container
+        // Get response payload container
         var container = document.getElementById('ajaxform');
 
-        // extract DOM element to fiddle from result container
+        // Extract form DOM element from payload container
         var child = container.firstChild;
         while(child != null && child.nodeType == 3) {
             child = child.nextSibling;
         }
 
-        // call ``ts.ajax.form`` on parent frame (remember, we're in
-        // iframe here). ``form`` expects the result DOM element,
-        // the ``selector``, the DOM manipulation ``mode``, ``continuation``
-        // operations and a flag wgether an error occured while form processing
-        // (error not means a form validation error).
+        /**
+         * Call ``ts.ajax.form`` on parent frame. It expects the
+         * form DOM element, the selector, the DOM manipulation
+         * mode, optional continuation operation definitions and
+         * a flag whether an error occured while processing the
+         * form. The error flag not means a validation error but
+         * an exception happened and is needed for proper application
+         * state handling.
+         */
         parent.ts.ajax.form({
             payload: child,
-            selector: '#my_ajax_form',
+            selector: '#someform',
             mode: 'replace',
             next: {},
             error: false
         });
 
     </script>
-
-If ``div`` with id ``ajaxform`` contains markup, it gets rendered to
-``selector`` (#my_ajax_form) with ``mode`` (replace). This makes it possible
-to re-render forms on validation error or display a success page or similar.
-Optional continuation operations can be given.
-
-Treibstoff not ships a server side implementation, it's up to the user
-providing one.
 
 
 API
