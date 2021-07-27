@@ -236,7 +236,7 @@ export class AjaxUtil extends Events {
     }
 
     /**
-     * Get ajax target for event.
+     * Get ajax target for action.
      *
      * Lookup ``ajaxtarget`` on event, fall back to ``ajax:target`` attribute
      * on elem.
@@ -245,7 +245,7 @@ export class AjaxUtil extends Events {
      * @param {$.Event} evt - jQuery event.
      * @returns {Object} Target for event.
      */
-    event_target(elem, evt) {
+    action_target(elem, evt) {
         if (evt.ajaxtarget) {
             return evt.ajaxtarget;
         }
@@ -426,6 +426,7 @@ export class AjaxPath extends AjaxOperation {
         // delete options which should not end up in state
         delete opts.path;
         delete opts.replace;
+        opts._t_ajax = true;
         if (replace) {
             history.replaceState(opts, '', path);
         } else {
@@ -437,6 +438,9 @@ export class AjaxPath extends AjaxOperation {
         evt.preventDefault();
         let state = evt.originalEvent.state;
         if (!state) {
+            return;
+        }
+        if (!state._t_ajax) {
             return;
         }
         let target;
@@ -478,7 +482,7 @@ export class AjaxPath extends AjaxOperation {
             let href = elem.attr('href');
             path = parse_path(href, true);
         } else if (path === 'target') {
-            let tgt = this.event_target(elem, evt);
+            let tgt = this.action_target(elem, evt);
             path = tgt.path + tgt.query;
         }
         let target;
@@ -488,7 +492,7 @@ export class AjaxPath extends AjaxOperation {
                 target = this.parse_target(target);
             }
         } else {
-            target = this.event_target(elem, evt);
+            target = this.action_target(elem, evt);
         }
         let p_opts = {
             path: path,
@@ -963,7 +967,7 @@ export class AjaxDispatcher extends AjaxUtil {
             event = opts.event;
         if (elem.attr('ajax:action')) {
             this.trigger('on_action', {
-                target: this.event_target(elem, event),
+                target: this.action_target(elem, event),
                 action: elem.attr('ajax:action')
             });
         }
@@ -975,7 +979,7 @@ export class AjaxDispatcher extends AjaxUtil {
         }
         if (elem.attr('ajax:overlay')) {
             this.trigger('on_overlay', {
-                target: this.event_target(elem, event),
+                target: this.action_target(elem, event),
                 overlay: elem.attr('ajax:overlay'),
                 css: elem.attr('ajax:overlay-css')
             });

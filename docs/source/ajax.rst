@@ -4,20 +4,21 @@ Ajax
 Overview
 --------
 
-Treibstoff provides an Ajax mechanism to integrate server side rendering into
-a SPA Application driven by XML-Attributes on the HTML markup. These attributes
-are defined in its own XML namespace.
+Treibstoff provides an Ajax mechanism to integrate Server-Side Rendering (SSR)
+into a Single-Page Applications (SPA), driven by XML-Attributes on the HTML
+markup.
 
-Therefor a set of Ajax operations is provided. The actual server side rendering
-is done by a resource named ``ajaxaction``, which gets called with information
-provided via the Ajax related DOM attributes.
+Therefor a set of Ajax operations is provided. The actual Server-Side Rendering
+is done by an endpoint named ``ajaxaction``, which gets called with information
+provided in the Ajax related DOM attributes.
 
 
-Define Namespace
-~~~~~~~~~~~~~~~~
+XML Namespace
+~~~~~~~~~~~~~
 
-To keep your HTML valid when using the XML namespace extension define this
-namespace on the HTML document:
+Ajax related attributes are defined in its own XML namespace.
+
+Define this namespace on the HTML document:
 
 .. code-block:: html
 
@@ -46,9 +47,9 @@ see Forms), without getting bound to one or more events.
 Define a Target
 ~~~~~~~~~~~~~~~
 
-The ``ajax:target`` attribute contains the base URL on which the server side
-``ajaxaction`` is called, and may include query parameters which get passed to
-the server:
+The ``ajax:target`` attribute contains the ``Server Target`` on which the
+``ajaxaction`` is called, and consists of the base URL and may include query
+parameters which get passed to the server:
 
 .. code-block:: html
 
@@ -57,71 +58,112 @@ the server:
       Click me!
     </a>
 
-When performing Ajax actions, this target results in URL
+The target in this example results in in URL
 ``https://tld.com/resource/ajacaction?param=value``. The user needs to make
-sure to provide the appropriate server endpoint, e.g. via URL dispatching or
-traversal.
+sure to provide the appropriate endpoint on the server, e.g. via URL dispatching
+or traversal.
+
+
+Perform Actions
+~~~~~~~~~~~~~~~
+
+The actual Server-Side Rendering is triggered by defining the ``alax:action``
+attribute. It contains a colon seperated triple with the action ``name``, a
+``selector`` which identifies the DOM element to modify with the response and
+a DOM modification ``mode``:
+
+.. code-block:: html
+
+    <a ajax:bind="click"
+       ajax:action="renderfoo:.#foo:replace"
+       ajax:target="http://tld.com?param=value">
+      Click me!
+    </a>
+
+Now, when the link gets clicked, the DOM element with id ``#foo`` is replaced by
+the results of action ``renderfoo``. The server target is taken from
+``ajax:target`` attribute.
 
 
 Trigger Events
 ~~~~~~~~~~~~~~
 
 When adding ``ajax:event`` attribute, an event gets triggered to all elements
-defined by selector including the defined target.
+defined by selector. The event instance provides the defined target.
 
 .. code-block:: html
 
     <a ajax:bind="click"
-       ajax:event="some_event:.listen_to_some_event"
+       ajax:event="update_something:.something-tp-update"
        ajax:target="http://tld.com/resource?param=value">
       Click me!
     </a>
 
-This causes ``some_event`` being triggered on all DOM elements with
-``listen_to_some_event`` CSS class set when the link gets clicked. The target
-gets written on the event at attribute ``ajaxtarget`` before it is triggered.
+This causes ``update_something`` event being triggered on all DOM elements with
+``something-to-update`` CSS class set when the link gets clicked. The target
+gets written on the event at property ``ajaxtarget``.
 
-This feature is useful when defining actions which can be triggered from several
-places in the application.
+This feature is useful when providing actions which can be triggered from several
+places in the application. The event receiving DOM element contains the action
+definition:
+
+.. code-block:: html
+
+    <div id="#something"
+         class="something-to-update"
+         ajax:bind="update_something"
+         ajax:action="rendersomething:#something:replace">
+    </div>
+
+If binding actions which get triggered by Ajax event operations, there's no
+need to define the target as it gets passed along with the event.
 
 
 Browser History
 ---------------
 
-Set path directly, triggers event on history state change:
+To provide a sane browser history, ``ajax:path`` and related attribute are
+provided. The path operation causes Ajax operation definitions to be written
+to the browser's session history stack. The path operation listens to the
+window's popstate event and executes the Ajax operations contained in state if
+any.
+
+Treibstoff not provides a client side SPA routing mechanism. If the URL under
+path is supposed to display the same contents as the outcome of the Ajax
+operations when entered directly in the URL bar, the server side is responsible
+to render it accordingly.
+
+It is totally sane to use the history stack in your own Jacascript as long as
+the pushed state objects not contains a property named ``_t_ajax``, which is
+used to detect Ajax operations on popstate. Also make sure to unbind only
+custom popstate handles from window on cleanup to avoid breaking Ajax history
+handling.
+
+How the path is extracted from ``ajax:path`` follow these rules:
+
+* When value is set to ``target``, path gets extracted from ``ajax:target``
+  attribute including request parameters. This is the most common use.
+
+* When value is set to ``href`` and DOM element is a link, path gets taken
+  from there.
+
+* When setting it to a dedicated path, e.g. ``/some/path``, it is used as
+  defined. This is in particular useful if the operation target contains
+  request parameters but the path should not.
+
+The following example add an ajax action operation to the browser histroy stack:
 
 .. code-block:: html
 
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:path="/some/path"
-       ajax:path-event="contextxhanged:#layout">
-      fubar
-    </a>
-
-Take path from target, performs action on history state change:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:target="http://fubar.com/baz?a=a"
+    <a ajax:bind="click"
+       ajax:target="https://tld.com/some/path?param=value"
        ajax:path="target"
-       ajax:path-action="layout:#layout:replace">
-      fubar
+       ajax:path-action="rendersomething:#something:replace">
+      Click me!
     </a>
 
-Take path from href attribute, trigger overlay:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:path="href"
-       ajax:path-overlay="acionname:#custom-overlay:.custom_overlay_content">
-      fubar
-    </a>
+For a full documentation about the path operation related attributes, see
+``AjaxPath`` docs.
 
 
 Perform Actions
@@ -244,43 +286,6 @@ If both ``flavor`` and ``selector`` are set, ``selector`` is ignored.
 
 **note** - Be aware that you can provoke infinite loops with continuation
 actions and events, use this feature with care.
-
-
-Direct Actions
-~~~~~~~~~~~~~~
-
-Bind an action which is triggered directly:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:action="renderfubar:.#fubar:replace"
-       ajax:target="http://fubar.com/baz?a=a">
-      fubar
-    </a>
-
-On click the DOM element with id ``fubar`` will be replaced by the results of
-action ``renderfubar``. Request context and parameters are taken from
-``ajax:target`` definition.
-
-
-Actions by Event
-~~~~~~~~~~~~~~~~
-
-Bind an action as event listener. See section 'Trigger events'.
-A triggered event indicates change of context on target with parameters.
-
-.. code-block:: html
-
-    <div id="content"
-         class="contextsensitiv"
-         ajax:bind="contextchanged"
-         ajax:action="rendercontent:#content:inner">
-    </div>
-
-**note** - If binding actions as event listeners, there's no need to define a target
-since it is passed along with the event.
 
 
 Multiple Operations
@@ -476,7 +481,7 @@ Ajax Utilities
 ~~~~~~~~~~~~~~
 
 .. js:autoclass:: AjaxUtil
-    :members: parse_target, parse_definition, event_target
+    :members: parse_target, parse_definition, action_target
 
 
 Ajax Singleton
