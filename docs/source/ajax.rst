@@ -5,12 +5,12 @@ Overview
 --------
 
 Treibstoff provides an Ajax mechanism to integrate Server-Side Rendering (SSR)
-into a Single-Page Applications (SPA), driven by XML-Attributes on the HTML
+into Single-Page Applications (SPA), driven by XML-Attributes on the HTML
 markup.
 
 Therefor a set of Ajax operations is provided. The actual Server-Side Rendering
 is done by an endpoint named ``ajaxaction``, which gets called with information
-provided in the Ajax related DOM attributes.
+provided via the Ajax related DOM attributes.
 
 
 XML Namespace
@@ -67,7 +67,7 @@ or traversal.
 Perform Actions
 ~~~~~~~~~~~~~~~
 
-The actual Server-Side Rendering is triggered by defining the ``alax:action``
+The actual Server-Side Rendering is triggered by defining the ``ajax:action``
 attribute. It contains a colon seperated triple with the action ``name``, a
 ``selector`` which identifies the DOM element to modify with the response and
 a DOM modification ``mode``:
@@ -75,14 +75,14 @@ a DOM modification ``mode``:
 .. code-block:: html
 
     <a ajax:bind="click"
-       ajax:action="renderfoo:.#foo:replace"
+       ajax:action="rendersomething:.#element-id:replace"
        ajax:target="http://tld.com?param=value">
       Click me!
     </a>
 
-Now, when the link gets clicked, the DOM element with id ``#foo`` is replaced by
-the results of action ``renderfoo``. The server target is taken from
-``ajax:target`` attribute.
+Now, when the link gets clicked, the DOM element with id ``#element-id`` is
+replaced by the results of action ``rendersomething``. The server target is
+taken from ``ajax:target`` attribute.
 
 
 Trigger Events
@@ -119,8 +119,55 @@ If binding actions which get triggered by Ajax event operations, there's no
 need to define the target as it gets passed along with the event.
 
 
+Overlays Actions
+~~~~~~~~~~~~~~~~
+
+The overlay operation is a special kind of action operation, which renders
+the result of the action into an overlay. This is achieved by defining
+``ajax:overlay`` attribute on the DOM element.:
+
+.. code-block:: html
+
+    <a ajax:bind="click"
+       ajax:target="http://tld.com/some/path?param=value"
+       ajax:overlay="rendersomething">
+      Click me!
+    </a>
+
+Other than ``ajax:action``, the value of ``ajax:overlay`` contains only the
+action ``name``, since ``selector`` and ``mode`` are implicit due to the use
+of the ``Overlay`` widget.
+
+Overlays can be closed by setting special value ``CLOSE`` to ``ajax:overlay``,
+colon seperated followed by the overlay UID, which gets passed as
+``ajax.overlay-uid`` request parameter to the server:
+
+.. code-block:: html
+
+    <a ajax:bind="click"
+       ajax:overlay="CLOSE:12345">
+      Click me!
+    </a>
+
+
+Confirming Operations
+~~~~~~~~~~~~~~~~~~~~~
+
+By defining ``ajax:confirm`` attribute on the DOM element, a confirmation
+dialog gets displayed with the value of this attribute as dialog text, and
+executes the operation only if th user confirms it:
+
+.. code-block:: html
+
+    <a ajax:action="rendersomething:.#something:replace"
+       ajax:target="http://tld.com/some/path?param=value"
+       ajax:confirm="Do you really want to do this?">
+      Click me!
+    </a>
+
+
 Browser History
----------------
+~~~~~~~~~~~~~~~
 
 To provide a sane browser history, ``ajax:path`` and related attribute are
 provided. The path operation causes Ajax operation definitions to be written
@@ -164,6 +211,19 @@ The following example add an ajax action operation to the browser histroy stack:
 
 For a full documentation about the path operation related attributes, see
 ``AjaxPath`` docs.
+
+
+Operation execution order
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When defining multiple Ajax operations on a single DOM element, they get
+executed in the following order:
+
+1. If a confirmation disalog is requested, it gets displayed first.
+2. Action operation gets dispatched if defined.
+3. Event operation gets dispatched if defined.
+4. Overlay operation gets dispatched if defined.
+5. Path operation gets dispatched if defined.
 
 
 Perform Actions
@@ -286,76 +346,6 @@ If both ``flavor`` and ``selector`` are set, ``selector`` is ignored.
 
 **note** - Be aware that you can provoke infinite loops with continuation
 actions and events, use this feature with care.
-
-
-Multiple Operations
--------------------
-
-Bind multiple operations on the same DOM element:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:event="contextchanged:.contextsensitiv"
-       ajax:action="rendersomething:.#something:replace"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:path="/some/path">
-      foo
-    </a>
-
-In this example, click event ``contextchanged`` gets triggered, action
-``rendersomething`` is performed and URL path ``/some/path`` gets set.
-
-
-Confirming Operations
----------------------
-
-Treibstoff can display a confirmation dialog before performing ajax operations:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:event="contextchanged:.contextsensitiv"
-       ajax:action="rendersomething:.#something:replace"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:confirm="Do you really want to do this?">
-      fubar
-    </a>
-
-If ``ajax:confirm`` is set, a modal dialog gets displayed before dispatching
-operations.
-
-
-Overlays
---------
-
-Ajax actions can be rendered to and overlay directly by using ``ajax:overlay``:
-
-.. code-block:: html
-
-    <a href="http://fubar.com/baz?a=a"
-       ajax:bind="click"
-       ajax:target="http://fubar.com/baz?a=a"
-       ajax:overlay="acionname">
-      fubar
-    </a>
-
-This causes treibstoff to perform action ``acionname`` on context defined in
-``ajax:target`` and renders the result to an overlay element.
-
-Overlays can be closed by setting special value ``CLOSE`` at
-``ajax:overlay``, colon seperated followed by the overlay UID (which gets
-passed as ``ajax.overlay-uid`` request parameter):
-
-.. code-block:: html
-
-    <a href="#"
-       ajax:bind="click"
-       ajax:overlay="CLOSE:12345">
-      foo
-    </a>
 
 
 Forms
