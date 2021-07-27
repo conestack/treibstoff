@@ -258,29 +258,32 @@ Ajax form responses.
 Server Side
 -----------
 
-Perform Actions
-~~~~~~~~~~~~~~~
+Treibstoff not provides any SSR implementation. It's up to the user to
+implement the required enpoints on the server.
 
-An action performs a JSON request to the server and modifies the DOM tree as
-defined.
 
-Treibstoff expects a resource (i.e a zope/pyramid view or some script) named
-``ajaxaction`` on server. Resource is called on target url with target query
-parameters. The following additional arguments are passed:
+Ajax Action
+~~~~~~~~~~~
 
-**ajax.action**
-    Name of the action.
+When executing Ajax actions, a JSON request gets send to the ``ajaxaction``
+endpoint on server target (see 'Define Target').
 
-**ajax.selector**
-    Given selector must be added to response. Can be ``NONE``, which means
-    that no markup is manipulated after action (useful i.e. in combination with
-    continuation operations).
+The following request parameters are passed (additional to the one defined on
+the action target):
 
-**ajax.mode**
+* ``ajax.action``
+    Name of the requested action.
+
+* ``ajax.selector``
+    DOM element selector for action. It must be added to response response.
+    Can be ``NONE``, which means that no markup is manipulated after action.
+    This is useful in combination with continuation operations.
+
+* ``ajax.mode``
     The DOM manipulation mode. Either ``inner`` or ``replace`` or ``NONE``
     (see above).
 
-**ajax.overlay-uid**
+* ``ajax.overlay-uid``
     This parameter gets additionally set if performing an overlay operation.
 
 The resource is responsible to return the requested resource as a JSON
