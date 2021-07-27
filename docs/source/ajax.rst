@@ -286,8 +286,8 @@ the action target):
 * ``ajax.overlay-uid``
     This parameter gets additionally set if performing an overlay operation.
 
-The resource is responsible to return the requested resource as a JSON
-response in the format as follows:
+The endpoint is must return the requested resource as a JSON
+response in the follow inf format:
 
 .. code-block:: js
 
@@ -302,65 +302,77 @@ response in the format as follows:
 Continuation Operations
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``continuation`` value defines an array of tasks which should
-be performed after an Ajax action returns. Available continuation
-operations are described below.
+The server side may include continuation Ajax operation which gets executed
+immediately after the client received the response from ``ajaxaction``,
+modified the DOM tree and rebound the response payload.
 
-**actions**:
+This is useful if reloading or updating of UI components depends on the
+completion of an ajax action (e.g. deleting a resource) or for closing
+overlays (e.g. if overlays are used for rendering ajax forms).
+
+The ``continuation`` property of the ``ajaxaction`` reponse contains an array
+of operation definitions to execute.
+
+To execute an action operation on continuation, add an object defining:
 
 .. code-block:: js
 
     {
         'type': 'action',
-        'target': 'http://example.com',
+        'target': 'http://tld.com',
         'name': 'actionname',
         'mode': 'inner',
         'selector': '.foo'
     }
 
-**events**:
+To execute an event operation on continuation, add an object defining:
 
 .. code-block:: js
 
     {
         'type': 'event',
-        'target': 'http://example.com',
+        'target': 'http://tld.com',
         'name': 'eventname',
         'selector': '.foo',
         'data': {}
     }
 
-**path**:
+The ``data`` property gets set on the event instance on client side and can be
+used to pass additional data to custom event handlers.
+
+To execute a path operation on continuation, add an object defining:
 
 .. code-block:: js
 
     {
         'type': 'path',
         'path': '/some/path',
-        'target': 'http://example.com/some/path',
+        'target': 'http://tld.com/some/path',
         'action': 'actionname:.selector:replace',
-        'event': 'contextchanged:#layout',
-        'overlay': 'acionname:#custom-overlay:.custom_overlay_content',
-        'overlay_css': 'some-css-class'
+        'event': 'eventname:.selector',
+        'overlay': 'actionname',
+        'overlay_css': 'someclass'
     }
 
-**overlay**:
+To execute an overlay operation on continuation, add an object defining:
 
 .. code-block:: js
 
     {
         'type': 'overlay',
         'action': 'actionname',
-        'css': 'some-css-class',
-        'target': 'http://example.com',
+        'css': 'someclass',
+        'target': 'http://tld.com',
         'close': false,
         'uid': '1234'
     }
 
-Setting close to ``true`` closes overlay with ``uid``. The UID gets passed as
-``ajax.overlay-uid`` request parameter.
+Setting close to ``true``, closes the overlay with ``uid``. The UID gets passed
+as ``ajax.overlay-uid`` request parameter to ``ajaxaction`` endpoint when
+executing an overlay operation on client side.
 
-**messages**:
+An additional continuation feature is to display messages. To display a
+message, add an object defining:
 
 .. code-block:: js
 
@@ -371,16 +383,14 @@ Setting close to ``true`` closes overlay with ``uid``. The UID gets passed as
         'selector': null,
     }
 
-Either ``flavor`` or ``selector`` must be given. Flavor could be one of
-'message', 'info', 'warning' or 'error'. Selector indicates to hook
-returned payload at a custom location in DOM tree instead of displaying an
-overlay message. In this case, payload is set as contents of DOM element
-returned by selector.
+Either ``flavor`` or ``selector`` must be given. Flavor causes the message to
+be shown in an overlay and could be one of 'message', 'info', 'warning' or
+'error'. If selector is given, the message gets displayed as content of the
+DOM element identified by this selector. If both flavor and selector is set,
+selector is ignored.
 
-If both ``flavor`` and ``selector`` are set, ``selector`` is ignored.
-
-**note** - Be aware that you can provoke infinite loops with continuation
-actions and events, use this feature with care.
+**Note** - Be aware that you can provoke infinite loops with continuation
+action and event operations, use this features with care.
 
 
 Forms
