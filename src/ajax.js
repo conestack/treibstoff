@@ -365,8 +365,9 @@ export class AjaxPath extends AjaxOperation {
     }
 
     has_attr(elem, name) {
-        let attr = elem.attr(name);
-        return attr !== undefined && attr !== false;
+        let val = elem.attr(name);
+        // In some browsers val is undefined, in others it's false.
+        return val !== undefined && val !== false;
     }
 
     attr_val(elem, name, fallback) {

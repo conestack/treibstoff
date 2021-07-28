@@ -511,6 +511,19 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(win.location, 'https://tld.com');
         win.location = null;
 
+        // Case window location gets set. Action, event and overlay operations
+        // empty.
+        trigger_popstate({
+            _t_ajax: true,
+            target: 'https://tld.com?param=value',
+            action: null,
+            event: null,
+            overlay: null
+        })
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(win.location, 'https://tld.com');
+        win.location = null;
+
         // Case action operation
         trigger_popstate({
             _t_ajax: true,
@@ -581,6 +594,63 @@ QUnit.module('treibstoff.ajax', hooks => {
             '}'
         ]);
         assert.deepEqual(win.location, null);
+    });
+
+    QUnit.test('Test AjaxPath.has_attr', assert => {
+        let path = new AjaxPath({
+            dispatcher: new AjaxDispatcher(),
+            win: $('<span/>')
+        });
+
+        let elem = $('<span />');
+        assert.notOk(path.has_attr(elem, 'ajax:path'));
+
+        elem = $('<span ajax:path=""/>');
+        assert.ok(path.has_attr(elem, 'ajax:path'));
+    });
+
+    QUnit.test('Test AjaxPath.attr_val', assert => {
+        let path = new AjaxPath({
+            dispatcher: new AjaxDispatcher(),
+            win: $('<span/>')
+        });
+
+        let elem = $('<span />');
+        assert.deepEqual(path.attr_val(elem, 'a', 'b'), undefined);
+
+        elem = $('<span a="a" b="b" />');
+        assert.deepEqual(path.attr_val(elem, 'a', 'b'), 'a');
+
+        elem = $('<span a="" b="b" />');
+        assert.deepEqual(path.attr_val(elem, 'a', 'b'), '');
+
+        elem = $('<span b="b" />');
+        assert.deepEqual(path.attr_val(elem, 'a', 'b'), 'b');
+    });
+
+    QUnit.test('Test AjaxPath.handle', assert => {
+        class TestAjaxPath extends AjaxPath {
+            execute(opts) {
+                assert.step(JSON.stringify(opts));
+            }
+        }
+
+        let dispatcher = new AjaxDispatcher();
+        let path = new TestAjaxPath({
+            dispatcher: dispatcher,
+            win: $('<span/>')
+        });
+
+        let elem = $('<a ajax:path="/some/path" />');
+        dispatcher.trigger('on_path', {
+            elem: elem,
+            event: $.Event('click')
+        });
+        // XXXXXXXXXXXXXXXXXX
+        // Check with docs what should happen if no target given.
+        assert.verifySteps([
+            '{"path":"/some/path","target":{"params":{}}}'
+        ]);
     });
 
     ///////////////////////////////////////////////////////////////////////////
