@@ -92,7 +92,7 @@ export class AjaxSpinner {
 }
 
 /**
- * Ajax request convenience.
+ * XMLHttpRequest helper.
  */
 export class AjaxRequest {
 
@@ -104,45 +104,6 @@ export class AjaxRequest {
         this.default_403 = opts.default_403;
     }
 
-    /**
-     * Perform XMLHttpRequest request.
-     *
-     * By default it sends requests of type ``html`` with method ``get`` and
-     * displays a ``ts.ajax.error`` message if request fails::
-     *
-     *     >> ts.ajax.request({
-     *         url: 'https://tld.com/some/path',
-     *         params: {
-     *             a: 'a',
-     *             b: 'b'
-     *         },
-     *         type: 'json',
-     *         method: 'POST',
-     *         cache: true,
-     *         success: function(data, status, request) {
-     *         },
-     *         error: function(request, status, error) {
-     *         }
-     *     });
-     *
-     * Given ``url`` might contain a query string. It gets parsed and written to
-     * request parameters. If same request parameter is defined in URL query and
-     * params object, latter one takes precedence.
-     *
-     * Success and error callback functions gets wrapped to handle ajax spinner
-     * automatically.
-     *
-     * @param {Object} opts - Request options.
-     * @param {string} opts.url - Request URL.
-     * @param {Object} opts.params - Optional query parameters for request.
-     * @param {string} opts.type - Optional request type. Defaults to 'html'.
-     * @param {string} opts.method - Optional request method. Defaults to 'GET'.
-     * @param {boolean} opts.cache - Optional flag whether to cache the response.
-     * Defaults to False.
-     * @param {function} opts.success - Callback if request is successful.
-     * @param {function} opts.error - Optional callback if request fails.
-     * Default callback displays error message with response status.
-     */
     execute(opts) {
         if (opts.url.indexOf('?') !== -1) {
             let params_ = opts.params;
@@ -196,7 +157,7 @@ export class AjaxRequest {
 }
 
 /**
- * Utility class.
+ * Ajax utility mixin.
  */
 export class AjaxUtil extends Events {
 
@@ -297,7 +258,7 @@ export class AjaxOperation extends AjaxUtil {
 }
 
 /**
- * Handle for ajax path operation.
+ * Handle for path operation.
  */
 export class AjaxPath extends AjaxOperation {
 
@@ -308,43 +269,6 @@ export class AjaxPath extends AjaxOperation {
         $(this.win).on('popstate', this.state_handle.bind(this));
     }
 
-    /**
-     * Write browser history.
-     *
-     * When performing ajax operations, it's desired to keep the browser history
-     * sane. With this function it's possible to inject ajax definitions into
-     * the browser history. When the user navigates via the browser's back or
-     * forward buttons, ajax operations get executed as defined.
-     *
-     * Add an entry to the browser history::
-     *
-     *     ts.ajax.path({
-     *         path: '/some/path',
-     *         target: 'http://tld.com/some/path',
-     *         action: 'layout:#layout:replace',
-     *         event: 'contextchanged:#layout',
-     *         overlay: 'actionname',
-     *         overlay_css: 'additional-overlay-css-class'
-     *     });
-     *
-     * If ``replace`` option is given, browser history gets reset::
-     *
-     *     ts.ajax.path({
-     *         path: '/some/path',
-     *         target: 'http://example.com/some/path',
-     *         action: 'layout:#layout:replace',
-     *         replace: true
-     *     });
-     *
-     * @param {Object} opts - Path options.
-     * @param {string} opts.path - The path to write to the address bar.
-     * @param {string} opts.target - Related target URL.
-     * @param {string} opts.action - Ajax action to perform.
-     * @param {string} opts.event - Ajax event to trigger.
-     * @param {string} opts.overlay - Ajax overlay to display.
-     * @param {string} opts.overlay_css - CSS class to add to ajax overlay.
-     * @param {boolean} opts.replace - Flag whether to reset browser history.
-     */
     execute(opts) {
         let history = this.win.history;
         if (history.pushState === undefined) {
@@ -455,7 +379,7 @@ export class AjaxPath extends AjaxOperation {
 }
 
 /**
- * Handle for ajax action operation.
+ * Handle for action operation.
  */
 export class AjaxAction extends AjaxOperation {
 
@@ -467,30 +391,6 @@ export class AjaxAction extends AjaxOperation {
         this._request = opts.request;
     }
 
-    /**
-     * Perform Ajax action.
-     *
-     * Requests ``ajaxaction`` on server and modifies DOM with response
-     * according to mode and selector::
-     *
-     *     let target = ts.ajax.parse_target('http://tld.com/some/path?param=value');
-     *     ts.ajax.action({
-     *         name: 'content',
-     *         selector: '#content',
-     *         mode: 'inner',
-     *         url: target.url,
-     *         params: target.params
-     *     });
-     *
-     * @param {Object} opts - Ajax options.
-     * @param {string} opts.name - Action name.
-     * @param {string} opts.selector - CSS selector of DOM element to modify
-     * with response payload.
-     * @param {string} opts.mode - Mode for manipulation. Either ``inner`` or
-     * ``replace``.
-     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
-     * @param {Object} opts.params - Query parameters.
-     */
     execute(opts) {
         opts.success = this.complete.bind(this);
         this.request(opts);
@@ -536,7 +436,7 @@ export class AjaxAction extends AjaxOperation {
 }
 
 /**
- * Handle for ajax event operation.
+ * Handle for event operation.
  */
 export class AjaxEvent extends AjaxOperation {
 
@@ -545,54 +445,6 @@ export class AjaxEvent extends AjaxOperation {
         super(opts);
     }
 
-    /**
-     * Trigger Ajax event.
-     *
-     * Creates an event providing ``ajaxtarget`` and ``ajaxdata`` properties
-     * and trigger it on DOM elements by selector.
-     *
-     * The ``ajaxtarget`` property on the event instance is an object containing
-     * ``url`` and ``params`` properties, as returned by ``Ajax.parse_target``::
-     *
-     *     let url = 'http://tls.com?param=value';
-     *     ts.ajax.trigger({
-     *         name: 'contextchanged',
-     *         selector: '.contextsensitiv',
-     *         target: ts.ajax.parse_target(url);
-     *     });
-     *
-     * If given target is a URL string, it gets automatically parsed by the
-     * trigger function::
-     *
-     *     ts.ajax.trigger({
-     *         name: 'contextchanged',
-     *         selector: '.contextsensitiv',
-     *         target: 'http://tls.com?param=value'
-     *     });
-     *
-     * Optionally a ``data`` option can be passed, which gets set at the
-     * ``ajaxdata`` attribute of the event::
-     *
-     *     ts.ajax.trigger({
-     *         name: 'contextchanged',
-     *         selector: '.contextsensitiv',
-     *         target: 'http://tld.com?param=value',
-     *         data: {key: 'val'}
-     *     });
-     *
-     * **NOTE** - For B/C reasons, ``Ajax.event`` can be called with positional
-     * arguments (name, selector, target, data). This behavior is deprecated
-     * and will be removed in future versions.
-     *
-     * @param {Object} opts - Event options.
-     * @param {string} opts.name - Event name.
-     * @param {string} opts.selector - CSS selector of DOM elements on which to
-     * trigger events on.
-     * @param {string|Object} opts.target - Event target. Gets set as
-     * ``ajaxtarget`` property on event instance.
-     * @param {*} opts.data - Optional event data. Gets set as
-     * ``ajaxdata`` property on event instance.
-     */
     execute(opts) {
         let create_event = this.create_event.bind(this);
         $(opts.selector).each(function() {
@@ -628,7 +480,7 @@ export class AjaxEvent extends AjaxOperation {
 }
 
 /**
- * Handle for ajax overlay operation.
+ * Handle for overlay operation.
  */
 export class AjaxOverlay extends AjaxAction {
 
@@ -638,79 +490,6 @@ export class AjaxOverlay extends AjaxAction {
         this.overlay_content_sel = '.modal-body';
     }
 
-    /**
-     * Perform ajax action and load result into an overlay.
-     *
-     * Display ajax action in overlay. Contents of the ``title`` option gets
-     * displayed in the overlay header::
-     *
-     *     ts.ajax.overlay({
-     *         action: 'actionname',
-     *         url: 'https://tld.com',
-     *         params: {param: 'value'},
-     *         title: 'Overlay Title'
-     *     });
-     *
-     * Optional to ``url`` and ``params``, ``target`` can be passed as option.
-     * If both ``target`` and ``url``/``params`` given, ``target`` takes
-     * precedence::
-     *
-     *     ts.ajax.overlay({
-     *         action: 'actionname',
-     *         target: 'https://tld.com?param=value'
-     *     });
-     *
-     * If ``css`` option is given, it gets set on overlay DOM element. This
-     * way it's possible to add custom styles for a specific overlay::
-     *
-     *     ts.ajax.overlay({
-     *         action: 'actionname',
-     *         target: 'https://tld.com?param=value',
-     *         css: 'some-class'
-     *     });
-     *
-     * Overlays get a generated UID by default for later reference which gets
-     * passed as ``ajax:overlay-uid`` request parameter to the server.
-     * ``Ajax.overlay`` returns the overlay instance, from which this uid
-     * can be read::
-     *
-     *     let overlay = ts.ajax.overlay({
-     *         action: 'actionname',
-     *         target: 'https://tld.com?param=value'
-     *     });
-     *     let uid = overlay.uid;
-     *
-     * Already open ajax overlays can be closed by passing the ``close`` option
-     * and the overlay ``uid``::
-     *
-     *     ts.ajax.overlay({
-     *         close: true,
-     *         uid: uid
-     *     });
-     *
-     * A callback can be provided when overlay gets closed by passing it as
-     * ``on_close`` option::
-     *
-     *     ts.ajax.overlay({
-     *         action: 'actionname',
-     *         target: 'http://foobar.org?param=value',
-     *         on_close: function(inst) {
-     *             // inst is the overlay instance.
-     *         }
-     *     });
-     *
-     * @param {Object} opts - Overlay options.
-     * @param {string} opts.action - Ajax action name.
-     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
-     * @param {Object} opts.params - Query parameters.
-     * @param {string|Object} opts.target - Optional action target. Takes
-     * precedence over ``url`` and ``params``.
-     * @param {string} opts.title - Title to display in overlay header.
-     * @param {string} opts.css - CSS class to add to overlay DOM element.
-     * @param {string} opts.uid - The overlay UID.
-     * @param {boolean} opts.close - Flag whether to close an open overlay.
-     * @returns {Overlay} Overlay instance.
-     */
     execute(opts) {
         let ol;
         if (opts.close) {
@@ -799,10 +578,7 @@ export class AjaxOverlay extends AjaxAction {
 }
 
 /**
- * Handle for ajax form operation.
- *
- * **ajax:form="true"**
- *     Indicate AJAX form. Valid only on ``form`` elements. Value is ignored.
+ * Handle for Ajax form.
  */
 export class AjaxForm {
 
@@ -972,6 +748,9 @@ export class AjaxHandle extends AjaxUtil {
     }
 }
 
+/**
+ * DOM Parser for binding Ajax operations.
+ */
 export class AjaxParser extends Parser {
 
     constructor(opts) {
@@ -1001,7 +780,7 @@ export class AjaxParser extends Parser {
 }
 
 /**
- * Ajax singleton.
+ * Ajax singleton. Public API.
  */
 export class Ajax extends AjaxUtil {
 
@@ -1065,7 +844,8 @@ export class Ajax extends AjaxUtil {
         }
     }
 
-    /** Bind Ajax Operations on context.
+    /**
+     * Bind Ajax operations.
      *
      * Parses given piece of DOM for Ajax operation related attributes and binds
      * the Ajax dispatcher.
@@ -1094,28 +874,162 @@ export class Ajax extends AjaxUtil {
     }
 
     /**
-     * See ``AjaxRequest.execute``.
+     * Perform XMLHttpRequest request.
+     *
+     * By default it sends requests of type ``html`` with method ``get`` and
+     * displays a ``ts.ajax.error`` message if request fails::
+     *
+     *     ts.ajax.request({
+     *         url: 'https://tld.com/some/path',
+     *         params: {
+     *             a: 'a',
+     *             b: 'b'
+     *         },
+     *         type: 'json',
+     *         method: 'POST',
+     *         cache: true,
+     *         success: function(data, status, request) {
+     *         },
+     *         error: function(request, status, error) {
+     *         }
+     *     });
+     *
+     * Given ``url`` might contain a query string. It gets parsed and written to
+     * request parameters. If same request parameter is defined in URL query and
+     * params object, latter one takes precedence.
+     *
+     * Success and error callback functions gets wrapped to handle ajax spinner
+     * automatically.
+     *
+     * @param {Object} opts - Request options.
+     * @param {string} opts.url - Request URL.
+     * @param {Object} opts.params - Optional query parameters for request.
+     * @param {string} opts.type - Optional request type. Defaults to 'html'.
+     * @param {string} opts.method - Optional request method. Defaults to 'GET'.
+     * @param {boolean} opts.cache - Optional flag whether to cache the response.
+     * Defaults to False.
+     * @param {function} opts.success - Callback if request is successful.
+     * @param {function} opts.error - Optional callback if request fails.
+     * Default callback displays error message with response status.
      */
     request(opts) {
         this._request.execute(opts);
     }
 
     /**
-     * See ``AjaxPath.execute``.
+     * Execute path operation.
+     *
+     * Wites browser session history stack. Executes Ajax operations on
+     * window popstate event.
+     *
+     * Add an entry to the browser history::
+     *
+     *     ts.ajax.path({
+     *         path: '/some/path',
+     *         target: 'http://tld.com/some/path',
+     *         action: 'layout:#layout:replace',
+     *         event: 'contextchanged:#layout',
+     *         overlay: 'actionname',
+     *         overlay_css: 'additional-overlay-css-class'
+     *     });
+     *
+     * If ``replace`` option is given, browser history gets reset::
+     *
+     *     ts.ajax.path({
+     *         path: '/some/path',
+     *         target: 'http://example.com/some/path',
+     *         action: 'layout:#layout:replace',
+     *         replace: true
+     *     });
+     *
+     * @param {Object} opts - Path options.
+     * @param {string} opts.path - The path to write to the address bar.
+     * @param {string} opts.target - Related target URL.
+     * @param {string} opts.action - Ajax action to perform.
+     * @param {string} opts.event - Ajax event to trigger.
+     * @param {string} opts.overlay - Ajax overlay to display.
+     * @param {string} opts.overlay_css - CSS class to add to ajax overlay.
+     * @param {boolean} opts.replace - Flag whether to reset browser history.
      */
     path(opts) {
         this._path.execute(opts);
     }
 
     /**
-     * See ``AjaxAction.execute``.
+     * Execute action operation.
+     *
+     * Requests ``ajaxaction`` on server and modifies DOM with response
+     * according to mode and selector::
+     *
+     *     let target = ts.ajax.parse_target('http://tld.com/some/path?param=value');
+     *     ts.ajax.action({
+     *         name: 'content',
+     *         selector: '#content',
+     *         mode: 'inner',
+     *         url: target.url,
+     *         params: target.params
+     *     });
+     *
+     * @param {Object} opts - Ajax options.
+     * @param {string} opts.name - Action name.
+     * @param {string} opts.selector - CSS selector of DOM element to modify
+     * with response payload.
+     * @param {string} opts.mode - Mode for manipulation. Either ``inner`` or
+     * ``replace``.
+     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
+     * @param {Object} opts.params - Query parameters.
      */
     action(opts) {
         this._action.execute(opts);
     }
 
     /**
-     * See ``AjaxEvent.execute``.
+     * Execute event operation.
+     *
+     * Creates an event providing ``ajaxtarget`` and ``ajaxdata`` properties
+     * and trigger it on DOM elements by selector.
+     *
+     * The ``ajaxtarget`` property on the event instance is an object containing
+     * ``url`` and ``params`` properties, as returned by ``Ajax.parse_target``::
+     *
+     *     let url = 'http://tls.com?param=value';
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: ts.ajax.parse_target(url);
+     *     });
+     *
+     * If given target is a URL string, it gets automatically parsed by the
+     * trigger function::
+     *
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: 'http://tls.com?param=value'
+     *     });
+     *
+     * Optionally a ``data`` option can be passed, which gets set at the
+     * ``ajaxdata`` attribute of the event::
+     *
+     *     ts.ajax.trigger({
+     *         name: 'contextchanged',
+     *         selector: '.contextsensitiv',
+     *         target: 'http://tld.com?param=value',
+     *         data: {key: 'val'}
+     *     });
+     *
+     * **Note** - For B/C reasons, ``trigger`` can be called with positional
+     * arguments (name, selector, target, data). This behavior is deprecated
+     * and will be removed in future versions.
+     *
+     * @param {Object} opts - Event options.
+     * @param {string} opts.name - Event name.
+     * @param {string} opts.selector - CSS selector of DOM elements on which to
+     * trigger events on.
+     * @param {string|Object} opts.target - Event target. Gets set as
+     * ``ajaxtarget`` property on event instance.
+     * @param {*} opts.data - Optional event data. Gets set as
+     * ``ajaxdata`` property on event instance.
      */
     trigger(opts) {
         if (arguments.length > 1) {
@@ -1131,15 +1045,99 @@ export class Ajax extends AjaxUtil {
     }
 
     /**
-     * See ``AjaxOverlay.execute``.
+     * Execute overlay operation.
+     *
+     * Load action result into an overlay.
+     *
+     * Display action operation in overlay. Contents of the ``title`` option
+     * gets displayed in the overlay header::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         url: 'https://tld.com',
+     *         params: {param: 'value'},
+     *         title: 'Overlay Title'
+     *     });
+     *
+     * Optional to ``url`` and ``params``, ``target`` can be passed as option.
+     * If both ``target`` and ``url``/``params`` given, ``target`` takes
+     * precedence::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value'
+     *     });
+     *
+     * If ``css`` option is given, it gets set on overlay DOM element. This
+     * way it's possible to add custom styles for a specific overlay::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value',
+     *         css: 'some-class'
+     *     });
+     *
+     * Overlays get a generated UID by default for later reference which gets
+     * passed as ``ajax:overlay-uid`` request parameter to the server.
+     * ``Ajax.overlay`` returns the overlay instance, from which this uid
+     * can be read::
+     *
+     *     let overlay = ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'https://tld.com?param=value'
+     *     });
+     *     let uid = overlay.uid;
+     *
+     * Already open ajax overlays can be closed by passing the ``close`` option
+     * and the overlay ``uid``::
+     *
+     *     ts.ajax.overlay({
+     *         close: true,
+     *         uid: uid
+     *     });
+     *
+     * A callback can be provided when overlay gets closed by passing it as
+     * ``on_close`` option::
+     *
+     *     ts.ajax.overlay({
+     *         action: 'actionname',
+     *         target: 'http://foobar.org?param=value',
+     *         on_close: function(inst) {
+     *             // inst is the overlay instance.
+     *         }
+     *     });
+     *
+     * @param {Object} opts - Overlay options.
+     * @param {string} opts.action - Ajax action name.
+     * @param {string} opts.url - URL on which ``ajaxaction`` gets requested.
+     * @param {Object} opts.params - Query parameters.
+     * @param {string|Object} opts.target - Optional action target. Takes
+     * precedence over ``url`` and ``params``.
+     * @param {string} opts.title - Title to display in overlay header.
+     * @param {string} opts.css - CSS class to add to overlay DOM element.
+     * @param {string} opts.uid - The overlay UID.
+     * @param {boolean} opts.close - Flag whether to close an open overlay.
+     * @returns {Overlay} Overlay instance.
      */
     overlay(opts) {
         this._overlay.execute(opts);
     }
 
     /**
-     * Gets called from hidden form iframe when response returns.
-     * See server integration.
+     * Render ajax form after form processing.
+     *
+     * Gets called from hidden form iframe when response returns. See server
+     * integration documentation for details.
+     *
+     * @param {Object} opts - Form options.
+     * @param {DOMElement} opts.payload - The rendered form.
+     * @param {string} opts.selector - CSS selector of the form.
+     * @param {string} opts.mode - DOM manipulation mode.
+     * @param {Array} opts.next - Continuation operation definitions.
+     * @param {boolean} opts.error - A flag whether an error occured while
+     * processing the form. The error flag not means a validation error but
+     * an exception happened and is needed for proper application
+     * state handling.
      */
     form(opts) {
         this._form.render(opts);
@@ -1220,14 +1218,6 @@ export class Ajax extends AjaxUtil {
                 callback(opts);
             }
         });
-    }
-
-    /**
-     * This function is deprecated. Use ``ts.ajax.form`` instead.
-     */
-    render_ajax_form(opts) {
-        deprecate('ts.ajax.render_ajax_form', 'ts.ajax.form', '1.0');
-        this.form(opts);
     }
 }
 

@@ -17,6 +17,7 @@ var ts = (function (exports, $) {
         if (ob[name] === undefined) {
             ob[name] = val;
         }
+        return ob[name];
     }
     function json_merge(base, other) {
         let ret = {};
@@ -657,7 +658,9 @@ var ts = (function (exports, $) {
     class AjaxRequest {
         constructor(opts) {
             this.spinner = opts.spinner;
+            set_default(opts, 'win', window);
             this.win = opts.win;
+            set_default(opts, 'default_403', '/login');
             this.default_403 = opts.default_403;
         }
         execute(opts) {
@@ -688,7 +691,7 @@ var ts = (function (exports, $) {
             }.bind(this);
             let wrapped_error = function(request, status, error) {
                 if (request.status === 0) {
-                    spinner.hide(true);
+                    this.spinner.hide(true);
                     return;
                 }
                 status = request.status || status;
@@ -720,7 +723,7 @@ var ts = (function (exports, $) {
         parse_definition(val) {
             return val.replace(/\s+/g, ' ').split(' ');
         }
-        event_target(elem, evt) {
+        action_target(elem, evt) {
             if (evt.ajaxtarget) {
                 return evt.ajaxtarget;
             }
@@ -759,6 +762,7 @@ var ts = (function (exports, $) {
             let replace = opts.replace;
             delete opts.path;
             delete opts.replace;
+            opts._t_ajax = true;
             if (replace) {
                 history.replaceState(opts, '', path);
             } else {
@@ -769,6 +773,9 @@ var ts = (function (exports, $) {
             evt.preventDefault();
             let state = evt.originalEvent.state;
             if (!state) {
+                return;
+            }
+            if (!state._t_ajax) {
                 return;
             }
             let target;
@@ -809,7 +816,7 @@ var ts = (function (exports, $) {
                 let href = elem.attr('href');
                 path = parse_path(href, true);
             } else if (path === 'target') {
-                let tgt = this.event_target(elem, evt);
+                let tgt = this.action_target(elem, evt);
                 path = tgt.path + tgt.query;
             }
             let target;
@@ -819,7 +826,7 @@ var ts = (function (exports, $) {
                     target = this.parse_target(target);
                 }
             } else {
-                target = this.event_target(elem, evt);
+                target = this.action_target(elem, evt);
             }
             let p_opts = {
                 path: path,
@@ -1082,7 +1089,7 @@ var ts = (function (exports, $) {
                 event = opts.event;
             if (elem.attr('ajax:action')) {
                 this.trigger('on_action', {
-                    target: this.event_target(elem, event),
+                    target: this.action_target(elem, event),
                     action: elem.attr('ajax:action')
                 });
             }
@@ -1094,7 +1101,7 @@ var ts = (function (exports, $) {
             }
             if (elem.attr('ajax:overlay')) {
                 this.trigger('on_overlay', {
-                    target: this.event_target(elem, event),
+                    target: this.action_target(elem, event),
                     overlay: elem.attr('ajax:overlay'),
                     css: elem.attr('ajax:overlay-css')
                 });
@@ -1158,7 +1165,7 @@ var ts = (function (exports, $) {
                     if (op.flavor) {
                         show_message({
                             message: op.payload,
-                            flavor: op.flavor,
+                            flavor: op.flavor
                         });
                     } else {
                         $(op.selector).html(op.payload);
@@ -1315,10 +1322,6 @@ var ts = (function (exports, $) {
                     callback(opts);
                 }
             });
-        }
-        render_ajax_form(opts) {
-            deprecate('ts.ajax.render_ajax_form', 'ts.ajax.form', '1.0');
-            this.form(opts);
         }
     }
     let ajax = new Ajax();

@@ -449,7 +449,7 @@ but in a defined response format:
             payload: child,
             selector: '#someform',
             mode: 'replace',
-            next: {},
+            next: [{}],
             error: false
         });
 
@@ -575,39 +575,17 @@ Form
 API
 ---
 
-.. js:autoclass:: AjaxSpinner
-    :members: show, hide
-
-.. js:autoclass:: AjaxRequest
-    :members: execute
-
-.. js:autoclass:: AjaxOperation
-    :members: constructor, execute, handle
-
-.. js:autoclass:: AjaxPath
-    :members: execute
-
-.. js:autoclass:: AjaxAction
-    :members: execute
-
-.. js:autoclass:: AjaxEvent
-    :members: execute
-
-.. js:autoclass:: AjaxOverlay
-    :members: execute
-
-.. js:autoclass:: AjaxUtil
-    :members: parse_target, parse_definition, action_target
-
 .. js:autoclass:: Ajax
     :members:
         register,
+        bind,
         request,
         action,
         trigger,
         path,
         overlay,
-        bind,
+        form,
+        parse_target,
         parseurl,
         parsequery,
         parsepath,
