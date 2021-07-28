@@ -456,6 +456,122 @@ but in a defined response format:
     </script>
 
 
+Attribute Reference
+-------------------
+
+This section contains a detailed description about all available Ajax operation
+related DOM attributes.
+
+
+Operation
+~~~~~~~~~
+
+* ``ajax:bind="click other"``
+    Bind an Ajax operation on DOM element. Value contains a space separated list
+    of events which triggers the operation. Events can be DOM events or any
+    arbitrary custom event.
+
+* ``ajax:target="http://tld.com?param=value"``
+    Ajax target definition. Value consists of server target URL and an optional
+    query string.
+
+* ``ajax:confirm="Do you really want to do this?"``
+    Show confirmation dialog whether to execute the operation. Value contains
+    the confirmation message.
+
+
+Action
+~~~~~~
+
+* ``ajax:action="name1:selector1:mode1 name2:selector2:mode2"``
+    Perform one or more action operations. Action definitions are colon
+    separated. Each action definition consists of a triple containing action
+    ``name``, ``selector``  and ``mode``. Selector is a CSS selector defining
+    the DOM element(s) which gets affected by the action. Mode defines the DOM
+    manipulation mode which can be either ``inner`` or ``replace``.
+
+
+Event
+~~~~~
+
+* ``ajax:event="event1:selector1 event2:selector2"``
+    Trigger one or more event operations. Event definitions are colon separated.
+    Each event definition consists of a tuple containing event ``name`` and
+    ``selector``. Name is the event name and can be any arbitrary custom event.
+    Selector is a CSS selector defining the DOM element(s) to receive the event.
+
+
+Overlay
+~~~~~~~
+
+* ``ajax:overlay="actionname"``
+    Renders an action operation to an overlay. Value contains the action
+    ``name``. Other than ``ajax:action``, value contains only the action name,
+    selector mode are implicit.
+
+* ``ajax:overlay-css="someclass"``
+    Add an additional CSS class to Overlay DOM element.
+
+
+Path
+~~~~
+
+* ``ajax:path="/some/path"``
+    Sets the address bar path and pushes a state object containing operation
+    definitions to session history stack if supported by browser.
+
+    If value is ``href``, path gets taken from ``href`` attribute. If value is
+    ``target``, path gets taken from event ``ajaxtarget`` property or
+    ``ajax:target`` attribute. Otherwise value is taken as is.
+
+    On window ``popstate`` event, the operations defined by
+    the state object are executed. Possible operations are action, event and
+    overlay.
+
+    If no ajax operation is defined on state, a redirect to target is executed.
+
+    If state object not contains ``_t_ajax`` property, it gets ignored. This
+    property is set transparently and ensures that only state objects are
+    considered which has been added by path operations.
+
+    ``popstate=1`` is added to requests made by path operations. This is useful
+    to determine on server side whether to skip path operation in continuation
+    operations.
+
+* ``ajax:path-target="http://tld.com?param=value"``
+    Operation target gets taken from ``ajax:path-target`` if set, otherwise
+    falls back to target from event ``ajaxtarget`` or ``ajax:target``. If
+    ``ajax:path-target`` contains an empty value, target gets taken from
+    ``ajax:path``.
+
+* ``ajax:path-action="name:selector:mode"``
+    Action operation definition gets taken from ``ajax:path-action`` if set,
+    otherwise falls back to ``ajax:action``. If value is empty, action execution
+    is suppressed even if ``ajax:action`` is set.
+
+* ``ajax:path-event="evt1:sel1"``
+    Event operation definition gets taken from ``ajax:path-event`` if set,
+    otherwise falls back to ``ajax:event``. If value is empty, event dispatching
+    is suppressed even if ``ajax:event`` is set.
+
+* ``ajax:path-overlay="actionname"``
+    Overlay operation definition gets taken from ``ajax:path-overlay`` if set,
+    otherwise falls back to ``ajax:overlay``. If value is empty, overlay
+    execution is suppressed even if ``ajax:overlay`` is set.
+
+* ``ajax:path-overlay-css="somclass"``
+    Additional CSS class for overlay gets taken from ``ajax:path-overlay-css``
+    if set, otherwise falls back to ``ajax:overlay-css``.
+
+
+Form
+~~~~
+
+* ``ajax:form``
+    Valid on form DOM elements. If set, form gets handles as ajax form and is
+    posted to hidden iframe.
+
+
 API
 ---
 

@@ -255,20 +255,6 @@ export class AjaxUtil extends Events {
 
 /**
  * Abstract Ajax operation.
- *
- * **ajax:bind="evt1 evt2"**
- *     Bind Ajax operation on DOM element and define the event(s) triggering
- *     it/them.
- *
- * **ajax:target="http://fubar.org?param=value"**
- *     Ajax target definition. Consists out of target context URL and a
- *     query string used for requests on the target context.
- *     ``ajax:target`` is mandatory when ``ajax:event`` is defined, and
- *     optional when ``ajax:action`` is defined (depends if event is triggered
- *     by treibstoff or browser event).
- *
- * **ajax:confirm="Do you really want to do this?"**
- *     Show confirmation dialog before executing ajax operations.
  */
 export class AjaxOperation extends AjaxUtil {
 
@@ -312,61 +298,6 @@ export class AjaxOperation extends AjaxUtil {
 
 /**
  * Handle for ajax path operation.
- *
- * **ajax:path="/some/path"**
- *     Sets the browser URL path and pushes history state if supported by browser.
- *     If value is ``href``, path gets taken from ``href`` attribute. If value is
- *     ``target`` path gets taken from event ``ajaxtarget`` or ``ajax:target``
- *     attribute. Otherwise value is taken as defined.
- *
- *     On ``popstate`` event treibstoff executes the definitions written to state
- *     object. The state object consists of ``target``, ``action`` and ``event``
- *     attributes. Execution behaves the way described at ``ajax:action`` and
- *     ``ajax:event``.
- *
- *     Target gets taken from ``ajax:path-target`` if set, otherwise falls back
- *     to target from event ``ajaxtarget`` or ``ajax:target``. If
- *     ``ajax:path-target`` set with empty value, target gets taken from ``path``.
- *
- *     Action gets taken from ``ajax:path-action`` if set, otherwise falls back
- *     to ``ajax:action``. If ``ajax:path-action`` set with empty value, action
- *     execution on history state change can be suppressed even if ``ajax:action``
- *     is set.
- *
- *     Event gets taken from ``ajax:path-event`` if set, otherwise falls back
- *     to ``ajax:event``. If ``ajax:path-event`` set with empty value, event
- *     triggering on history state change can be suppressed even if ``ajax:event``
- *     is set.
- *
- *     Overlay gets taken from ``ajax:path-overlay`` if set, otherwise falls back
- *     to ``ajax:overlay``. If ``ajax:path-overlay`` set with empty value, overlay
- *     triggering on history state change can be suppressed even if
- *     ``ajax:overlay`` is set.
- *
- *     Additional CSS class for overlay gets taken from ``ajax:path-overlay-css``
- *     if set, otherwise falls back to ``ajax:overlay-css``.
- *
- *     If no action and no event and no overlay defined on history state change,
- *     treibstoff performs a redirect to target.
- *
- *     Bdajax appends the request parameter ``popstate=1`` to requests made by
- *     history browsing. This is useful to determine on server side whether to
- *     skip setting ajax path as continuation operation.
- *
- * **ajax:path-target="http://fubar.org?param=value"**
- *     Can be used in conjunction with ``ajax:path``.
- *
- * **ajax:path-action="name1:selector1:mode1"**
- *     Can be used in conjunction with ``ajax:path``.
- *
- * **ajax:path-event="evt1:sel1"**
- *     Can be used in conjunction with ``ajax:path``.
- *
- * **ajax:path-overlay="actionname:selector:content_selector"**
- *     Can be used in conjunction with ``ajax:path``.
- *
- * **ajax:path-overlay-css="actionname:selector:content_selector"**
- *     Can be used in conjunction with ``ajax:path``.
  */
 export class AjaxPath extends AjaxOperation {
 
@@ -525,16 +456,6 @@ export class AjaxPath extends AjaxOperation {
 
 /**
  * Handle for ajax action operation.
- *
- * **ajax:action="name1:selector1:mode1 name2:selector2:mode2"**
- *     Perform AJAX action(s) on selector with mode. An AJAX action performs a
- *     request to the server, which may return a HTML snippet. Selector points to
- *     target DOM element, mode defines how to modify the DOM tree. Possible
- *     mode values are ``inner`` and ``replace``.
- *
- * .. note::
- *
- *     No selectors containing spaces are supported!
  */
 export class AjaxAction extends AjaxOperation {
 
@@ -616,10 +537,6 @@ export class AjaxAction extends AjaxOperation {
 
 /**
  * Handle for ajax event operation.
- *
- * **ajax:event="evt1:sel1 evt2:sel2"**
- *     Trigger event(s) on selector. The triggered event gets the target
- *     as additional parameter on event.ajaxtarget.
  */
 export class AjaxEvent extends AjaxOperation {
 
@@ -712,13 +629,6 @@ export class AjaxEvent extends AjaxOperation {
 
 /**
  * Handle for ajax overlay operation.
- *
- * **ajax:overlay="actionname"**
- *     Renders ajax action to overlay.
- *
- * **ajax:overlay-css="additional-overlay-css-class"**
- *     Additional CSS class which is added when overlay is opened and removed
- *     as soon as overlay is closed.
  */
 export class AjaxOverlay extends AjaxAction {
 
