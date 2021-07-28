@@ -1,13 +1,14 @@
 import $ from 'jquery';
 import {
     Ajax,
-    AjaxRequest,
     AjaxDispatcher,
     AjaxForm,
+    AjaxOperation,
     AjaxParser,
+    AjaxPath,
+    AjaxRequest,
     AjaxSpinner,
-    AjaxUtil,
-    AjaxPath
+    AjaxUtil
 } from '../src/ajax.js';
 
 QUnit.module('treibstoff.ajax', hooks => {
@@ -282,85 +283,105 @@ QUnit.module('treibstoff.ajax', hooks => {
     });
 
     ///////////////////////////////////////////////////////////////////////////
-    // Test AjaxParser
+    // Test AjaxUtil
     ///////////////////////////////////////////////////////////////////////////
 
-    QUnit.test('Test AjaxParser', assert => {
-        class TestAjaxDispatcher extends AjaxDispatcher {
-            bind(node, evts) {
-                assert.step('bind dispatcher: ' + evts);
-            }
-        }
-        class TestAjaxForm extends AjaxForm {
-            bind(form) {
-                assert.step('bind form');
-            }
-        }
+    QUnit.test('Test AjaxUtil.parse_target', assert => {
+        let util = new AjaxUtil();
 
-        let parser = new AjaxParser({
-            dispatcher: new TestAjaxDispatcher(),
-            form: new TestAjaxForm({})
+        assert.deepEqual(util.parse_target(''), {
+            url: undefined,
+            params: {},
+            path: undefined,
+            query: undefined
         });
 
-        // no ajax attributes, nothing gets bound
-        container.append($('<span></span>'));
-        parser.walk(container.get(0));
-        assert.verifySteps([]);
-        container.empty();
+        assert.deepEqual(util.parse_target('https://tld.com'), {
+            url: 'https://tld.com',
+            params: {},
+            path: '',
+            query: ''
+        });
 
-        // ajax:bind defined, but nothing associated, nothing gets bound
-        container.append($('<span ajax:bind="click"></span>'));
-        parser.walk(container.get(0));
-        assert.verifySteps([]);
-        container.empty();
+        assert.deepEqual(util.parse_target('https://tld.com/sub?foo=bar'), {
+            url: 'https://tld.com/sub',
+            params: {foo: 'bar'},
+            path: '/sub',
+            query: '?foo=bar'
+        });
+    });
 
-        // ajax action gets bound to DOM events
-        container.append($(`
-          <span ajax:bind="click custom"
-                ajax:action="action:selector:replace">
-          </span>
-        `.trim()));
-        parser.walk(container.get(0));
-        assert.verifySteps(['bind dispatcher: click custom']);
-        container.empty();
+    QUnit.test('Test AjaxUtil.parse_definition', assert => {
+        let util = new AjaxUtil();
 
-        // ajax event gets bound tom DOM events
-        container.append($(`
-          <span ajax:bind="click"
-                ajax:event="event:selector">
-          </span>
-        `.trim()));
-        parser.walk(container.get(0));
-        assert.verifySteps(['bind dispatcher: click']);
-        container.empty();
+        assert.deepEqual(
+            util.parse_definition('action:.selector:inner'),
+            ['action:.selector:inner']
+        )
 
-        // ajax overlay gets bound to DOM events
-        container.append($(`
-          <span ajax:bind="click"
-                ajax:overlay="actionname">
-          </span>
-        `.trim()));
-        parser.walk(container.get(0));
-        assert.verifySteps(['bind dispatcher: click']);
-        container.empty();
+        assert.deepEqual(
+            util.parse_definition('a1:.sel1:inner a2:.sel2:replace'),
+            ['a1:.sel1:inner', 'a2:.sel2:replace']
+        )
 
-        // ajax form gets bound
-        container.append($('<form ajax:form="true"></form>'));
-        parser.walk(container.get(0));
-        assert.verifySteps(['bind form']);
-        container.empty();
+        assert.deepEqual(
+            util.parse_definition('event:.selector'),
+            ['event:.selector']
+        )
 
-        container.append($('<form class="ajax"></form>'));
-        parser.walk(container.get(0));
-        assert.verifySteps(['bind form']);
-        container.empty();
+        assert.deepEqual(
+            util.parse_definition('e1:.sel1 e2:sel2'),
+            ['e1:.sel1', 'e2:sel2']
+        )
+    });
+
+    QUnit.test('Test AjaxUtil.action_target', assert => {
+        let util = new AjaxUtil();
+
+        let elem = $('<span />');
+        let evt = $.Event();
+        evt.ajaxtarget = util.parse_target('https://tld.com?param=value');
+        assert.deepEqual(util.action_target(elem, evt), {
+            params: {param: 'value'},
+            path: '',
+            query: '?param=value',
+            url: 'https://tld.com'
+        });
+
+        elem = $('<span ajax:target="https://tld.com?param=value" />');
+        evt = $.Event();
+        assert.deepEqual(util.action_target(elem, evt), {
+            params: {param: 'value'},
+            path: '',
+            query: '?param=value',
+            url: 'https://tld.com'
+        });
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxOperation
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxOperation', assert => {
+        let op = new AjaxOperation({
+            event: 'on_operation',
+            dispatcher: new AjaxDispatcher()
+        });
+
+        assert.deepEqual(op.dispatcher._subscribers['on_operation'].length, 1);
+        assert.throws(function() {
+            op.execute({})
+        });
+        assert.throws(function() {
+            op.dispatcher.trigger('on_operation', {})
+        });
     });
 
     ///////////////////////////////////////////////////////////////////////////
     // Test AjaxPath
     ///////////////////////////////////////////////////////////////////////////
 
-    QUnit.test('Test AjaxPath', assert => {
+    QUnit.test('Test AjaxPath.execute', assert => {
         class TestHistory {
             pushState(state, title, url) {
                 assert.step('pushState');
@@ -437,6 +458,206 @@ QUnit.module('treibstoff.ajax', hooks => {
         ]);
     });
 
+    QUnit.test('Test AjaxPath.handle_state', assert => {
+        // dummy window for dispatching events to
+        let win = $('<span />');
+        win.loaction = null;
+
+        let preventDefault = function() {
+            assert.step('evt.preventDefault()');
+        }
+        let trigger_popstate = function(state) {
+            let evt = $.Event('popstate', {preventDefault:preventDefault});
+            evt.originalEvent = {state: state};
+            win.trigger(evt);
+        }
+
+        let dispatcher = new AjaxDispatcher();
+        let handler = function(inst, opts) {
+            assert.step(JSON.stringify(opts));
+        }
+        dispatcher.on('on_action', handler);
+        dispatcher.on('on_event', handler);
+        dispatcher.on('on_overlay', handler);
+
+        let path = new AjaxPath({
+            dispatcher: dispatcher,
+            win: win
+        });
+
+        // no state, nothing happens
+        trigger_popstate(undefined);
+        assert.verifySteps([]);
+
+        // state not ajax related, nothing happens
+        trigger_popstate({});
+        assert.verifySteps([]);
+
+        // Case window location gets set, target set as parsed target
+        trigger_popstate({
+            _t_ajax: true,
+            target: path.parse_target('https://tld.com?param=value'),
+        })
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(win.location, 'https://tld.com');
+        win.location = null;
+
+        // Case window location gets set, target set as string
+        trigger_popstate({
+            _t_ajax: true,
+            target: 'https://tld.com?param=value',
+        })
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(win.location, 'https://tld.com');
+        win.location = null;
+
+        // Case action operation
+        trigger_popstate({
+            _t_ajax: true,
+            target: 'https://tld.com?param=value',
+            action: 'name:.selector:replace'
+        })
+        assert.verifySteps([
+            'evt.preventDefault()',
+            '{' +
+                '"target":{' +
+                    '"url":"https://tld.com",' +
+                    '"params":{' +
+                        '"param":"value",' +
+                        '"popstate":"1"' +
+                    '},' +
+                    '"path":"",' +
+                    '"query":"?param=value"' +
+                '},' +
+                '"action":"name:.selector:replace"' +
+            '}'
+        ]);
+        assert.deepEqual(win.location, null);
+
+        // Case event operation
+        trigger_popstate({
+            _t_ajax: true,
+            target: 'https://tld.com?param=value',
+            event: 'name:.selector'
+        })
+        assert.verifySteps([
+            'evt.preventDefault()',
+            '{' +
+                '"target":{' +
+                    '"url":"https://tld.com",' +
+                    '"params":{' +
+                        '"param":"value",' +
+                        '"popstate":"1"' +
+                    '},' +
+                    '"path":"",' +
+                    '"query":"?param=value"' +
+                '},' +
+                '"event":"name:.selector"' +
+            '}'
+        ]);
+        assert.deepEqual(win.location, null);
+
+        // Case overlay operation
+        trigger_popstate({
+            _t_ajax: true,
+            target: 'https://tld.com?param=value',
+            overlay: 'name',
+            overlay_css: 'css'
+        })
+        assert.verifySteps([
+            'evt.preventDefault()',
+            '{' +
+                '"target":{' +
+                    '"url":"https://tld.com",' +
+                    '"params":{' +
+                        '"param":"value",' +
+                        '"popstate":"1"' +
+                    '},' +
+                    '"path":"",' +
+                    '"query":"?param=value"' +
+                '},' +
+                '"overlay":"name",' +
+                '"css":"css"' +
+            '}'
+        ]);
+        assert.deepEqual(win.location, null);
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxParser
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxParser', assert => {
+        class TestAjaxDispatcher extends AjaxDispatcher {
+            bind(node, evts) {
+                assert.step('bind dispatcher: ' + evts);
+            }
+        }
+        class TestAjaxForm extends AjaxForm {
+            bind(form) {
+                assert.step('bind form');
+            }
+        }
+
+        let parser = new AjaxParser({
+            dispatcher: new TestAjaxDispatcher(),
+            form: new TestAjaxForm({})
+        });
+
+        // no ajax attributes, nothing gets bound
+        container.append($('<span></span>'));
+        parser.walk(container.get(0));
+        assert.verifySteps([]);
+        container.empty();
+
+        // ajax:bind defined, but nothing associated, nothing gets bound
+        container.append($('<span ajax:bind="click"></span>'));
+        parser.walk(container.get(0));
+        assert.verifySteps([]);
+        container.empty();
+
+        // ajax action gets bound to DOM events
+        container.append($(`
+          <span ajax:bind="click custom"
+                ajax:action="action:selector:replace">
+          </span>
+        `.trim()));
+        parser.walk(container.get(0));
+        assert.verifySteps(['bind dispatcher: click custom']);
+        container.empty();
+
+        // ajax event gets bound tom DOM events
+        container.append($(`
+          <span ajax:bind="click"
+                ajax:event="event:selector">
+          </span>
+        `.trim()));
+        parser.walk(container.get(0));
+        assert.verifySteps(['bind dispatcher: click']);
+        container.empty();
+
+        // ajax overlay gets bound to DOM events
+        container.append($(`
+          <span ajax:bind="click"
+                ajax:overlay="actionname">
+          </span>
+        `.trim()));
+        parser.walk(container.get(0));
+        assert.verifySteps(['bind dispatcher: click']);
+        container.empty();
+
+        // ajax form gets bound
+        container.append($('<form ajax:form="true"></form>'));
+        parser.walk(container.get(0));
+        assert.verifySteps(['bind form']);
+        container.empty();
+
+        container.append($('<form class="ajax"></form>'));
+        parser.walk(container.get(0));
+        assert.verifySteps(['bind form']);
+        container.empty();
+    });
+
     ///////////////////////////////////////////////////////////////////////////
     // Test Ajax
     ///////////////////////////////////////////////////////////////////////////
@@ -499,35 +720,6 @@ QUnit.module('treibstoff.ajax', hooks => {
     QUnit.test('Test Ajax.parsetarget', assert => {
         let ajax = new Ajax();
         assert.deepEqual(ajax.parsetarget('https://tld.com/sub?foo=bar'), {
-            url: 'https://tld.com/sub',
-            params: {foo: 'bar'},
-            path: '/sub',
-            query: '?foo=bar'
-        });
-    });
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Test AjaxUtil
-    ///////////////////////////////////////////////////////////////////////////
-
-    QUnit.test('Test AjaxUtil.parse_target', assert => {
-        let util = new AjaxUtil();
-
-        assert.deepEqual(util.parse_target(''), {
-            url: undefined,
-            params: {},
-            path: undefined,
-            query: undefined
-        });
-
-        assert.deepEqual(util.parse_target('https://tld.com'), {
-            url: 'https://tld.com',
-            params: {},
-            path: '',
-            query: ''
-        });
-
-        assert.deepEqual(util.parse_target('https://tld.com/sub?foo=bar'), {
             url: 'https://tld.com/sub',
             params: {foo: 'bar'},
             path: '/sub',

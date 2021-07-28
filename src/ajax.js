@@ -290,7 +290,6 @@ export class AjaxPath extends AjaxOperation {
     }
 
     state_handle(evt) {
-        evt.preventDefault();
         let state = evt.originalEvent.state;
         if (!state) {
             return;
@@ -298,6 +297,7 @@ export class AjaxPath extends AjaxOperation {
         if (!state._t_ajax) {
             return;
         }
+        evt.preventDefault();
         let target;
         if (state.target.url) {
             target = state.target;
