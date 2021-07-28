@@ -1,0 +1,28 @@
+dl.js.class {
+    margin-bottom: 40px;
+}
+dl.js.class > dt {
+    font-size: 130%;
+    margin-bottom: 10px;
+}
+dl.js.class > dd {
+    margin-left: 0;
+}
+dl.js.class dl.field-list {
+    display: block;
+}
+dl.js.class dl.field-list dt {
+    padding-bottom: 8px;
+}
+dl.js.class dl.field-list dt,
+dl.js.class dl.field-list dd {
+    padding-left: 0;
+    padding-right: 0;
+}
+dl.js.function {
+    margin-top: 30px;
+}
+dl.js.function > dt {
+    font-size: 110%;
+    margin-bottom: 8px;
+}

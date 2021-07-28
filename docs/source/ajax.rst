@@ -459,64 +459,29 @@ but in a defined response format:
 API
 ---
 
-Spinner Animation
-~~~~~~~~~~~~~~~~~
-
 .. js:autoclass:: AjaxSpinner
     :members: show, hide
-
-
-XMLHttpRequest
-~~~~~~~~~~~~~~
 
 .. js:autoclass:: AjaxRequest
     :members: execute
 
-
-Ajax Operation
-~~~~~~~~~~~~~~
-
 .. js:autoclass:: AjaxOperation
     :members: constructor, execute, handle
-
-
-Path Operation
-~~~~~~~~~~~~~~
 
 .. js:autoclass:: AjaxPath
     :members: execute
 
-
-Action Operation
-~~~~~~~~~~~~~~~~
-
 .. js:autoclass:: AjaxAction
     :members: execute
-
-
-Event Operation
-~~~~~~~~~~~~~~~
 
 .. js:autoclass:: AjaxEvent
     :members: execute
 
-
-Overlay Operation
-~~~~~~~~~~~~~~~~~
-
 .. js:autoclass:: AjaxOverlay
     :members: execute
 
-
-Ajax Utilities
-~~~~~~~~~~~~~~
-
 .. js:autoclass:: AjaxUtil
     :members: parse_target, parse_definition, action_target
-
-
-Ajax Singleton
-~~~~~~~~~~~~~~
 
 .. js:autoclass:: Ajax
     :members:
