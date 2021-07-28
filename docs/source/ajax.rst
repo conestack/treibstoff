@@ -575,6 +575,8 @@ Form
 API
 ---
 
+The public API is available via the ``ajax`` singleton.
+
 .. js:autoclass:: Ajax
     :members:
         register,
@@ -584,14 +586,32 @@ API
         trigger,
         path,
         overlay,
-        form,
-        parse_target,
-        parseurl,
-        parsequery,
-        parsepath,
-        parsetarget,
-        message,
-        info,
-        warning,
-        error,
-        dialog
+        form
+
+.. js:autoclass:: AjaxUtil
+    :members: parse_target
+
+.. js:autoclass:: AjaxSpinner
+    :members: show, hide
+
+
+Deprecated functions
+~~~~~~~~~~~~~~~~~~~~
+
+.. js:autofunction:: Ajax#parseurl
+
+.. js:autofunction:: Ajax#parsequery
+
+.. js:autofunction:: Ajax#parsepath
+
+.. js:autofunction:: Ajax#parsetarget
+
+.. js:autofunction:: Ajax#message
+
+.. js:autofunction:: Ajax#info
+
+.. js:autofunction:: Ajax#warning
+
+.. js:autofunction:: Ajax#error
+
+.. js:autofunction:: Ajax#dialog

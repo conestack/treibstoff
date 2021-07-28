@@ -35,11 +35,11 @@ import {Events} from './events.js';
  *
  * Show the spinner::
  *
- *     ajax.spinner.show();
+ *     ts.ajax.spinner.show();
  *
  * Hide the spinner. Spinner not disappears before request count reaches 0::
  *
- *     ajax.spinner.hide();
+ *     ts.ajax.spinner.hide();
  *
  * Force closing of the spinner and reset request count::
  *
@@ -780,7 +780,7 @@ export class AjaxParser extends Parser {
 }
 
 /**
- * Ajax singleton. Public API.
+ * Ajax singleton.
  */
 export class Ajax extends AjaxUtil {
 
