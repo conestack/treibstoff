@@ -342,9 +342,9 @@ export class AjaxPath extends AjaxOperation {
         }
         let target;
         if (this.has_attr(elem, 'ajax:path-target')) {
-            target = elem.attr('ajax:path-target');
-            if (target) {
-                target = this.parse_target(target);
+            let path_target = elem.attr('ajax:path-target');
+            if (path_target) {
+                target = this.parse_target(path_target);
             }
         } else {
             target = this.action_target(elem, evt);
@@ -356,11 +356,13 @@ export class AjaxPath extends AjaxOperation {
         p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
         p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
         p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
-        p_opts.overlay_css = this.attr_val(
-            elem,
-            'ajax:path-overlay-css',
-            'ajax:overlay-css'
-        );
+        if (p_opts.overlay) {
+            p_opts.overlay_css = this.attr_val(
+                elem,
+                'ajax:path-overlay-css',
+                'ajax:overlay-css'
+            );
+        }
         this.execute(p_opts);
     }
 
