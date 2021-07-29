@@ -389,8 +389,8 @@ export class AjaxAction extends AjaxOperation {
     constructor(opts) {
         set_default(opts, 'event', 'on_action');
         super(opts);
-        this.handle = opts.handle;
         this.spinner = opts.spinner;
+        this._handle = opts.handle;
         this._request = opts.request;
     }
 
@@ -413,11 +413,11 @@ export class AjaxAction extends AjaxOperation {
 
     complete(data) {
         if (!data) {
-            show_error('Empty response');
+            show_error('Empty Response');
             this.spinner.hide();
         } else {
-            this.handle.update(data);
-            this.handle.next(data.continuation);
+            this._handle.update(data);
+            this._handle.next(data.continuation);
         }
     }
 

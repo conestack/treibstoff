@@ -1,8 +1,10 @@
 import $ from 'jquery';
 import {
     Ajax,
+    AjaxAction,
     AjaxDispatcher,
     AjaxForm,
+    AjaxHandle,
     AjaxOperation,
     AjaxParser,
     AjaxPath,
@@ -883,6 +885,136 @@ QUnit.module('treibstoff.ajax', hooks => {
                 '"overlay":"name",' +
                 '"overlay_css":""' +
             '}'
+        ]);
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxAction
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxAction.execute', assert => {
+        class TestAjaxRequest extends AjaxRequest {
+            execute(opts) {
+                this.spinner.show();
+                assert.step(JSON.stringify(opts));
+            }
+        }
+
+        let win = {};
+        let ajax = new Ajax(win);
+        let spinner = ajax.spinner;
+        let request = new TestAjaxRequest({
+            spinner: spinner,
+            win: win
+        });
+        let handle = new AjaxHandle({
+            ajax: ajax,
+            spinner: spinner
+        });
+        let dispatcher = new AjaxDispatcher();
+        let action = new AjaxAction({
+            dispatcher: dispatcher,
+            win: {},
+            handle: handle,
+            spinner: ajax.spinner,
+            request: request
+        })
+
+        action.execute({
+            name: 'name',
+            selector: '.selector',
+            mode: 'inner',
+            url: 'https://tld.com',
+            params: {}
+        });
+        assert.deepEqual(spinner._request_count, 1);
+        spinner.hide();
+        assert.deepEqual(spinner._request_count, 0);
+        assert.verifySteps([
+            '{' +
+                '"url":"https://tld.com/ajaxaction",' +
+                '"type":"json",' +
+                '"params":{' +
+                    '"ajax.action":"name",' +
+                    '"ajax.mode":"inner",' +
+                    '"ajax.selector":' +
+                    '".selector"' +
+                '}' +
+            '}'
+        ]);
+    });
+
+    QUnit.test('Test AjaxAction.complete', assert => {
+        let response_data;
+
+        class TestAjaxRequest extends AjaxRequest {
+            execute(opts) {
+                this.spinner.show();
+                opts.success(response_data);
+            }
+        }
+
+        class TestAjaxHandle extends AjaxHandle {
+            update(opts) {
+                assert.step(`update(${JSON.stringify(opts)})`);
+            }
+            next(operations) {
+                assert.step(`next(${JSON.stringify(operations)})`);
+            }
+        }
+
+        let win = {};
+        let ajax = new Ajax(win);
+        let spinner = ajax.spinner;
+        let request = new TestAjaxRequest({
+            spinner: spinner,
+            win: win
+        });
+        let handle = new TestAjaxHandle({
+            ajax: ajax,
+            spinner: spinner
+        });
+        let dispatcher = new AjaxDispatcher();
+        let action = new AjaxAction({
+            dispatcher: dispatcher,
+            win: win,
+            handle: handle,
+            spinner: ajax.spinner,
+            request: request
+        })
+
+        // No response data, error is displayed
+        response_data = null;
+        action.execute({
+            name: 'name',
+            selector: '.selector',
+            mode: 'inner',
+            url: 'https://tld.com',
+            params: {}
+        });
+        assert.verifySteps([]);
+
+        assert.deepEqual(spinner._request_count, 0);
+
+        let err = $('body .modal.error').data('overlay');
+        assert.deepEqual(err.content, 'Empty Response');
+        err.close();
+
+        // Response data given, ajax handle ``update`` and ``next`` gets called
+        response_data = {
+            payload: '<div>Response Payload</div>',
+            continuation: []
+        }
+        action.execute({
+            name: 'name',
+            selector: '.selector',
+            mode: 'inner',
+            url: 'https://tld.com',
+            params: {}
+        });
+        assert.verifySteps([
+            'update({"payload":"<div>Response Payload</div>","continuation":[]})',
+            'next([])'
         ]);
     });
 
