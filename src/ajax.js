@@ -497,7 +497,7 @@ export class AjaxOverlay extends AjaxAction {
             if (ol) {
                 ol.close();
             }
-            return;
+            return ol;
         }
         let url, params;
         if (opts.target) {

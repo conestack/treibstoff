@@ -15,6 +15,7 @@ export class Overlay extends Events {
         this.container = opts.container ? opts.container : $('body');
         this.compile();
         this.elem.data('overlay', this);
+        this.is_open = false;
     }
 
     compile() {
@@ -44,6 +45,7 @@ export class Overlay extends Events {
             .addClass('modal-open');
         this.container.append(this.elem);
         this.elem.show();
+        this.is_open = true;
         this.trigger('on_open');
     }
 
@@ -55,6 +57,7 @@ export class Overlay extends Events {
                 .removeClass('modal-open');
         }
         this.elem.remove();
+        this.is_open = false;
         this.trigger('on_close');
     }
 }

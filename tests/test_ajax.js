@@ -7,12 +7,14 @@ import {
     AjaxForm,
     AjaxHandle,
     AjaxOperation,
+    AjaxOverlay,
     AjaxParser,
     AjaxPath,
     AjaxRequest,
     AjaxSpinner,
     AjaxUtil
 } from '../src/ajax.js';
+import {uuid4} from '../src/utils.js';
 
 QUnit.module('treibstoff.ajax', hooks => {
     let container;
@@ -1167,6 +1169,157 @@ QUnit.module('treibstoff.ajax', hooks => {
             'execute({"name":"name1","selector":".sel1","target":"https://tld.com"})',
             'execute({"name":"name2","selector":".sel2","target":"https://tld.com"})'
         ]);
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxOverlay
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxOverlay.execute', assert => {
+        let request_data;
+        let response_data;
+        let call_success = false;
+
+        class TestAjaxRequest extends AjaxRequest {
+            execute(opts) {
+                request_data = opts;
+                if (call_success) {
+                    opts.success(response_data);
+                }
+            }
+        }
+
+        class TestAjaxOverlay extends AjaxOverlay {
+            complete(data) {
+                assert.step(`complete(${JSON.stringify(data)})`);
+            }
+        }
+
+        let win = {};
+        let ajax = new Ajax(win);
+        let spinner = ajax.spinner;
+        let request = new TestAjaxRequest({
+            spinner: spinner,
+            win: win
+        });
+        let handle = new AjaxHandle({
+            ajax: ajax,
+            spinner: spinner
+        });
+        let dispatcher = new AjaxDispatcher();
+        let overlay = new TestAjaxOverlay({
+            dispatcher: dispatcher,
+            win: {},
+            handle: handle,
+            spinner: ajax.spinner,
+            request: request
+        })
+
+        assert.ok(overlay instanceof AjaxAction);
+
+        // Case target passed as url and params
+        let ol = overlay.execute({
+            action: 'name',
+            url: 'https://tld.com',
+            params: {param: 'value'}
+        });
+        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(request_data.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': `#${ol.uid} .modal-body`,
+            'ajax.overlay-uid': ol.uid,
+            'param': 'value'
+        });
+
+        // Case target passed as string
+        ol = overlay.execute({
+            action: 'name',
+            target: 'https://tld.com?param=value'
+        });
+        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(request_data.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': `#${ol.uid} .modal-body`,
+            'ajax.overlay-uid': ol.uid,
+            'param': 'value'
+        });
+
+        // Case target passed as object
+        ol = overlay.execute({
+            action: 'name',
+            target: {
+                url: 'https://tld.com',
+                params: {param: 'value'}
+            }
+        });
+        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(request_data.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': `#${ol.uid} .modal-body`,
+            'ajax.overlay-uid': ol.uid,
+            'param': 'value'
+        });
+
+        // Case uid given
+        let uid = uuid4();
+        ol = overlay.execute({
+            action: 'name',
+            target: 'https://tld.com?param=value',
+            uid: uid
+        });
+        assert.deepEqual(ol.uid, uid);
+
+        // Case overlay not displayed if no payload received
+        call_success = true;
+        response_data = {};
+        ol = overlay.execute({
+            action: 'name',
+            url: 'https://tld.com',
+            params: {}
+        });
+        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(request_data.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': `#${ol.uid} .modal-body`,
+            'ajax.overlay-uid': ol.uid
+        });
+        assert.notOk(ol.is_open);
+        assert.verifySteps(['complete({})']);
+
+        // Case overlay displayed if payload received
+        response_data = {payload: 'Overlay Content'};
+        ol = overlay.execute({
+            action: 'name',
+            url: 'https://tld.com',
+            params: {}
+        });
+        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(request_data.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': `#${ol.uid} .modal-body`,
+            'ajax.overlay-uid': ol.uid
+        });
+        assert.verifySteps(['complete({"payload":"Overlay Content"})']);
+        assert.ok(ol.is_open);
+
+        // Case close overlay
+        ol = overlay.execute({
+            close: true,
+            uid: ol.uid
+        });
+        assert.notOk(ol.is_open);
+
+        // Case close overlay, overlay not exists
+        ol = overlay.execute({
+            close: true,
+            uid: 'inexistent'
+        });
+        assert.deepEqual(ol, null);
     });
 
     ///////////////////////////////////////////////////////////////////////////
