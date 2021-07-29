@@ -3,6 +3,7 @@ import {
     Ajax,
     AjaxAction,
     AjaxDispatcher,
+    AjaxEvent,
     AjaxForm,
     AjaxHandle,
     AjaxOperation,
@@ -1015,6 +1016,156 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.verifySteps([
             'update({"payload":"<div>Response Payload</div>","continuation":[]})',
             'next([])'
+        ]);
+    });
+
+    QUnit.test('Test AjaxAction.handle', assert => {
+        class TestAjaxAction extends AjaxAction {
+            execute(opts) {
+                assert.step(`execute(${JSON.stringify(opts)})`);
+            }
+        }
+
+        let win = {};
+        let ajax = new Ajax(win);
+        let spinner = ajax.spinner;
+        let request = new AjaxRequest({
+            spinner: spinner,
+            win: win
+        });
+        let handle = new AjaxHandle({
+            ajax: ajax,
+            spinner: spinner
+        });
+        let dispatcher = new AjaxDispatcher();
+        let action = new TestAjaxAction({
+            dispatcher: dispatcher,
+            win: win,
+            handle: handle,
+            spinner: ajax.spinner,
+            request: request
+        })
+
+        assert.deepEqual(dispatcher._subscribers['on_action'].length, 1);
+
+        dispatcher.trigger('on_action', {
+            target: action.parse_target('https://tld.com'),
+            action: 'name:.selector:replace',
+        });
+        assert.verifySteps([
+            'execute({' +
+                '"name":"name",' +
+                '"selector":".selector",' +
+                '"mode":"replace",' +
+                '"url":"https://tld.com",' +
+                '"params":{}' +
+            '})'
+        ]);
+
+        dispatcher.trigger('on_action', {
+            target: action.parse_target('https://tld.com?param=value'),
+            action: 'name1:.sel1:replace name2:.sel2:inner',
+        });
+        assert.verifySteps([
+            'execute({' +
+                '"name":"name1",' +
+                '"selector":".sel1",' +
+                '"mode":"replace",' +
+                '"url":"https://tld.com",' +
+                '"params":{"param":"value"}' +
+            '})',
+            'execute({' +
+                '"name":"name2",' +
+                '"selector":".sel2",' +
+                '"mode":"inner",' +
+                '"url":"https://tld.com",' +
+                '"params":{"param":"value"}' +
+            '})'
+        ]);
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxEvent
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxEvent.create_event', assert => {
+        let dispatcher = new AjaxDispatcher();
+        let event = new AjaxEvent({dispatcher: dispatcher});
+
+        let evt = event.create_event('name', 'https://tld.com', {});
+        assert.ok(evt instanceof $.Event);
+        assert.deepEqual(evt.type, 'name');
+        assert.deepEqual(evt.ajaxtarget, {
+            url: 'https://tld.com',
+            params:{},
+            path: '',
+            query: ''
+        });
+        assert.deepEqual(evt.ajaxdata, {});
+
+        let target = event.parse_target('https://tld.com/sub?param=value');
+        evt = event.create_event('name', target, {key: 'val'});
+        assert.deepEqual(evt.ajaxtarget, {
+            url: 'https://tld.com/sub',
+            params:{param: 'value'},
+            path: '/sub',
+            query: '?param=value'
+        });
+        assert.deepEqual(evt.ajaxdata, {key: 'val'});
+    });
+
+    QUnit.test('Test AjaxEvent.execute', assert => {
+        let dispatcher = new AjaxDispatcher();
+        let event = new AjaxEvent({dispatcher: dispatcher});
+
+        let elem = $(`<div class="testevent_listener"></div>`);
+        $('body').append(elem);
+        elem.on('testevent', function(e) {
+            assert.step(`type: ${e.type}`);
+            assert.step(`target: ${JSON.stringify(e.ajaxtarget)}`);
+            assert.step(`data: ${JSON.stringify(e.ajaxdata)}`);
+        });
+
+        event.execute({
+            name: 'testevent',
+            selector: '.testevent_listener',
+            target: 'http://tld.com',
+            data: {key: 'val'}
+        });
+        assert.verifySteps([
+            'type: testevent',
+            'target: {"url":"http://tld.com","params":{},"path":"","query":""}',
+            'data: {"key":"val"}'
+        ]);
+    });
+
+    QUnit.test('Test AjaxEvent.handle', assert => {
+        class TestAjaxEvent extends AjaxEvent {
+            execute(opts) {
+                assert.step(`execute(${JSON.stringify(opts)})`);
+            }
+        }
+
+        let dispatcher = new AjaxDispatcher();
+        let event = new TestAjaxEvent({dispatcher: dispatcher});
+
+        assert.deepEqual(dispatcher._subscribers['on_event'].length, 1);
+
+        dispatcher.trigger('on_event', {
+            target: 'https://tld.com',
+            event: 'name:.sel',
+        });
+        assert.verifySteps([
+            'execute({"name":"name","selector":".sel","target":"https://tld.com"})'
+        ]);
+
+        dispatcher.trigger('on_event', {
+            target: 'https://tld.com',
+            event: 'name1:.sel1 name2:.sel2',
+        });
+        assert.verifySteps([
+            'execute({"name":"name1","selector":".sel1","target":"https://tld.com"})',
+            'execute({"name":"name2","selector":".sel2","target":"https://tld.com"})'
         ]);
     });
 

@@ -423,10 +423,9 @@ export class AjaxAction extends AjaxOperation {
 
     handle(inst, opts) {
         let target = opts.target,
-            action = opts.action,
-            actions = this.parse_definition(action);
-        for (let i = 0; i < actions.length; i++) {
-            let defs = actions[i].split(':');
+            action = opts.action;
+        for (let action_ of this.parse_definition(action)) {
+            let defs = action_.split(':');
             this.execute({
                 name: defs[0],
                 selector: defs[1],
@@ -468,11 +467,9 @@ export class AjaxEvent extends AjaxOperation {
 
     handle(inst, opts) {
         let target = opts.target,
-            event = opts.event,
-            defs = this.parse_definition(event);
-        for (let i = 0; i < defs.length; i++) {
-            let def = defs[i];
-            def = def.split(':');
+            event = opts.event;
+        for (let event_ of this.parse_definition(event)) {
+            let def = event_.split(':');
             this.execute({
                 name: def[0],
                 selector: def[1],
