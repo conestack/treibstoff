@@ -78,24 +78,28 @@ QUnit.module('treibstoff.ajax', hooks => {
         let spinner = new AjaxSpinner();
         let request = new AjaxRequest({spinner: spinner});
 
+        let ajax_opts;
+
         $.ajax = function(opts) {
-            assert.step(`url: ${opts.url}`);
-            assert.step(`params: ${JSON.stringify(opts.data)}`);
-            assert.step(`type: ${opts.dataType}`);
-            assert.step(`method: ${opts.method}`);
-            assert.step(`cache: ${opts.cache}`);
+            ajax_opts = {
+                url: opts.url,
+                params: opts.data,
+                type: opts.dataType,
+                method: opts.method,
+                cache: opts.cache
+            };
             spinner.hide();
         }
 
         // defaults
         request.execute({url: 'https://tld.com'});
-        assert.verifySteps([
-            'url: https://tld.com',
-            'params: {}',
-            'type: html',
-            'method: GET',
-            'cache: false'
-        ]);
+        assert.deepEqual(ajax_opts, {
+            url: 'https://tld.com',
+            params: {},
+            type: 'html',
+            method: 'GET',
+            cache: false
+        })
 
         // override defaults
         request.execute({
@@ -104,49 +108,34 @@ QUnit.module('treibstoff.ajax', hooks => {
             method: 'POST',
             cache: true
         });
-        assert.verifySteps([
-            'url: https://tld.com',
-            'params: {}',
-            'type: json',
-            'method: POST',
-            'cache: true'
-        ]);
+        assert.deepEqual(ajax_opts, {
+            url: 'https://tld.com',
+            params: {},
+            type: 'json',
+            method: 'POST',
+            cache: true
+        })
 
         // params from url
         request.execute({url: 'https://tld.com?foo=bar'});
-        assert.verifySteps([
-            'url: https://tld.com',
-            'params: {"foo":"bar"}',
-            'type: html',
-            'method: GET',
-            'cache: false'
-        ]);
+        assert.deepEqual(ajax_opts.url, 'https://tld.com');
+        assert.deepEqual(ajax_opts.params, {foo: 'bar'});
 
         // params from object
         request.execute({
             url: 'https://tld.com',
-            params: {foo: 'bar'}
+            params: {foo: 'foo'}
         });
-        assert.verifySteps([
-            'url: https://tld.com',
-            'params: {"foo":"bar"}',
-            'type: html',
-            'method: GET',
-            'cache: false'
-        ]);
+        assert.deepEqual(ajax_opts.url, 'https://tld.com');
+        assert.deepEqual(ajax_opts.params, {foo: 'foo'});
 
         // params from object take precedencs over url params
         request.execute({
             url: 'https://tld.com?foo=bar',
             params: {foo: 'baz'}
         });
-        assert.verifySteps([
-            'url: https://tld.com',
-            'params: {"foo":"baz"}',
-            'type: html',
-            'method: GET',
-            'cache: false'
-        ]);
+        assert.deepEqual(ajax_opts.url, 'https://tld.com');
+        assert.deepEqual(ajax_opts.params, {foo: 'baz'});
     });
 
     QUnit.test('Test AjaxRequest success callback', assert => {
