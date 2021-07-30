@@ -456,7 +456,7 @@ QUnit.module('treibstoff.ajax', hooks => {
 
     QUnit.test('Test AjaxPath.handle_state', assert => {
         // dummy window for dispatching events to
-        let win = $('<span />');
+        let win = $('<win />');
         win.loaction = null;
 
         let preventDefault = function() {
@@ -468,10 +468,13 @@ QUnit.module('treibstoff.ajax', hooks => {
             win.trigger(evt);
         }
 
-        let dispatcher = new AjaxDispatcher();
+        let handler_opts;
+
         let handler = function(inst, opts) {
-            assert.step(JSON.stringify(opts));
+            handler_opts = opts;
         }
+
+        let dispatcher = new AjaxDispatcher();
         dispatcher.on('on_action', handler);
         dispatcher.on('on_event', handler);
         dispatcher.on('on_overlay', handler);
@@ -493,7 +496,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         trigger_popstate({
             _t_ajax: true,
             target: path.parse_target('https://tld.com?param=value'),
-        })
+        });
         assert.verifySteps(['evt.preventDefault()']);
         assert.deepEqual(win.location, 'https://tld.com');
         win.location = null;
@@ -502,7 +505,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         trigger_popstate({
             _t_ajax: true,
             target: 'https://tld.com?param=value',
-        })
+        });
         assert.verifySteps(['evt.preventDefault()']);
         assert.deepEqual(win.location, 'https://tld.com');
         win.location = null;
@@ -515,32 +518,32 @@ QUnit.module('treibstoff.ajax', hooks => {
             action: null,
             event: null,
             overlay: null
-        })
+        });
         assert.verifySteps(['evt.preventDefault()']);
         assert.deepEqual(win.location, 'https://tld.com');
         win.location = null;
+
+        let target_res = {
+            url: 'https://tld.com',
+            params: {
+                param: 'value',
+                popstate: '1'
+            },
+            path: '',
+            query: '?param=value'
+        };
 
         // Case action operation
         trigger_popstate({
             _t_ajax: true,
             target: 'https://tld.com?param=value',
             action: 'name:.selector:replace'
-        })
-        assert.verifySteps([
-            'evt.preventDefault()',
-            '{' +
-                '"target":{' +
-                    '"url":"https://tld.com",' +
-                    '"params":{' +
-                        '"param":"value",' +
-                        '"popstate":"1"' +
-                    '},' +
-                    '"path":"",' +
-                    '"query":"?param=value"' +
-                '},' +
-                '"action":"name:.selector:replace"' +
-            '}'
-        ]);
+        });
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(handler_opts, {
+            target: target_res,
+            action: 'name:.selector:replace'
+        });
         assert.deepEqual(win.location, null);
 
         // Case event operation
@@ -548,22 +551,12 @@ QUnit.module('treibstoff.ajax', hooks => {
             _t_ajax: true,
             target: 'https://tld.com?param=value',
             event: 'name:.selector'
-        })
-        assert.verifySteps([
-            'evt.preventDefault()',
-            '{' +
-                '"target":{' +
-                    '"url":"https://tld.com",' +
-                    '"params":{' +
-                        '"param":"value",' +
-                        '"popstate":"1"' +
-                    '},' +
-                    '"path":"",' +
-                    '"query":"?param=value"' +
-                '},' +
-                '"event":"name:.selector"' +
-            '}'
-        ]);
+        });
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(handler_opts, {
+            target: target_res,
+            event: 'name:.selector'
+        });
         assert.deepEqual(win.location, null);
 
         // Case overlay operation
@@ -574,25 +567,15 @@ QUnit.module('treibstoff.ajax', hooks => {
             overlay_css: 'css',
             overlay_uid: '1234',
             overlay_title: 'Overlay Title'
-        })
-        assert.verifySteps([
-            'evt.preventDefault()',
-            '{' +
-                '"target":{' +
-                    '"url":"https://tld.com",' +
-                    '"params":{' +
-                        '"param":"value",' +
-                        '"popstate":"1"' +
-                    '},' +
-                    '"path":"",' +
-                    '"query":"?param=value"' +
-                '},' +
-                '"overlay":"name",' +
-                '"css":"css",' +
-                '"uid":"1234",' +
-                '"title":"Overlay Title"' +
-            '}'
-        ]);
+        });
+        assert.verifySteps(['evt.preventDefault()']);
+        assert.deepEqual(handler_opts, {
+            target: target_res,
+            overlay: 'name',
+            css: 'css',
+            uid: '1234',
+            title: 'Overlay Title'
+        });
         assert.deepEqual(win.location, null);
     });
 
