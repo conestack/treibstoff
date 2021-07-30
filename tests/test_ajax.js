@@ -376,43 +376,47 @@ QUnit.module('treibstoff.ajax', hooks => {
     ///////////////////////////////////////////////////////////////////////////
 
     QUnit.test('Test AjaxPath.execute', assert => {
+        let pushed_path,
+            pushed_state,
+            replaced_path,
+            replaced_state;
+
         class TestHistory {
             pushState(state, title, url) {
-                assert.step('pushState');
-                assert.step(`state: ${JSON.stringify(state)}`);
-                assert.step(`url: ${url}`);
+                pushed_state = state;
+                pushed_path = url;
             }
             replaceState(state, title, url) {
-                assert.step('replaceState');
-                assert.step(`state: ${JSON.stringify(state)}`);
-                assert.step(`url: ${url}`);
+                replaced_state = state;
+                replaced_path = url;
+            }
+        }
+
+        class TestWindow {
+            constructor() {
+                this.history = {};
+                this.location = {origin: 'https://tld.com'};
             }
         }
 
         let dispatcher = new AjaxDispatcher();
+        let win = new TestWindow();
         let path = new AjaxPath({
             dispatcher: dispatcher,
-            win: {
-                history: {},
-                location: {
-                    origin: 'https://tld.com'
-                }
-            }
+            win: win
         });
 
         // nothing happens if history not provides pushState, call for coverage.
         path.execute({});
-        path.win.history = new TestHistory();
+        let history = win.history = new TestHistory();
 
         // if no target given, window.location.origin is used
-        path.execute({
-            path: 'foo'
+        path.execute({path: 'foo'});
+        assert.deepEqual(pushed_path, '/foo');
+        assert.deepEqual(pushed_state, {
+            target: 'https://tld.com/foo',
+            _t_ajax: true
         });
-        assert.verifySteps([
-            'pushState',
-            'state: {"target":"https://tld.com/foo","_t_ajax":true}',
-            'url: /foo'
-        ]);
 
         path.execute({
             path: '/some/path',
@@ -424,20 +428,17 @@ QUnit.module('treibstoff.ajax', hooks => {
             overlay_uid: '1234',
             overlay_title: 'Overlay Title'
         });
-        assert.verifySteps([
-            'pushState',
-            'state: {' +
-                '"target":"http://tld.com/some/path",' +
-                '"action":"layout:#layout:replace",' +
-                '"event":"contextchanged:#layout",' +
-                '"overlay":"actionname",' +
-                '"overlay_css":"someclass",' +
-                '"overlay_uid":"1234",' +
-                '"overlay_title":"Overlay Title",' +
-                '"_t_ajax":true' +
-            '}',
-            'url: /some/path'
-        ]);
+        assert.deepEqual(pushed_path, '/some/path');
+        assert.deepEqual(pushed_state, {
+            target: 'http://tld.com/some/path',
+            action: 'layout:#layout:replace',
+            event: 'contextchanged:#layout',
+            overlay: 'actionname',
+            overlay_css: 'someclass',
+            overlay_uid: '1234',
+            overlay_title: 'Overlay Title',
+            _t_ajax: true
+        });
 
         path.execute({
             path: '/some/path',
@@ -445,15 +446,12 @@ QUnit.module('treibstoff.ajax', hooks => {
             action: 'layout:#layout:replace',
             replace: true
         });
-        assert.verifySteps([
-            'replaceState',
-            'state: {' +
-                '"target":"http://example.com/some/path",' +
-                '"action":"layout:#layout:replace",' +
-                '"_t_ajax":true' +
-            '}',
-            'url: /some/path'
-        ]);
+        assert.deepEqual(replaced_path, '/some/path');
+        assert.deepEqual(replaced_state, {
+            target: 'http://example.com/some/path',
+            action: 'layout:#layout:replace',
+            _t_ajax: true
+        });
     });
 
     QUnit.test('Test AjaxPath.handle_state', assert => {
