@@ -431,7 +431,9 @@ QUnit.module('treibstoff.ajax', hooks => {
             action: 'layout:#layout:replace',
             event: 'contextchanged:#layout',
             overlay: 'actionname',
-            overlay_css: 'additional-overlay-css-class'
+            overlay_css: 'someclass',
+            overlay_uid: '1234',
+            overlay_title: 'Overlay Title'
         });
         assert.verifySteps([
             'pushState',
@@ -440,7 +442,9 @@ QUnit.module('treibstoff.ajax', hooks => {
                 '"action":"layout:#layout:replace",' +
                 '"event":"contextchanged:#layout",' +
                 '"overlay":"actionname",' +
-                '"overlay_css":"additional-overlay-css-class",' +
+                '"overlay_css":"someclass",' +
+                '"overlay_uid":"1234",' +
+                '"overlay_title":"Overlay Title",' +
                 '"_t_ajax":true' +
             '}',
             'url: /some/path'
@@ -580,7 +584,9 @@ QUnit.module('treibstoff.ajax', hooks => {
             _t_ajax: true,
             target: 'https://tld.com?param=value',
             overlay: 'name',
-            overlay_css: 'css'
+            overlay_css: 'css',
+            overlay_uid: '1234',
+            overlay_title: 'Overlay Title'
         })
         assert.verifySteps([
             'evt.preventDefault()',
@@ -595,7 +601,9 @@ QUnit.module('treibstoff.ajax', hooks => {
                     '"query":"?param=value"' +
                 '},' +
                 '"overlay":"name",' +
-                '"css":"css"' +
+                '"css":"css",' +
+                '"uid":"1234",' +
+                '"title":"Overlay Title"' +
             '}'
         ]);
         assert.deepEqual(win.location, null);
@@ -887,6 +895,74 @@ QUnit.module('treibstoff.ajax', hooks => {
                 '"path":"/sub",' +
                 '"overlay":"name",' +
                 '"overlay_css":""' +
+            '}'
+        ]);
+
+        // overlay uid from ajax:path-overlay-uid
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:path-target=""
+                ajax:overlay="name"
+                ajax:overlay-uid="1234"
+                ajax:path-overlay-uid="5678" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.verifySteps([
+            '{' +
+                '"path":"/sub",' +
+                '"overlay":"name",' +
+                '"overlay_uid":"5678"' +
+            '}'
+        ]);
+
+        // suppress ajax:overlay-uid with ajax:path-overlay-uid
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:path-target=""
+                ajax:overlay="name"
+                ajax:overlay-uid="1234"
+                ajax:path-overlay-uid="" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.verifySteps([
+            '{' +
+                '"path":"/sub",' +
+                '"overlay":"name",' +
+                '"overlay_uid":""' +
+            '}'
+        ]);
+
+        // overlay title from ajax:path-overlay-title
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:path-target=""
+                ajax:overlay="name"
+                ajax:overlay-title="Title"
+                ajax:path-overlay-title="Other" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.verifySteps([
+            '{' +
+                '"path":"/sub",' +
+                '"overlay":"name",' +
+                '"overlay_title":"Other"' +
+            '}'
+        ]);
+
+        // suppress ajax:overlay-title with ajax:path-overlay-title
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:path-target=""
+                ajax:overlay="name"
+                ajax:overlay-title="Title"
+                ajax:path-overlay-title="" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.verifySteps([
+            '{' +
+                '"path":"/sub",' +
+                '"overlay":"name",' +
+                '"overlay_title":""' +
             '}'
         ]);
     });
@@ -1320,6 +1396,52 @@ QUnit.module('treibstoff.ajax', hooks => {
             uid: 'inexistent'
         });
         assert.deepEqual(ol, null);
+    });
+
+    QUnit.test('Test AjaxOverlay.handle', assert => {
+        let execute_opts;
+
+        class TestAjaxOverlay extends AjaxOverlay {
+            execute(opts) {
+                execute_opts = opts;
+            }
+        }
+
+        let dispatcher = new AjaxDispatcher();
+        let overlay = new TestAjaxOverlay({dispatcher: dispatcher});
+
+        assert.deepEqual(dispatcher._subscribers['on_overlay'].length, 1);
+
+        dispatcher.trigger('on_overlay', {
+            target: overlay.parse_target('https://tld.com?param=value'),
+            overlay: 'name',
+            css: 'someclass',
+            uid: '1234',
+            title: 'Title'
+        });
+        assert.deepEqual(execute_opts, {
+            url: 'https://tld.com',
+            params: {param: 'value'},
+            action: 'name',
+            css: 'someclass',
+            uid: '1234',
+            title: 'Title'
+        });
+
+        dispatcher.trigger('on_overlay', {
+            overlay: 'CLOSE',
+            uid: '1234'
+        });
+        assert.deepEqual(execute_opts, {
+            uid: '1234',
+            close: true
+        });
+
+        dispatcher.trigger('on_overlay', {overlay: 'CLOSE:1234'});
+        assert.deepEqual(execute_opts, {
+            uid: '1234',
+            close: true
+        });
     });
 
     ///////////////////////////////////////////////////////////////////////////

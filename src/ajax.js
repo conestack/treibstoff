@@ -321,7 +321,9 @@ export class AjaxPath extends AjaxOperation {
             this.dispatcher.trigger('on_overlay', {
                 target: target,
                 overlay: state.overlay,
-                css: state.overlay_css
+                css: state.overlay_css,
+                uid: state.overlay_uid,
+                title: state.overlay_title
             });
         }
         if (!state.action && !state.event && !state.overlay) {
@@ -361,6 +363,16 @@ export class AjaxPath extends AjaxOperation {
                 elem,
                 'ajax:path-overlay-css',
                 'ajax:overlay-css'
+            );
+            p_opts.overlay_uid = this.attr_val(
+                elem,
+                'ajax:path-overlay-uid',
+                'ajax:overlay-uid'
+            );
+            p_opts.overlay_title = this.attr_val(
+                elem,
+                'ajax:path-overlay-title',
+                'ajax:overlay-title'
             );
         }
         this.execute(p_opts);
@@ -541,38 +553,21 @@ export class AjaxOverlay extends AjaxAction {
 
     handle(inst, opts) {
         let target = opts.target,
-            overlay = opts.overlay,
-            css = opts.css;
-        // XXX: close needs an overlay uid
+            overlay = opts.overlay;
         if (overlay.indexOf('CLOSE') > -1) {
-            let opts = {};
-            if (overlay.indexOf(':') > -1) {
-                opts.selector = overlay.split(':')[1];
-            }
-            opts.close = true;
-            this.execute(opts);
-            return;
-        }
-        if (overlay.indexOf(':') > -1) {
-            let defs = overlay.split(':');
-            let opts = {
-                action: defs[0],
-                selector: defs[1],
-                url: target.url,
-                params: target.params,
-                css: css
-            };
-            if (defs.length === 3) {
-                opts.content_selector = defs[2];
-            }
-            this.execute(opts);
+            this.execute({
+                close: true,
+                uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
+            });
             return;
         }
         this.execute({
             action: overlay,
             url: target.url,
             params: target.params,
-            css: css
+            css: opts.css,
+            uid: opts.uid,
+            title: opts.title
         });
     }
 }
@@ -667,7 +662,9 @@ export class AjaxDispatcher extends AjaxUtil {
             this.trigger('on_overlay', {
                 target: this.action_target(elem, event),
                 overlay: elem.attr('ajax:overlay'),
-                css: elem.attr('ajax:overlay-css')
+                css: elem.attr('ajax:overlay-css'),
+                uid: elem.attr('ajax:overlay-uid'),
+                title: elem.attr('ajax:overlay-title')
             });
         }
         if (elem.attr('ajax:path')) {

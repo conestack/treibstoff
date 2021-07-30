@@ -351,7 +351,9 @@ To execute a path operation on continuation, add an object defining:
         'action': 'actionname:.selector:replace',
         'event': 'eventname:.selector',
         'overlay': 'actionname',
-        'overlay_css': 'someclass'
+        'overlay_css': 'someclass',
+        'overlay_uid': '1234',
+        'overlay_title': 'Overlay Title'
     }
 
 To execute an overlay operation on continuation, add an object defining:
@@ -361,8 +363,9 @@ To execute an overlay operation on continuation, add an object defining:
     {
         'type': 'overlay',
         'action': 'actionname',
-        'css': 'someclass',
         'target': 'http://tld.com',
+        'title': 'Overlay Title',
+        'css': 'someclass',
         'close': false,
         'uid': '1234'
     }
@@ -509,6 +512,12 @@ Overlay
     ``name``. Other than ``ajax:action``, value contains only the action name,
     selector mode are implicit.
 
+* ``ajax:overlay-uid="1234"``
+    Uid for the overlay. If not given, a UUID 4 gets generated as overlay uid.
+
+* ``ajax:overlay-title="Overlay Title"``
+    Renders title in overlay header.
+
 * ``ajax:overlay-css="someclass"``
     Add an additional CSS class to Overlay DOM element.
 
@@ -562,6 +571,14 @@ Path
 * ``ajax:path-overlay-css="somclass"``
     Additional CSS class for overlay gets taken from ``ajax:path-overlay-css``
     if set, otherwise falls back to ``ajax:overlay-css``.
+
+* ``ajax:path-overlay-uid="1234"``
+    Overlay uid gets taken from ``ajax:path-overlay-uid`` if set, otherwise
+    falls back to ``ajax:overlay-uid``.
+
+* ``ajax:path-overlay-title="Overlay Title"``
+    Overlay title gets taken from ``ajax:path-overlay-title`` if set, otherwise
+    falls back to ``ajax:overlay-title``.
 
 
 Form
