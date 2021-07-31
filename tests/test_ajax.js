@@ -855,10 +855,12 @@ QUnit.module('treibstoff.ajax', hooks => {
     ///////////////////////////////////////////////////////////////////////////
 
     QUnit.test('Test AjaxAction.execute', assert => {
+        let execute_opts;
+
         class TestAjaxRequest extends AjaxRequest {
             execute(opts) {
                 this.spinner.show();
-                assert.step(JSON.stringify(opts));
+                execute_opts = opts;
             }
         }
 
@@ -892,18 +894,13 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(spinner._request_count, 1);
         spinner.hide();
         assert.deepEqual(spinner._request_count, 0);
-        assert.verifySteps([
-            '{' +
-                '"url":"https://tld.com/ajaxaction",' +
-                '"type":"json",' +
-                '"params":{' +
-                    '"ajax.action":"name",' +
-                    '"ajax.mode":"inner",' +
-                    '"ajax.selector":' +
-                    '".selector"' +
-                '}' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.type, 'json');
+        assert.deepEqual(execute_opts.params, {
+            'ajax.action': 'name',
+            'ajax.mode': 'inner',
+            'ajax.selector': '.selector'
+        });
     });
 
     QUnit.test('Test AjaxAction.complete', assert => {
@@ -916,12 +913,15 @@ QUnit.module('treibstoff.ajax', hooks => {
             }
         }
 
+        let update_opts,
+            next_opts;
+
         class TestAjaxHandle extends AjaxHandle {
             update(opts) {
-                assert.step(`update(${JSON.stringify(opts)})`);
+                update_opts = opts;
             }
             next(operations) {
-                assert.step(`next(${JSON.stringify(operations)})`);
+                next_opts = operations;
             }
         }
 
@@ -954,9 +954,9 @@ QUnit.module('treibstoff.ajax', hooks => {
             url: 'https://tld.com',
             params: {}
         });
-        assert.verifySteps([]);
-
         assert.deepEqual(spinner._request_count, 0);
+        assert.notOk(update_opts);
+        assert.notOk(next_opts);
 
         let err = $('body .modal.error').data('overlay');
         assert.deepEqual(err.content, 'Empty Response');
@@ -974,16 +974,16 @@ QUnit.module('treibstoff.ajax', hooks => {
             url: 'https://tld.com',
             params: {}
         });
-        assert.verifySteps([
-            'update({"payload":"<div>Response Payload</div>","continuation":[]})',
-            'next([])'
-        ]);
+        assert.deepEqual(update_opts.payload, '<div>Response Payload</div>');
+        assert.deepEqual(next_opts, []);
     });
 
     QUnit.test('Test AjaxAction.handle', assert => {
+        let execute_opts = [];
+
         class TestAjaxAction extends AjaxAction {
             execute(opts) {
-                assert.step(`execute(${JSON.stringify(opts)})`);
+                execute_opts.push(opts);
             }
         }
 
@@ -1013,36 +1013,35 @@ QUnit.module('treibstoff.ajax', hooks => {
             target: action.parse_target('https://tld.com'),
             action: 'name:.selector:replace',
         });
-        assert.verifySteps([
-            'execute({' +
-                '"name":"name",' +
-                '"selector":".selector",' +
-                '"mode":"replace",' +
-                '"url":"https://tld.com",' +
-                '"params":{}' +
-            '})'
-        ]);
+        assert.deepEqual(execute_opts.length, 1);
+        assert.deepEqual(execute_opts[0], {
+            name: 'name',
+            selector: '.selector',
+            mode: 'replace',
+            url: 'https://tld.com',
+            params: {}
+        });
+        execute_opts = [];
 
         dispatcher.trigger('on_action', {
             target: action.parse_target('https://tld.com?param=value'),
             action: 'name1:.sel1:replace name2:.sel2:inner',
         });
-        assert.verifySteps([
-            'execute({' +
-                '"name":"name1",' +
-                '"selector":".sel1",' +
-                '"mode":"replace",' +
-                '"url":"https://tld.com",' +
-                '"params":{"param":"value"}' +
-            '})',
-            'execute({' +
-                '"name":"name2",' +
-                '"selector":".sel2",' +
-                '"mode":"inner",' +
-                '"url":"https://tld.com",' +
-                '"params":{"param":"value"}' +
-            '})'
-        ]);
+        assert.deepEqual(execute_opts.length, 2);
+        assert.deepEqual(execute_opts[0], {
+            name: 'name1',
+            selector: '.sel1',
+            mode: 'replace',
+            url: 'https://tld.com',
+            params: {param: 'value'}
+        });
+        assert.deepEqual(execute_opts[1], {
+            name: 'name2',
+            selector: '.sel2',
+            mode: 'inner',
+            url: 'https://tld.com',
+            params: {param: 'value'}
+        });
     });
 
     ///////////////////////////////////////////////////////////////////////////
