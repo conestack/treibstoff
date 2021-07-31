@@ -1080,10 +1080,11 @@ QUnit.module('treibstoff.ajax', hooks => {
 
         let elem = $(`<div class="testevent_listener"></div>`);
         $('body').append(elem);
+
+        let test_event;
+
         elem.on('testevent', function(e) {
-            assert.step(`type: ${e.type}`);
-            assert.step(`target: ${JSON.stringify(e.ajaxtarget)}`);
-            assert.step(`data: ${JSON.stringify(e.ajaxdata)}`);
+            test_event = e;
         });
 
         event.execute({
@@ -1092,17 +1093,22 @@ QUnit.module('treibstoff.ajax', hooks => {
             target: 'http://tld.com',
             data: {key: 'val'}
         });
-        assert.verifySteps([
-            'type: testevent',
-            'target: {"url":"http://tld.com","params":{},"path":"","query":""}',
-            'data: {"key":"val"}'
-        ]);
+        assert.deepEqual(test_event.type, 'testevent');
+        assert.deepEqual(test_event.ajaxtarget, {
+            url: 'http://tld.com',
+            params: {},
+            path: '',
+            query: ''
+        });
+        assert.deepEqual(test_event.ajaxdata, {key: 'val'});
     });
 
     QUnit.test('Test AjaxEvent.handle', assert => {
+        let execute_opts = [];
+
         class TestAjaxEvent extends AjaxEvent {
             execute(opts) {
-                assert.step(`execute(${JSON.stringify(opts)})`);
+                execute_opts.push(opts);
             }
         }
 
@@ -1115,18 +1121,29 @@ QUnit.module('treibstoff.ajax', hooks => {
             target: 'https://tld.com',
             event: 'name:.sel',
         });
-        assert.verifySteps([
-            'execute({"name":"name","selector":".sel","target":"https://tld.com"})'
-        ]);
+        assert.deepEqual(execute_opts.length, 1);
+        assert.deepEqual(execute_opts[0], {
+            name: 'name',
+            selector: '.sel',
+            target: 'https://tld.com'
+        });
+        execute_opts = [];
 
         dispatcher.trigger('on_event', {
             target: 'https://tld.com',
             event: 'name1:.sel1 name2:.sel2',
         });
-        assert.verifySteps([
-            'execute({"name":"name1","selector":".sel1","target":"https://tld.com"})',
-            'execute({"name":"name2","selector":".sel2","target":"https://tld.com"})'
-        ]);
+        assert.deepEqual(execute_opts.length, 2);
+        assert.deepEqual(execute_opts[0], {
+            name: 'name1',
+            selector: '.sel1',
+            target: 'https://tld.com'
+        });
+        assert.deepEqual(execute_opts[1], {
+            name: 'name2',
+            selector: '.sel2',
+            target: 'https://tld.com'
+        });
     });
 
     ///////////////////////////////////////////////////////////////////////////
