@@ -582,7 +582,7 @@ QUnit.module('treibstoff.ajax', hooks => {
     QUnit.test('Test AjaxPath.has_attr', assert => {
         let path = new AjaxPath({
             dispatcher: new AjaxDispatcher(),
-            win: $('<span/>')
+            win: $('<win />')
         });
 
         let elem = $('<span />');
@@ -595,7 +595,7 @@ QUnit.module('treibstoff.ajax', hooks => {
     QUnit.test('Test AjaxPath.attr_val', assert => {
         let path = new AjaxPath({
             dispatcher: new AjaxDispatcher(),
-            win: $('<span/>')
+            win: $('<win />')
         });
 
         let elem = $('<span />');
@@ -612,47 +612,29 @@ QUnit.module('treibstoff.ajax', hooks => {
     });
 
     QUnit.test('Test AjaxPath.handle', assert => {
+        let execute_opts;
+
         class TestAjaxPath extends AjaxPath {
             execute(opts) {
-                assert.step(JSON.stringify(opts));
+                execute_opts = opts;
             }
         }
 
         let dispatcher = new AjaxDispatcher();
         let path = new TestAjaxPath({
             dispatcher: dispatcher,
-            win: $('<span/>')
+            win: $('<win />')
         });
 
-        // path as is
+        // path from ajax:path as is
         let elem = $('<a ajax:path="/some/path" ajax:target="http://tld.com" />');
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/some/path",' +
-                '"target":{' +
-                    '"url":"http://tld.com",' +
-                    '"params":{},' +
-                    '"path":"",' +
-                    '"query":""' +
-                '}' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.path, '/some/path');
 
         // path from target
         elem = $('<a ajax:path="target" ajax:target="http://tld.com/sub" />');
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"target":{' +
-                    '"url":"http://tld.com/sub",' +
-                    '"params":{},' +
-                    '"path":"/sub",' +
-                    '"query":""' +
-                '}' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.path, '/sub');
 
         // path from href
         elem = $(
@@ -661,17 +643,21 @@ QUnit.module('treibstoff.ajax', hooks => {
                 ajax:target="http://tld.com/sub" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/other",' +
-                '"target":{' +
-                    '"url":"http://tld.com/sub",' +
-                    '"params":{},' +
-                    '"path":"/sub",' +
-                    '"query":""' +
-                '}' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.path, '/other');
+
+        // target from ajax:target
+        elem = $(
+            `<a ajax:path="target"
+                ajax:target="http://tld.com/sub" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.deepEqual(execute_opts.path, '/sub');
+        assert.deepEqual(execute_opts.target, {
+            url: 'http://tld.com/sub',
+            params: {},
+            path: '/sub',
+            query: ''
+        });
 
         // target from ajax:path-target
         elem = $(
@@ -680,261 +666,188 @@ QUnit.module('treibstoff.ajax', hooks => {
                 ajax:path-target="http://tld.com/other" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"target":{' +
-                    '"url":"http://tld.com/other",' +
-                    '"params":{},' +
-                    '"path":"/other",' +
-                    '"query":""' +
-                '}' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.path, '/sub');
+        assert.deepEqual(execute_opts.target, {
+            url: 'http://tld.com/other',
+            params: {},
+            path: '/other',
+            query: ''
+        });
 
-        // target from empty ajax:path-target
+        // suppress ajax:target with empty ajax:path-target
         elem = $(
             `<a ajax:path="target"
                 ajax:target="http://tld.com/sub"
                 ajax:path-target="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps(['{"path":"/sub"}']);
+        assert.deepEqual(execute_opts.path, '/sub');
+        assert.deepEqual(execute_opts.target, undefined);
 
         // action from ajax:action
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:action="name:.selector:replace" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"action":"name:.selector:replace"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.action, 'name:.selector:replace');
 
         // action from ajax:path-action
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:action="name:.selector:replace"
                 ajax:path-action="other:.selector:replace" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"action":"other:.selector:replace"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.action, 'other:.selector:replace');
 
-        // suppress ajax:action with ajax:path-action
+        // suppress ajax:action with empty ajax:path-action
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:action="name:.selector:replace"
                 ajax:path-action="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps(['{"path":"/sub","action":""}']);
+        assert.deepEqual(execute_opts.action, '');
 
         // event from ajax:event
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:event="name:.selector" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"event":"name:.selector"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.event, 'name:.selector');
 
         // event from ajax:path-event
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:event="name:.selector"
                 ajax:path-event="other:.selector" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"event":"other:.selector"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.event, 'other:.selector');
 
-        // suppress ajax:event with ajax:path-event
+        // suppress ajax:event with empty ajax:path-event
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:event="name:.selector"
                 ajax:path-event="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps(['{"path":"/sub","event":""}']);
+        assert.deepEqual(execute_opts.event, '');
 
         // overlay from ajax:overlay
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay, 'name');
 
         // overlay from ajax:path-overlay
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:path-overlay="other" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"other"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay, 'other');
 
-        // suppress ajax:overlay with ajax:path-overlay
+        // suppress ajax:overlay with empty ajax:path-overlay
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:path-overlay="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps(['{"path":"/sub","overlay":""}']);
+        assert.deepEqual(execute_opts.overlay, '');
 
         // overlay CSS from ajax:overlay-css
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-css="css" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_css":"css"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_css, 'css');
 
         // overlay CSS from ajax:path-overlay-css
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-css="css"
                 ajax:path-overlay-css="other" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_css":"other"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_css, 'other');
 
-        // suppress ajax:overlay-css with ajax:path-overlay-css
+        // suppress ajax:overlay-css with empty ajax:path-overlay-css
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-css="css"
                 ajax:path-overlay-css="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_css":""' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_css, '');
+
+        // overlay uid from ajax:overlay-uid
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:overlay="name"
+                ajax:overlay-uid="1234" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.deepEqual(execute_opts.overlay_uid, '1234');
 
         // overlay uid from ajax:path-overlay-uid
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-uid="1234"
                 ajax:path-overlay-uid="5678" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_uid":"5678"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_uid, '5678');
 
-        // suppress ajax:overlay-uid with ajax:path-overlay-uid
+        // suppress ajax:overlay-uid with empty ajax:path-overlay-uid
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-uid="1234"
                 ajax:path-overlay-uid="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_uid":""' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_uid, '');
+
+        // overlay title from ajax:overlay-title
+        elem = $(
+            `<a ajax:path="/sub"
+                ajax:overlay="name"
+                ajax:overlay-title="Title" />`
+        );
+        dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
+        assert.deepEqual(execute_opts.overlay_title, 'Title');
 
         // overlay title from ajax:path-overlay-title
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-title="Title"
                 ajax:path-overlay-title="Other" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_title":"Other"' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_title, 'Other');
 
-        // suppress ajax:overlay-title with ajax:path-overlay-title
+        // suppress ajax:overlay-title with empty ajax:path-overlay-title
         elem = $(
             `<a ajax:path="/sub"
-                ajax:path-target=""
                 ajax:overlay="name"
                 ajax:overlay-title="Title"
                 ajax:path-overlay-title="" />`
         );
         dispatcher.trigger('on_path', {elem: elem, event: $.Event('click')});
-        assert.verifySteps([
-            '{' +
-                '"path":"/sub",' +
-                '"overlay":"name",' +
-                '"overlay_title":""' +
-            '}'
-        ]);
+        assert.deepEqual(execute_opts.overlay_title, '');
     });
 
     ///////////////////////////////////////////////////////////////////////////
