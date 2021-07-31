@@ -143,7 +143,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         dial.open();
         assert.true(dial.elem.is(':visible'));
 
-        let ok_btn = $('button.submit', dial.footer);
+        let ok_btn = $('button.ok', dial.footer);
         ok_btn.click();
         assert.false(dial.elem.is(':visible'));
 

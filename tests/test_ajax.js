@@ -1433,6 +1433,149 @@ QUnit.module('treibstoff.ajax', hooks => {
     });
 
     ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxDispatcher
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxDispatcher.dispatch_handle', assert => {
+        let dispatch_opts;
+
+        class TestAjaxDispatcher extends AjaxDispatcher {
+            dispatch(opts) {
+                dispatch_opts = opts;
+            }
+        }
+
+        let dispatcher = new TestAjaxDispatcher();
+
+        let elem = $('<span />');
+        dispatcher.bind(elem.get(0), 'click');
+        elem.trigger('click');
+        assert.deepEqual(dispatch_opts.elem, elem);
+        assert.deepEqual(dispatch_opts.event.type, 'click');
+        dispatch_opts = null;
+
+        elem = $('<span ajax:confirm="Really?" />');
+        dispatcher.bind(elem.get(0), 'click');
+
+        elem.trigger('click');
+        let dialog = $('body > .modal.dialog').data('overlay');
+        assert.deepEqual(dialog.content, 'Really?');
+        assert.ok(dialog.is_open);
+
+        $('button.cancel', dialog.elem).trigger('click');
+        assert.notOk(dialog.is_open);
+        assert.deepEqual(dispatch_opts, null);
+
+        elem.trigger('click');
+        dialog = $('body > .modal.dialog').data('overlay');
+        assert.ok(dialog.is_open);
+
+        $('button.ok', dialog.elem).trigger('click');
+        assert.notOk(dialog.is_open);
+        assert.deepEqual(dispatch_opts.elem, elem);
+        assert.deepEqual(dispatch_opts.event.type, 'click');
+    });
+
+    QUnit.test('Test AjaxDispatcher.dispatch', assert => {
+        let dispatcher = new AjaxDispatcher();
+
+        let action_opts;
+        dispatcher.on('on_action', function(inst, opts) {
+            action_opts = opts;
+        });
+
+        let event_opts;
+        dispatcher.on('on_event', function(inst, opts) {
+            event_opts = opts;
+        });
+
+        let overlay_opts;
+        dispatcher.on('on_overlay', function(inst, opts) {
+            overlay_opts = opts;
+        });
+
+        let path_opts;
+        dispatcher.on('on_path', function(inst, opts) {
+            path_opts = opts;
+        });
+
+        // dispatch action
+        let elem = $(
+            `<span ajax:target="https://tld.com"
+                   ajax:action="name:.selector:target" />`
+        );
+        let event = $.Event();
+        dispatcher.dispatch({
+            elem: elem,
+            event: event
+        })
+        assert.deepEqual(action_opts, {
+            action: 'name:.selector:target',
+            target: {
+                params: {},
+                path: '',
+                query: '',
+                url: 'https://tld.com'
+              }
+        });
+
+        // dispatch event
+        elem = $(
+            `<span ajax:target="https://tld.com"
+                   ajax:event="name:.selector" />`
+        );
+        event = $.Event();
+        dispatcher.dispatch({
+            elem: elem,
+            event: event
+        })
+        assert.deepEqual(event_opts, {
+            event: 'name:.selector',
+            target: 'https://tld.com'
+        });
+
+        // dispatch overlay
+        elem = $(
+            `<span ajax:target="https://tld.com"
+                   ajax:overlay="name"
+                   ajax:overlay-css="css"
+                   ajax:overlay-uid="1234"
+                   ajax:overlay-title="" />`
+        );
+        event = $.Event();
+        dispatcher.dispatch({
+            elem: elem,
+            event: event
+        })
+        assert.deepEqual(overlay_opts, {
+            css: 'css',
+            overlay: 'name',
+            target: {
+                params: {},
+                path: '',
+                query: '',
+                url: 'https://tld.com'
+            },
+            title: '',
+            uid: '1234'
+        });
+
+        // dispatch path
+        elem = $(
+            `<span ajax:target="https://tld.com"
+                   ajax:path="/sub" />`
+        );
+        event = $.Event();
+        event.type = 'click';
+        dispatcher.dispatch({
+            elem: elem,
+            event: event
+        })
+        assert.deepEqual(path_opts.elem, elem);
+        assert.deepEqual(path_opts.event.type, 'click');
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
     // Test AjaxParser
     ///////////////////////////////////////////////////////////////////////////
 

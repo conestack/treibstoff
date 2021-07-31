@@ -1,7 +1,10 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
 import {Events} from './events.js';
-import {uuid4} from './utils.js';
+import {
+    set_default,
+    uuid4
+} from './utils.js';
 
 export class Overlay extends Events {
 
@@ -172,13 +175,14 @@ export function show_error(message) {
 export class Dialog extends Message {
 
     constructor(opts) {
+        set_default(opts, 'css', 'dialog');
         super(opts);
         this.bind_from_options(['on_confirm'], opts);
     }
 
     compile_actions() {
         compile_template(this, `
-          <button class="submit btn btn-default allowMultiSubmit"
+          <button class="ok btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-default allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
