@@ -914,14 +914,14 @@ QUnit.module('treibstoff.ajax', hooks => {
         }
 
         let update_opts,
-            next_opts;
+            next_operations;
 
         class TestAjaxHandle extends AjaxHandle {
             update(opts) {
                 update_opts = opts;
             }
             next(operations) {
-                next_opts = operations;
+                next_operations = operations;
             }
         }
 
@@ -956,7 +956,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         });
         assert.deepEqual(spinner._request_count, 0);
         assert.notOk(update_opts);
-        assert.notOk(next_opts);
+        assert.notOk(next_operations);
 
         let err = $('body .modal.error').data('overlay');
         assert.deepEqual(err.content, 'Empty Response');
@@ -975,7 +975,7 @@ QUnit.module('treibstoff.ajax', hooks => {
             params: {}
         });
         assert.deepEqual(update_opts.payload, '<div>Response Payload</div>');
-        assert.deepEqual(next_opts, []);
+        assert.deepEqual(next_operations, []);
     });
 
     QUnit.test('Test AjaxAction.handle', assert => {
@@ -1343,6 +1343,93 @@ QUnit.module('treibstoff.ajax', hooks => {
             uid: '1234',
             close: true
         });
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxForm
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxForm', assert => {
+        let update_opts,
+            next_operations;
+
+        class TestAjaxHandle extends AjaxHandle {
+            update(opts) {
+                update_opts = opts;
+            }
+            next(operations) {
+                next_operations = operations;
+            }
+        }
+
+        let win = {};
+        let ajax = new Ajax(win);
+        let spinner = ajax.spinner;
+        let handle = new TestAjaxHandle(ajax);
+        let form = new AjaxForm({
+            handle: handle,
+            spinner: spinner
+        });
+
+        // no hidden iframe yet
+        assert.deepEqual(form.afr, null);
+
+        // bind form element
+        let form_elem = $('<form />');
+        form.bind(form_elem.get(0));
+
+        // hidden iframe has been created and added to body
+        let hidden_iframe = $('body > #ajaxformresponse');
+        assert.deepEqual(hidden_iframe.length, 1);
+        assert.deepEqual(hidden_iframe.get(0), form.afr.get(0));
+        assert.deepEqual(hidden_iframe.attr('id'), 'ajaxformresponse');
+        assert.deepEqual(hidden_iframe.attr('name'), 'ajaxformresponse');
+        assert.deepEqual(hidden_iframe.attr('src'), 'about:blank');
+        assert.deepEqual(
+            hidden_iframe.attr('style'),
+            'width:0px;height:0px;display:none'
+        );
+
+        // form element target is hidden iframe
+        assert.deepEqual(form_elem.attr('target'), 'ajaxformresponse');
+
+        // hidden input added for marking form as ajax form
+        let hidden_input = $(form_elem.children()[0]);
+        assert.deepEqual(hidden_input.attr('type'), 'hidden');
+        assert.deepEqual(hidden_input.attr('name'), 'ajax');
+        assert.deepEqual(hidden_input.attr('value'), '1');
+
+        // submit displays spinner
+        form_elem.trigger('submit');
+        assert.deepEqual(spinner._request_count, 1);
+
+        // render response, case error, hidden iframe not gets removed, to avoid
+        // case form gets re submitted to missing frame, causing the browser to
+        // open a new tab. this is annoying when browser testing ajax forms.
+        form.render({error: true});
+        assert.notOk(update_opts);
+        assert.notOk(next_operations);
+        assert.ok(form.afr !== null);
+        assert.deepEqual(spinner._request_count, 0);
+
+        // render response, case payload
+        form_elem = $('<form />');
+        form.render({
+            payload: form_elem.get(0),
+            selector: '#form',
+            mode: 'replace',
+            next: [],
+            error: false
+        });
+        assert.deepEqual(update_opts, {
+            payload: form_elem.get(0),
+            selector: '#form',
+            mode: 'replace',
+            next: [],
+            error: false
+        });
+        assert.deepEqual(next_operations, []);
+        assert.ok(form.afr === null);
     });
 
     ///////////////////////////////////////////////////////////////////////////
