@@ -1151,22 +1151,24 @@ QUnit.module('treibstoff.ajax', hooks => {
     ///////////////////////////////////////////////////////////////////////////
 
     QUnit.test('Test AjaxOverlay.execute', assert => {
-        let request_data;
+        let execute_opts;
         let response_data;
         let call_success = false;
 
         class TestAjaxRequest extends AjaxRequest {
             execute(opts) {
-                request_data = opts;
+                execute_opts = opts;
                 if (call_success) {
                     opts.success(response_data);
                 }
             }
         }
 
+        let complete_data;
+
         class TestAjaxOverlay extends AjaxOverlay {
             complete(data) {
-                assert.step(`complete(${JSON.stringify(data)})`);
+                complete_data = data;
             }
         }
 
@@ -1198,8 +1200,8 @@ QUnit.module('treibstoff.ajax', hooks => {
             url: 'https://tld.com',
             params: {param: 'value'}
         });
-        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
-        assert.deepEqual(request_data.params, {
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.params, {
             'ajax.action': 'name',
             'ajax.mode': 'inner',
             'ajax.selector': `#${ol.uid} .modal-body`,
@@ -1212,8 +1214,8 @@ QUnit.module('treibstoff.ajax', hooks => {
             action: 'name',
             target: 'https://tld.com?param=value'
         });
-        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
-        assert.deepEqual(request_data.params, {
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.params, {
             'ajax.action': 'name',
             'ajax.mode': 'inner',
             'ajax.selector': `#${ol.uid} .modal-body`,
@@ -1229,8 +1231,8 @@ QUnit.module('treibstoff.ajax', hooks => {
                 params: {param: 'value'}
             }
         });
-        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
-        assert.deepEqual(request_data.params, {
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.params, {
             'ajax.action': 'name',
             'ajax.mode': 'inner',
             'ajax.selector': `#${ol.uid} .modal-body`,
@@ -1255,15 +1257,15 @@ QUnit.module('treibstoff.ajax', hooks => {
             url: 'https://tld.com',
             params: {}
         });
-        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
-        assert.deepEqual(request_data.params, {
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.params, {
             'ajax.action': 'name',
             'ajax.mode': 'inner',
             'ajax.selector': `#${ol.uid} .modal-body`,
             'ajax.overlay-uid': ol.uid
         });
         assert.notOk(ol.is_open);
-        assert.verifySteps(['complete({})']);
+        assert.deepEqual(complete_data, {});
 
         // Case overlay displayed if payload received
         response_data = {payload: 'Overlay Content'};
@@ -1272,14 +1274,14 @@ QUnit.module('treibstoff.ajax', hooks => {
             url: 'https://tld.com',
             params: {}
         });
-        assert.deepEqual(request_data.url, 'https://tld.com/ajaxaction');
-        assert.deepEqual(request_data.params, {
+        assert.deepEqual(execute_opts.url, 'https://tld.com/ajaxaction');
+        assert.deepEqual(execute_opts.params, {
             'ajax.action': 'name',
             'ajax.mode': 'inner',
             'ajax.selector': `#${ol.uid} .modal-body`,
             'ajax.overlay-uid': ol.uid
         });
-        assert.verifySteps(['complete({"payload":"Overlay Content"})']);
+        assert.deepEqual(complete_data, {payload: 'Overlay Content'});
         assert.ok(ol.is_open);
 
         // Case close overlay
