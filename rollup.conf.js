@@ -11,7 +11,7 @@ $.fn.bdajax = $.fn.tsajax;
 
 export default args => {
     let conf = {
-        input: 'src/treibstoff.js',
+        input: 'src/bundle.js',
         plugins: [
             cleanup()
         ],

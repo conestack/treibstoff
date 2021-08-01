@@ -1331,6 +1331,184 @@ var ts = (function (exports, $) {
         return this;
     };
 
+    class KeyState extends Events {
+        constructor(filter_keyevent) {
+            super();
+            this.filter_keyevent = filter_keyevent;
+            this._keys = [];
+            this._add_key('ctrl', 17);
+            this._add_key('shift', 16);
+            this._add_key('alt', 18);
+            this._add_key('enter', 13);
+            this._add_key('esc', 27);
+            this._add_key('delete', 46);
+            this.bind();
+        }
+        unload() {
+            $(window).off('keydown', this._keydown_handle);
+            $(window).off('keyup', this._keyup_handle);
+        }
+        bind() {
+            this._keydown_handle = this._keydown.bind(this);
+            this._keyup_handle = this._keyup.bind(this);
+            $(window).on('keydown', this._keydown_handle);
+            $(window).on('keyup', this._keyup_handle);
+        }
+        _add_key(name, key_code) {
+            this._keys.push(name);
+            this[`_${name}`] = false;
+            Object.defineProperty(this, name, {
+                get: function() {
+                    return this[`_${name}`];
+                },
+                set: function(evt) {
+                    let val = this[`_${name}`];
+                    if (evt.type == 'keydown') {
+                        if (!val && evt.keyCode == key_code) {
+                            this[`_${name}`] = true;
+                        }
+                    } else {
+                        if (val && evt.keyCode == key_code) {
+                            this[`_${name}`] = false;
+                        }
+                    }
+                }
+            });
+        }
+        _set_keys(evt) {
+            for (let name of this._keys) {
+                this[name] = evt;
+            }
+        }
+        _filter_event(evt) {
+            return this.filter_keyevent && this.filter_keyevent(evt);
+        }
+        _keydown(evt) {
+            this._set_keys(evt);
+            if (!this._filter_event(evt)) {
+                this.trigger('keydown', evt);
+            }
+        }
+        _keyup(evt) {
+            this._set_keys(evt);
+            if (!this._filter_event(evt)) {
+                this.trigger('keyup', evt);
+            }
+        }
+    }
+
+    class Motion extends Events {
+        constructor() {
+            super();
+            this._down_handle = null;
+            this._down_scope = null;
+            this._move_scope = null;
+        }
+        reset_state() {
+            this._move_handle = null;
+            this._up_handle = null;
+            this._prev_pos = null;
+            this._motion = null;
+        }
+        set_scope(down, move) {
+            if (this._up_handle) {
+                throw 'Attempt to set motion scope while handling';
+            }
+            this.reset_state();
+            if (this._down_handle) {
+                $(this._down_scope).off('mousedown', this._down_handle);
+            }
+            this._down_handle = this._mousedown.bind(this);
+            this._down_scope = down;
+            $(down).on('mousedown', this._down_handle);
+            this._move_scope = move ? move : null;
+        }
+        _mousedown(evt) {
+            evt.stopPropagation();
+            this._motion = false;
+            this._prev_pos = {
+                x: evt.pageX,
+                y: evt.pageY
+            };
+            if (this._move_scope) {
+                this._move_handle = this._mousemove.bind(this);
+                $(this._move_scope).on('mousemove', this._move_handle);
+            }
+            this._up_handle = this._mouseup.bind(this);
+            $(document).on('mouseup', this._up_handle);
+            this.trigger('down', evt);
+        }
+        _mousemove(evt) {
+            evt.stopPropagation();
+            this._motion = true;
+            evt.motion = this._motion;
+            evt.prev_pos = this._prev_pos;
+            this.trigger('move', evt);
+            this._prev_pos.x = evt.pageX;
+            this._prev_pos.y = evt.pageY;
+        }
+        _mouseup(evt) {
+            evt.stopPropagation();
+            if (this._move_scope) {
+                $(this._move_scope).off('mousemove', this._move_handle);
+            }
+            $(document).off('mouseup', this._up_handle);
+            evt.motion = this._motion;
+            this.trigger('up', evt);
+            this.reset_state();
+        }
+    }
+
+    class Widget extends Motion {
+        constructor(parent) {
+            super();
+            new Property(this, 'parent');
+            this.parent = parent ? parent : null;
+        }
+        acquire(cls) {
+            let parent = this.parent;
+            while(parent) {
+                if (!parent || parent instanceof cls) {
+                    break;
+                }
+                parent = parent.parent;
+            }
+            return parent;
+        }
+    }
+    class HTMLWidget extends Widget {
+        constructor(parent, elem) {
+            super(parent);
+            this.elem = elem;
+            new CSSProperty(this, 'x', {tgt: 'left'});
+            new CSSProperty(this, 'y', {tgt: 'top'});
+            new CSSProperty(this, 'width');
+            new CSSProperty(this, 'height');
+        }
+        get offset() {
+            return $(this.elem).offset();
+        }
+    }
+    class SVGContext extends HTMLWidget {
+        constructor(parent, name) {
+            let container = parent.elem.get(0),
+                elem = create_svg_elem('svg', {'class': name}, container);
+            super(parent, elem);
+            this.svg_ns = svg_ns;
+            this.xyz = {
+                x: 0,
+                y: 0,
+                z: 1
+            };
+        }
+        svg_attrs(el, opts) {
+            set_svg_attrs(el, opts);
+        }
+        svg_elem(name, opts, container) {
+            return create_svg_elem(name, opts, container);
+        }
+    }
+
     $(function() {
         ajax.spinner.hide();
         $(document).tsajax();
@@ -1357,15 +1535,20 @@ var ts = (function (exports, $) {
     exports.Dialog = Dialog;
     exports.Events = Events;
     exports.HTMLParser = HTMLParser;
+    exports.HTMLWidget = HTMLWidget;
     exports.InputProperty = InputProperty;
+    exports.KeyState = KeyState;
     exports.Message = Message;
+    exports.Motion = Motion;
     exports.Overlay = Overlay;
     exports.Parser = Parser;
     exports.Property = Property;
+    exports.SVGContext = SVGContext;
     exports.SVGParser = SVGParser;
     exports.SVGProperty = SVGProperty;
     exports.TemplateParser = TemplateParser;
     exports.TextProperty = TextProperty;
+    exports.Widget = Widget;
     exports.ajax = ajax;
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
