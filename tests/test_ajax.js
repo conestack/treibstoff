@@ -1645,6 +1645,118 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(bind_context, null);
     });
 
+    QUnit.test('Test AjaxHandle.next', assert => {
+        let path_opts,
+            action_opts,
+            event_opts,
+            overlay_opts;
+
+        class TestAjax extends Ajax {
+            path(opts) {
+                path_opts = opts;
+            }
+            action(opts) {
+                action_opts = opts;
+            }
+            trigger(opts) {
+                event_opts = opts;
+            }
+            overlay(opts) {
+                overlay_opts = opts;
+            }
+        }
+
+        let handle = new AjaxHandle(new TestAjax({}));
+
+        // case no operations
+        handle.next(null);
+
+        // case unknown operation
+        handle.next([{type: 'invalid'}]);
+
+        // case path
+        handle.next([{
+            type: 'path',
+            path: 'target',
+            target: 'http://tld.com/some/path',
+            action: 'actionname:.selector:replace'
+        }]);
+        assert.deepEqual(path_opts, {
+            path: 'target',
+            target: 'http://tld.com/some/path',
+            action: 'actionname:.selector:replace'
+        });
+
+        // case action
+        handle.next([{
+            type: 'action',
+            target: 'https://tld.com/some/path?param=value',
+            name: 'name',
+            selector: '.selector',
+            mode: 'replace'
+        }]);
+        assert.deepEqual(action_opts, {
+            mode: 'replace',
+            name: 'name',
+            params: {
+                param: 'value'
+            },
+            selector: '.selector',
+            target: 'https://tld.com/some/path?param=value',
+            url: 'https://tld.com/some/path'
+        });
+
+        // case event
+        handle.next([{
+            type: 'event',
+            target: 'http://tld.com',
+            name: 'eventname',
+            selector: '.foo'
+        }]);
+        assert.deepEqual(event_opts, {
+            target: 'http://tld.com',
+            name: 'eventname',
+            selector: '.foo'
+        });
+
+        // case overlay
+        handle.next([{
+            type: 'overlay',
+            action: 'actionname',
+            target: 'http://tld.com',
+            title: 'Overlay Title'
+        }]);
+        assert.deepEqual(overlay_opts, {
+            action: 'actionname',
+            target: 'http://tld.com',
+            title: 'Overlay Title',
+            params: {},
+            url: 'http://tld.com'
+        });
+
+        // case message in overlay
+        handle.next([{
+            type: 'message',
+            payload: 'Message Content',
+            flavor: 'info',
+            selector: null,
+        }]);
+        let ol = $('body > .modal.info').data('overlay');
+        assert.ok(ol.is_open);
+        assert.deepEqual(ol.content, 'Message Content');
+        ol.close();
+
+        // case message in custom element
+        let elem = $('<span class="ajax-message-content" />').appendTo($('body'));
+        handle.next([{
+            type: 'message',
+            payload: 'Message Content',
+            selector: '.ajax-message-content',
+        }])
+        assert.deepEqual(elem.html(), 'Message Content');
+        elem.remove();
+    });
+
     ///////////////////////////////////////////////////////////////////////////
     // Test AjaxParser
     ///////////////////////////////////////////////////////////////////////////

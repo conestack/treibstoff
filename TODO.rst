@@ -13,3 +13,6 @@ TODO
 
 [ ] - Support ``data-t-ajax-*`` attributes as substitute of ``ajax:*`` attributes
       and deprecate latter with B/C fallback.
+
+[ ] - Overlay continuation definition should contain ``overlay`` instead of
+      ``action``.
