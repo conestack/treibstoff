@@ -1,14 +1,8 @@
 import cleanup from 'rollup-plugin-cleanup';
 import {terser} from 'rollup-plugin-terser';
 
-const outro = `var old_ts = window.ts;
-
-exports.noConflict = function() {
-    window.ts = old_ts;
-    return this;
-}
-
-window.ts = exports;
+const outro = `
+window.treibstoff = exports;
 
 // bdajax B/C
 window.bdajax = exports.ajax;

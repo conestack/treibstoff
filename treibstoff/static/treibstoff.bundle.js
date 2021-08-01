@@ -501,6 +501,7 @@ var ts = (function (exports, $) {
             this.container = opts.container ? opts.container : $('body');
             this.compile();
             this.elem.data('overlay', this);
+            this.is_open = false;
         }
         compile() {
             compile_template(this, `
@@ -528,6 +529,7 @@ var ts = (function (exports, $) {
                 .addClass('modal-open');
             this.container.append(this.elem);
             this.elem.show();
+            this.is_open = true;
             this.trigger('on_open');
         }
         close() {
@@ -538,6 +540,7 @@ var ts = (function (exports, $) {
                     .removeClass('modal-open');
             }
             this.elem.remove();
+            this.is_open = false;
             this.trigger('on_close');
         }
     }
@@ -599,12 +602,13 @@ var ts = (function (exports, $) {
     }
     class Dialog extends Message {
         constructor(opts) {
+            set_default(opts, 'css', 'dialog');
             super(opts);
             this.bind_from_options(['on_confirm'], opts);
         }
         compile_actions() {
             compile_template(this, `
-          <button class="submit btn btn-default allowMultiSubmit"
+          <button class="ok btn btn-default allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-default allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
@@ -770,7 +774,6 @@ var ts = (function (exports, $) {
             }
         }
         state_handle(evt) {
-            evt.preventDefault();
             let state = evt.originalEvent.state;
             if (!state) {
                 return;
@@ -778,6 +781,7 @@ var ts = (function (exports, $) {
             if (!state._t_ajax) {
                 return;
             }
+            evt.preventDefault();
             let target;
             if (state.target.url) {
                 target = state.target;
@@ -801,7 +805,9 @@ var ts = (function (exports, $) {
                 this.dispatcher.trigger('on_overlay', {
                     target: target,
                     overlay: state.overlay,
-                    css: state.overlay_css
+                    css: state.overlay_css,
+                    uid: state.overlay_uid,
+                    title: state.overlay_title
                 });
             }
             if (!state.action && !state.event && !state.overlay) {
@@ -821,9 +827,9 @@ var ts = (function (exports, $) {
             }
             let target;
             if (this.has_attr(elem, 'ajax:path-target')) {
-                target = elem.attr('ajax:path-target');
-                if (target) {
-                    target = this.parse_target(target);
+                let path_target = elem.attr('ajax:path-target');
+                if (path_target) {
+                    target = this.parse_target(path_target);
                 }
             } else {
                 target = this.action_target(elem, evt);
@@ -835,16 +841,28 @@ var ts = (function (exports, $) {
             p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
             p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
             p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
-            p_opts.overlay_css = this.attr_val(
-                elem,
-                'ajax:path-overlay-css',
-                'ajax:overlay-css'
-            );
+            if (p_opts.overlay) {
+                p_opts.overlay_css = this.attr_val(
+                    elem,
+                    'ajax:path-overlay-css',
+                    'ajax:overlay-css'
+                );
+                p_opts.overlay_uid = this.attr_val(
+                    elem,
+                    'ajax:path-overlay-uid',
+                    'ajax:overlay-uid'
+                );
+                p_opts.overlay_title = this.attr_val(
+                    elem,
+                    'ajax:path-overlay-title',
+                    'ajax:overlay-title'
+                );
+            }
             this.execute(p_opts);
         }
         has_attr(elem, name) {
-            let attr = elem.attr(name);
-            return attr !== undefined && attr !== false;
+            let val = elem.attr(name);
+            return val !== undefined && val !== false;
         }
         attr_val(elem, name, fallback) {
             if (this.has_attr(elem, name)) {
@@ -858,8 +876,8 @@ var ts = (function (exports, $) {
         constructor(opts) {
             set_default(opts, 'event', 'on_action');
             super(opts);
-            this.handle = opts.handle;
             this.spinner = opts.spinner;
+            this._handle = opts.handle;
             this._request = opts.request;
         }
         execute(opts) {
@@ -879,19 +897,18 @@ var ts = (function (exports, $) {
         }
         complete(data) {
             if (!data) {
-                show_error('Empty response');
+                show_error('Empty Response');
                 this.spinner.hide();
             } else {
-                this.handle.update(data);
-                this.handle.next(data.continuation);
+                this._handle.update(data);
+                this._handle.next(data.continuation);
             }
         }
         handle(inst, opts) {
             let target = opts.target,
-                action = opts.action,
-                actions = this.parse_definition(action);
-            for (let i = 0; i < actions.length; i++) {
-                let defs = actions[i].split(':');
+                action = opts.action;
+            for (let action_ of this.parse_definition(action)) {
+                let defs = action_.split(':');
                 this.execute({
                     name: defs[0],
                     selector: defs[1],
@@ -925,11 +942,9 @@ var ts = (function (exports, $) {
         }
         handle(inst, opts) {
             let target = opts.target,
-                event = opts.event,
-                defs = this.parse_definition(event);
-            for (let i = 0; i < defs.length; i++) {
-                let def = defs[i];
-                def = def.split(':');
+                event = opts.event;
+            for (let event_ of this.parse_definition(event)) {
+                let def = event_.split(':');
                 this.execute({
                     name: def[0],
                     selector: def[1],
@@ -951,7 +966,7 @@ var ts = (function (exports, $) {
                 if (ol) {
                     ol.close();
                 }
-                return;
+                return ol;
             }
             let url, params;
             if (opts.target) {
@@ -992,37 +1007,21 @@ var ts = (function (exports, $) {
         }
         handle(inst, opts) {
             let target = opts.target,
-                overlay = opts.overlay,
-                css = opts.css;
+                overlay = opts.overlay;
             if (overlay.indexOf('CLOSE') > -1) {
-                let opts = {};
-                if (overlay.indexOf(':') > -1) {
-                    opts.selector = overlay.split(':')[1];
-                }
-                opts.close = true;
-                this.execute(opts);
-                return;
-            }
-            if (overlay.indexOf(':') > -1) {
-                let defs = overlay.split(':');
-                let opts = {
-                    action: defs[0],
-                    selector: defs[1],
-                    url: target.url,
-                    params: target.params,
-                    css: css
-                };
-                if (defs.length === 3) {
-                    opts.content_selector = defs[2];
-                }
-                this.execute(opts);
+                this.execute({
+                    close: true,
+                    uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
+                });
                 return;
             }
             this.execute({
                 action: overlay,
                 url: target.url,
                 params: target.params,
-                css: css
+                css: opts.css,
+                uid: opts.uid,
+                title: opts.title
             });
         }
     }
@@ -1103,7 +1102,9 @@ var ts = (function (exports, $) {
                 this.trigger('on_overlay', {
                     target: this.action_target(elem, event),
                     overlay: elem.attr('ajax:overlay'),
-                    css: elem.attr('ajax:overlay-css')
+                    css: elem.attr('ajax:overlay-css'),
+                    uid: elem.attr('ajax:overlay-uid'),
+                    title: elem.attr('ajax:overlay-title')
                 });
             }
             if (elem.attr('ajax:path')) {
@@ -1390,14 +1391,8 @@ var ts = (function (exports, $) {
 
     Object.defineProperty(exports, '__esModule', { value: true });
 
-    var old_ts = window.ts;
 
-    exports.noConflict = function() {
-        window.ts = old_ts;
-        return this;
-    }
-
-    window.ts = exports;
+    window.treibstoff = exports;
 
     // bdajax B/C
     window.bdajax = exports.ajax;
