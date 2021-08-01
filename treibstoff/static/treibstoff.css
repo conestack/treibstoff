@@ -19,13 +19,15 @@
 }
 .modal.info .modal-body,
 .modal.warning .modal-body,
-.modal.error .modal-body {
+.modal.error .modal-body,
+.modal.dialog .modal-body {
     padding-left:14px;
     min-height:80px;
 }
 .modal.info .modal-body:before,
 .modal.warning .modal-body:before,
-.modal.error .modal-body:before {
+.modal.error .modal-body:before,
+.modal.dialog .modal-body:before {
     top:2px;
     position:relative;
     display:inline-block;
@@ -40,10 +42,13 @@
 }
 .modal.info .modal-body:before {
     content:"";
-}​
+}
 .modal.warning .modal-body:before {
     content:"";
 }
 .modal.error .modal-body:before {
     content:"";
+}
+.modal.dialog .modal-body:before {
+    content:"\e085";
 }
