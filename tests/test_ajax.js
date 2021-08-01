@@ -1078,7 +1078,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         let dispatcher = new AjaxDispatcher();
         let event = new AjaxEvent({dispatcher: dispatcher});
 
-        let elem = $(`<div class="testevent_listener"></div>`);
+        let elem = $(`<div class="testevent-listener"></div>`);
         $('body').append(elem);
 
         let test_event;
@@ -1089,7 +1089,7 @@ QUnit.module('treibstoff.ajax', hooks => {
 
         event.execute({
             name: 'testevent',
-            selector: '.testevent_listener',
+            selector: '.testevent-listener',
             target: 'http://tld.com',
             data: {key: 'val'}
         });
@@ -1101,6 +1101,8 @@ QUnit.module('treibstoff.ajax', hooks => {
             query: ''
         });
         assert.deepEqual(test_event.ajaxdata, {key: 'val'});
+
+        elem.remove();
     });
 
     QUnit.test('Test AjaxEvent.handle', assert => {
@@ -1573,6 +1575,74 @@ QUnit.module('treibstoff.ajax', hooks => {
         })
         assert.deepEqual(path_opts.elem, elem);
         assert.deepEqual(path_opts.event.type, 'click');
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxHandle
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxHandle.update', assert => {
+        let bind_context;
+
+        class TestAjax extends Ajax {
+            bind(context) {
+                bind_context = context;
+            }
+        }
+
+        let handle = new AjaxHandle(new TestAjax({}));
+        let body = $('body');
+
+        // mode inner
+        let container = $('<div class="ajax-container" />').appendTo(body);
+        handle.update({
+            payload: '<span>Payload</span>',
+            selector: '.ajax-container',
+            mode: 'inner'
+        });
+        assert.deepEqual(bind_context.attr('class'), 'ajax-container');
+        assert.deepEqual($('span', bind_context).html(), 'Payload');
+        container.remove();
+
+        // mode replace, case selector works on replaced payload
+        container = $(`
+            <div class="ajax-container">
+              <span class="to-replace">Replace me</span>
+            </div>
+        `).appendTo(body);
+        handle.update({
+            payload: '<span class="to-replace">Replaced</span>',
+            selector: '.to-replace',
+            mode: 'replace'
+        });
+        assert.deepEqual(bind_context.attr('class'), 'ajax-container');
+        assert.deepEqual($('span', bind_context).html(), 'Replaced');
+        container.remove();
+
+        // mode replace, case selector not works on replaced payload, in this
+        // case bind context is the whole document.
+        container = $(`
+            <div class="ajax-container">
+              <span class="to-replace">Replace me</span>
+            </div>
+        `).appendTo(body);
+        handle.update({
+            payload: '<span id="to-replace">Replaced</span>',
+            selector: '.to-replace',
+            mode: 'replace'
+        });
+        assert.deepEqual(bind_context.get(0), document);
+        assert.deepEqual($('span#to-replace', bind_context).html(), 'Replaced');
+        container.remove();
+
+        // case unknown mode
+        bind_context = null;
+        handle.update({
+            payload: '<span>Ends up in Limbo</span>',
+            selector: '#not-matters-gets-ignored',
+            mode: 'invalid'
+        });
+        assert.deepEqual(bind_context, null);
     });
 
     ///////////////////////////////////////////////////////////////////////////
