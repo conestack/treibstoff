@@ -3,6 +3,7 @@
     "title": "Treibstoff JS",
     "description": "Javascript foundations for cone.app",
     "version": "0.0.dev0",
+    "main": "src/treibstoff.js",
     "devDependencies": {
         "jquery": "git+https://github.com/jquery/jquery.git#main",
         "jsdoc": "^3.6.7",
