@@ -16,7 +16,7 @@ export default args => {
             cleanup()
         ],
         output: [{
-            file: 'treibstoff/static/treibstoff.bundle.js',
+            file: 'treibstoff/bundle/treibstoff.bundle.js',
             format: 'iife',
             name: 'ts',
             outro: outro,
@@ -33,7 +33,7 @@ export default args => {
     };
     if (args.configDebug !== true) {
         conf.output.push({
-            file: 'treibstoff/static/treibstoff.bundle.min.js',
+            file: 'treibstoff/bundle/treibstoff.bundle.min.js',
             format: 'iife',
             name: 'ts',
             plugins: [

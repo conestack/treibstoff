@@ -1,7 +1,11 @@
 #!/bin/bash
 
+set -e
+
+./rollup.sh
+
 mkdir -p ./bundle
 rm -f ./bundle/*
-cp treibstoff/static/* ./bundle/
+cp treibstoff/bundle/* ./bundle/
 
 npm pack
