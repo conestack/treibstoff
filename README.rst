@@ -51,11 +51,7 @@ Following plugins are used:
 
 Start karma server (immediately run tests)::
 
-    node_modules/karma/bin/karma start karma.conf.js
-
-Re-run tests (needs karma server to be started)::
-
-    node_modules/karma/bin/karma run karma.conf.js
+    ./karma.sh
 
 To view coverage report, open::
 
@@ -68,9 +64,24 @@ For any reason the jquery package from npm includes the wrong sources.
 Deploy
 ------
 
+As python package
+~~~~~~~~~~~~~~~~~
+
 Create JS bundle with rollup::
 
-    node_modules/rollup/dist/bin/rollup --config rollup.conf.js
+    ./rollup.sh
+
+Create python package::
+
+    python setup.py sdist
+
+
+As npm package
+~~~~~~~~~~~~~~
+
+Create treibstoff package::
+
+    npm pack
 
 
 Documentation
@@ -93,7 +104,6 @@ Install treibstoff with docs extra dependencies::
 
     ./bin/pip install -e .[docs]
 
-Generate docs (since we installed jsdoc locally, we need to set path first)::
+Generate docs::
 
-    export PATH=$PATH:$(pwd)/node_modules/jsdoc
-    ./bin/sphinx-build docs/source/ docs/html
+    ./docs.sh

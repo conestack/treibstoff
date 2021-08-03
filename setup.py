@@ -33,6 +33,7 @@ setup(
     ],
     keywords='',
     author='Conestack Contributors',
+    author_email='dev@conestack.org',
     url=u'https://github.com/conestack/treibstoff',
     license='Simplified BSD',
     packages=find_packages(),
