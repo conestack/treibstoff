@@ -41,13 +41,13 @@ setup(
     zip_safe=False,
     install_requires=[
         'setuptools',
-        'pyramid'
+        'webresource'
     ],
     extras_require=dict(
         docs=[
             'Sphinx',
             'sphinx_js',
             'Jinja2<3.0'
-        ],
-    ),
+        ]
+    )
 )
