@@ -708,7 +708,7 @@ export class AjaxHandle extends AjaxUtil {
     }
 
     next(operations) {
-        if (!operations) {
+        if (!operations || !operations.length) {
             return;
         }
         this.spinner.hide();
