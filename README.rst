@@ -38,7 +38,7 @@ Install deployment requirements::
 Javascript Tests
 ----------------
 
-Cone uses karma testrunner for JS testing:
+Treibstoff uses karma testrunner for JS testing:
 
 - Karma: https://karma-runner.github.io/6.3/intro/installation.html
 - Istanbul: https://istanbul.js.org/
@@ -56,9 +56,6 @@ Start karma server (immediately run tests)::
 To view coverage report, open::
 
     karma/coverage/[browser name]/index.html
-
-jQuery is included as git submodule to ensure we can import from it in tests.
-For any reason the jquery package from npm includes the wrong sources.
 
 
 Deploy
