@@ -1306,7 +1306,7 @@ var ts = (function (exports, $) {
             this._event.execute(opts);
         }
         overlay(opts) {
-            this._overlay.execute(opts);
+            return this._overlay.execute(opts);
         }
         form(opts) {
             this._form.render(opts);

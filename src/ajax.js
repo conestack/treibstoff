@@ -1117,7 +1117,7 @@ export class Ajax extends AjaxUtil {
      * @returns {Overlay} Overlay instance.
      */
     overlay(opts) {
-        this._overlay.execute(opts);
+        return this._overlay.execute(opts);
     }
 
     /**
