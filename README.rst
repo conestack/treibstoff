@@ -4,106 +4,42 @@ Overview
 Treibstoff contains a set of useful javascript tools for writing browser based
 applications (or parts of it).
 
+treibstoff
+==========
 
-Development
+.. image:: https://img.shields.io/pypi/v/treibstoff.svg
+    :target: https://pypi.python.org/pypi/treibstoff
+    :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/dm/treibstoff.svg
+    :target: https://pypi.python.org/pypi/treibstoff
+    :alt: Number of PyPI downloads
+
+Treibstoff contains a set of useful javascript tools for writing browser based
+applications (or parts of it).
+
+
+Detailed Documentation
+----------------------
+
+The detailed ``treibstoff`` documentation is available
+`here <https://treibstoff.readthedocs.io>`_.
+
+
+Source Code
 -----------
 
-Install system dependencies::
-
-    sudo apt-get install npm
-
-Install test requirements::
-
-    npm --save-dev install \
-        qunit \
-        karma \
-        karma-qunit \
-        karma-coverage \
-        karma-chrome-launcher \
-        karma-module-resolver-preprocessor
-
-Install jquery from git as jquery 4 is not released yet but required to run
-tests as modules and import from jquery sources works::
-
-    npm --save-dev install https://github.com/jquery/jquery#main
-
-Install deployment requirements::
-
-    npm --save-dev install \
-        rollup \
-        rollup-plugin-cleanup \
-        rollup-plugin-terser
+The sources are in a GIT DVCS with its main branches at
+`github <http://github.com/conestack/treibstoff>`_.
 
 
-Javascript Tests
-----------------
+Copyright
+---------
 
-Cone uses karma testrunner for JS testing:
-
-- Karma: https://karma-runner.github.io/6.3/intro/installation.html
-- Istanbul: https://istanbul.js.org/
-- Puppeteer: https://pptr.dev/
-
-Following plugins are used:
-
-- karma-qunit
-- karma-chrome
-
-Start karma server (immediately run tests)::
-
-    ./karma.sh
-
-To view coverage report, open::
-
-    karma/coverage/[browser name]/index.html
-
-jQuery is included as git submodule to ensure we can import from it in tests.
-For any reason the jquery package from npm includes the wrong sources.
+- Copyright (c) 2021 Cone Contributors
 
 
-Deploy
-------
+Contributors
+------------
 
-As python package
-~~~~~~~~~~~~~~~~~
-
-Create JS bundle with rollup::
-
-    ./rollup.sh
-
-Create python package::
-
-    python setup.py sdist
-
-
-As npm package
-~~~~~~~~~~~~~~
-
-Create treibstoff package::
-
-    npm pack
-
-
-Documentation
--------------
-
-Install jsdoc::
-
-    npm install --save-dev jsdoc
-
-Link ``jsdoc`` executable::
-
-    sudo ln -s $(pwd)/node_modules/jsdoc/jsdoc.js /usr/local/bin/jsdoc
-
-Install virtualenv::
-
-    python3 -m venv .
-    ./bin/pip install wheel
-
-Install treibstoff with docs extra dependencies::
-
-    ./bin/pip install -e .[docs]
-
-Generate docs::
-
-    ./docs.sh
+- Robert Niederreiter (Author)
