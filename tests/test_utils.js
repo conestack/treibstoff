@@ -1,4 +1,5 @@
 import {
+    create_cookie,
     create_svg_elem,
     deprecate,
     json_merge,
@@ -6,6 +7,7 @@ import {
     parse_query,
     parse_svg,
     parse_url,
+    read_cookie,
     set_default,
     set_svg_attrs,
     svg_ns,
@@ -84,6 +86,17 @@ QUnit.module('treibstoff.utils', hooks => {
             '/sub?foo=bar'
         );
     });
+
+    QUnit.test('Test create_cookie', assert => {
+        create_cookie('test', 'test', null);
+        assert.deepEqual(document.cookie, '');
+    });
+
+    QUnit.test('Test read_cookie', assert => {
+        document.cookie = '';
+        assert.strictEqual(read_cookie('test'), '');
+    });
+
 
     QUnit.test('Test svg_ns', assert => {
         assert.strictEqual(svg_ns, 'http://www.w3.org/2000/svg', 'SVG namepsace');
