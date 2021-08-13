@@ -67,6 +67,34 @@ var ts = (function (exports, $) {
         }
         return path;
     }
+    function create_cookie(name, value, days) {
+        var date,
+            expires;
+        if (days) {
+            date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toGMTString();
+        } else {
+            expires = "";
+        }
+        document.cookie = name + "=" + escape(value) + expires + "; path=/;";
+    }
+    function read_cookie(name) {
+        var nameEQ = name + "=",
+            ca = document.cookie.split(';'),
+            i,
+            c;
+        for(i = 0; i < ca.length;i = i + 1) {
+            c = ca[i];
+            while (c.charAt(0) === ' ') {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(nameEQ) === 0) {
+                return unescape(c.substring(nameEQ.length, c.length));
+            }
+        }
+        return null;
+    }
     const svg_ns = 'http://www.w3.org/2000/svg';
     function set_svg_attrs(el, opts) {
         for (let n in opts) {
@@ -1141,7 +1169,7 @@ var ts = (function (exports, $) {
             }
         }
         next(operations) {
-            if (!operations) {
+            if (!operations || !operations.length) {
                 return;
             }
             this.spinner.hide();
@@ -1278,7 +1306,7 @@ var ts = (function (exports, $) {
             this._event.execute(opts);
         }
         overlay(opts) {
-            this._overlay.execute(opts);
+            return this._overlay.execute(opts);
         }
         form(opts) {
             this._form.render(opts);
@@ -1552,6 +1580,7 @@ var ts = (function (exports, $) {
     exports.ajax = ajax;
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
+    exports.create_cookie = create_cookie;
     exports.create_svg_elem = create_svg_elem;
     exports.deprecate = deprecate;
     exports.extract_number = extract_number;
@@ -1562,6 +1591,7 @@ var ts = (function (exports, $) {
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
     exports.parse_url = parse_url;
+    exports.read_cookie = read_cookie;
     exports.set_default = set_default;
     exports.set_svg_attrs = set_svg_attrs;
     exports.show_dialog = show_dialog;

@@ -1,19 +1,9 @@
-Overview
-========
-
-Treibstoff contains a set of useful javascript tools for writing browser based
-applications (or parts of it).
-
-treibstoff
+Treibstoff
 ==========
 
 .. image:: https://img.shields.io/pypi/v/treibstoff.svg
     :target: https://pypi.python.org/pypi/treibstoff
     :alt: Latest PyPI version
-
-.. image:: https://img.shields.io/pypi/dm/treibstoff.svg
-    :target: https://pypi.python.org/pypi/treibstoff
-    :alt: Number of PyPI downloads
 
 Treibstoff contains a set of useful javascript tools for writing browser based
 applications (or parts of it).

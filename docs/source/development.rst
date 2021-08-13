@@ -31,7 +31,7 @@ Install deployment requirements::
 Tests
 -----
 
-Cone uses karma testrunner for JS testing:
+Treibstoff uses karma testrunner for JS testing:
 
 - Karma: https://karma-runner.github.io/6.3/intro/installation.html
 - Istanbul: https://istanbul.js.org/
@@ -65,7 +65,7 @@ Create python package::
     python setup.py sdist
 
 
-npm package
+Npm package
 ~~~~~~~~~~~
 
 Create treibstoff package::
