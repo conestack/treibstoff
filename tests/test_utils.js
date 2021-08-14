@@ -89,12 +89,15 @@ QUnit.module('treibstoff.utils', hooks => {
 
     QUnit.test('Test create_cookie', assert => {
         create_cookie('test', 'test', null);
-        assert.deepEqual(document.cookie, '');
+        assert.deepEqual(document.cookie, 'test=test');
+        create_cookie('test', '', -1);
     });
 
     QUnit.test('Test read_cookie', assert => {
-        document.cookie = '';
-        assert.strictEqual(read_cookie('test'), '');
+        assert.strictEqual(read_cookie('test'), null);
+        document.cookie = 'test=test';
+        assert.strictEqual(read_cookie('test'), 'test');
+        create_cookie('test', '', -1);
     });
 
 
