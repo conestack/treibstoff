@@ -1,98 +1,59 @@
 Development
 ===========
 
-Install system dependencies::
+Treibstoff contains a set of shell scripts to ease setup of development
+environment, running tests, building docs and do deployment.
 
-    sudo apt-get install npm
+All scripts must be executed from the repository root.
 
-Install test requirements::
+Install development environment:
 
-    npm --save-dev install \
-        qunit \
-        karma \
-        karma-qunit \
-        karma-coverage \
-        karma-chrome-launcher \
-        karma-module-resolver-preprocessor
+.. code-block:: sh
 
-Install jquery from git as jquery 4 is not released yet but required to run
-tests as modules and import from jquery sources works::
+    ./scripts/install.sh
 
-    npm --save-dev install https://github.com/jquery/jquery#main
+Cleanup development environment:
 
-Install deployment requirements::
+.. code-block:: sh
 
-    npm --save-dev install \
-        rollup \
-        rollup-plugin-cleanup \
-        rollup-plugin-terser
+    ./scripts/clean.sh
 
+Run tests:
 
-Tests
------
+.. code-block:: sh
 
-Treibstoff uses karma testrunner for JS testing:
+    ./scripts/karma.sh
 
-- Karma: https://karma-runner.github.io/6.3/intro/installation.html
-- Istanbul: https://istanbul.js.org/
-
-Following plugins are used:
-
-- karma-qunit
-- karma-chrome
-
-Start karma server (immediately run tests)::
-
-    ./karma.sh
-
-To view coverage report, open::
+To view coverage report, open in browser::
 
     karma/coverage/[browser name]/index.html
 
+Create Javascript bundles:
 
-Deploy
-------
+.. code-block:: sh
 
-Python package
-~~~~~~~~~~~~~~
+    ./scripts/rollup.sh
 
-Create JS bundle with rollup::
+Automatically build JS bundles while development:
 
-    ./rollup.sh
+.. code-block:: sh
 
-Create python package::
+    ./scripts/watch.sh
 
-    python setup.py sdist
+Create NPM package:
 
+.. code-block:: sh
 
-Npm package
-~~~~~~~~~~~
+    ./scripts/pack.sh
 
-Create treibstoff package::
+Create Python package:
 
-    ./pack.sh
+.. code-block:: sh
 
+    ./scripts/wheel.sh
 
-Documentation
--------------
+Build documentation:
 
-Install jsdoc::
+.. code-block:: sh
 
-    npm install --save-dev jsdoc
-
-Link ``jsdoc`` executable::
-
-    sudo ln -s $(pwd)/node_modules/jsdoc/jsdoc.js /usr/local/bin/jsdoc
-
-Install virtualenv::
-
-    python3 -m venv .
-    ./bin/pip install wheel
-
-Install treibstoff with docs extra dependencies::
-
-    ./bin/pip install -e .[docs]
-
-Generate docs::
-
-    ./docs.sh
+    ./scripts/docs.sh
