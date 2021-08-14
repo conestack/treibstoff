@@ -1,8 +1,10 @@
 #!/bin/bash
+#
+# Create npm package.
 
 set -e
 
-./rollup.sh
+./scripts/rollup.sh
 
 mkdir -p ./bundle
 rm -f ./bundle/*
