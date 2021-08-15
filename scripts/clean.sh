@@ -4,14 +4,13 @@
 
 set -e
 
-for file in lib64 package-lock.json pyvenv.cfg treibstoff-*; do
-    if [ -e "$file" ]; then
-        rm "$file"
-    fi
-done
+to_remove=(
+    bin build bundle dist docs/html include karma lib lib64 node_modules
+    package-lock.json pyvenv.cfg share treibstoff-* treibstoff.egg-info
+)
 
-for dir in bin build bundle dist docs/html include karma lib node_modules share treibstoff.egg-info; do
-    if [ -d "$dir" ]; then
-        rm -r "$dir"
+for item in "${to_remove[@]}"; do
+    if [ -e "$item" ]; then
+        rm -r "$item"
     fi
 done
