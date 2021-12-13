@@ -1,7 +1,8 @@
 Changes
 =======
 
-0.0.dev0
---------
+0.1.0 (2021-12-13)
+------------------
 
-- Namespace claim.
+- Initial Release.
+  [rnix]

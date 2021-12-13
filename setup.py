@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '0.1.0.dev0'
+version = '0.1.0'
 shortdesc = (
     'A set of useful javascript tools for writing browser '
     'based applications (or parts of it).'
@@ -45,9 +45,10 @@ setup(
     ],
     extras_require=dict(
         docs=[
+            'Jinja2<3.0',
             'Sphinx',
-            'sphinx_js',
-            'Jinja2<3.0'
+            'sphinx-conestack-theme',
+            'sphinx_js'
         ]
     )
 )

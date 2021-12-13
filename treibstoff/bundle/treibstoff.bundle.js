@@ -1614,5 +1614,5 @@ var ts = (function (exports, $) {
 
     return exports;
 
-}({}, jQuery));
+})({}, jQuery);
 //# sourceMappingURL=treibstoff.bundle.js.map
