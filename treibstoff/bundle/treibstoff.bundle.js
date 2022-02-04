@@ -8,6 +8,29 @@ var ts = (function (exports, $) {
             `Use ${sub} instead.`
         );
     }
+    function query_elem(selector, context, unique=true) {
+        let elem = $(selector, context);
+        if (unique && elem.length > 1) {
+            throw `Element by selector ${selector} not unique.`;
+        } else if (!elem.length) {
+            return null;
+        }
+        return elem;
+    }
+    function get_elem(selector, context, unique=true) {
+        let elem = query_elem(selector, context, unique);
+        if (elem === null) {
+            throw `Element by selector ${selector} not found.`;
+        }
+        return elem;
+    }
+    function set_visible(elem, visible) {
+        if (visible) {
+            elem.removeClass('hidden');
+        } else {
+            elem.addClass('hidden');
+        }
+    }
     function uuid4() {
         return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
@@ -1359,71 +1382,57 @@ var ts = (function (exports, $) {
         return this;
     };
 
-    class KeyState extends Events {
-        constructor(filter_keyevent) {
-            super();
-            this.filter_keyevent = filter_keyevent;
-            this._keys = [];
-            this._add_key('ctrl', 17);
-            this._add_key('shift', 16);
-            this._add_key('alt', 18);
-            this._add_key('enter', 13);
-            this._add_key('esc', 27);
-            this._add_key('delete', 46);
-            this.bind();
-        }
-        unload() {
-            $(window).off('keydown', this._keydown_handle);
-            $(window).off('keyup', this._keyup_handle);
-        }
-        bind() {
-            this._keydown_handle = this._keydown.bind(this);
-            this._keyup_handle = this._keyup.bind(this);
-            $(window).on('keydown', this._keydown_handle);
-            $(window).on('keyup', this._keyup_handle);
-        }
-        _add_key(name, key_code) {
-            this._keys.push(name);
-            this[`_${name}`] = false;
-            Object.defineProperty(this, name, {
-                get: function() {
-                    return this[`_${name}`];
-                },
-                set: function(evt) {
-                    let val = this[`_${name}`];
-                    if (evt.type == 'keydown') {
-                        if (!val && evt.keyCode == key_code) {
-                            this[`_${name}`] = true;
-                        }
-                    } else {
-                        if (val && evt.keyCode == key_code) {
-                            this[`_${name}`] = false;
-                        }
-                    }
+    function create_listener(mixin, base=null) {
+        let listen = mixin.listen,
+            mixin_ = {};
+        Object.assign(mixin_, mixin);
+        delete mixin_.listen;
+        let listener;
+        if (base) {
+            listener = class extends base {
+                constructor(...args) {
+                    super(...args);
+                    listen.bind(this)();
                 }
-            });
+            };
+        } else {
+            listener = class {
+                constructor(opts) {
+                    if (!opts.elem) {
+                        throw `No element given`;
+                    }
+                    this.elem = opts.elem;
+                    listen.bind(this)();
+                }
+            };
         }
-        _set_keys(evt) {
-            for (let name of this._keys) {
-                this[name] = evt;
-            }
-        }
-        _filter_event(evt) {
-            return this.filter_keyevent && this.filter_keyevent(evt);
-        }
-        _keydown(evt) {
-            this._set_keys(evt);
-            if (!this._filter_event(evt)) {
-                this.trigger('keydown', evt);
-            }
-        }
-        _keyup(evt) {
-            this._set_keys(evt);
-            if (!this._filter_event(evt)) {
-                this.trigger('keyup', evt);
-            }
-        }
+        Object.assign(listener.prototype, mixin_);
+        return listener;
     }
+    let ClickListenerMixin = {
+        listen: function() {
+            this.on_click = this.on_click.bind(this);
+            if (this.elem) {
+                this.elem.on('click', this.on_click);
+            }
+        },
+        on_click: function(evt) {
+        }
+    };
+    let ClickListener = create_listener(ClickListenerMixin);
+    let clickListener = Base => create_listener(ClickListenerMixin, Base);
+    let ChangeListenerMixin = {
+        listen: function() {
+            this.on_change = this.on_change.bind(this);
+            if (this.elem) {
+                this.elem.on('change', this.on_change);
+            }
+        },
+        on_change: function(evt) {
+        }
+    };
+    let ChangeListener = create_listener(ChangeListenerMixin);
+    let changeListener = Base => create_listener(ChangeListenerMixin, Base);
 
     class Motion extends Events {
         constructor() {
@@ -1536,6 +1545,331 @@ var ts = (function (exports, $) {
             return create_svg_elem(name, opts, container);
         }
     }
+    class Visibility {
+        constructor(opts) {
+            if (!opts.elem) {
+                throw `No element given`;
+            }
+            this.elem = opts.elem;
+        }
+        get visible() {
+            return !this.elem.hasClass('hidden');
+        }
+        set visible(value) {
+            set_visible(this.elem, value);
+        }
+        get hidden() {
+            return !this.visible;
+        }
+        set hidden(value) {
+            this.visible = !value;
+        }
+    }
+    class Collapsible {
+        constructor(opts) {
+            if (!opts.elem) {
+                throw `No element given`;
+            }
+            this.elem = opts.elem;
+        }
+        get collapsed() {
+            return !this.elem.hasClass('in');
+        }
+        set collapsed(value) {
+            if (value) {
+                this.elem.collapse('hide');
+            } else {
+                this.elem.collapse('show');
+            }
+        }
+    }
+    class Button extends ClickListener {
+        constructor(opts) {
+            super(opts);
+            this.unselected_class = 'btn-default';
+            this.selected_class = 'btn-success';
+        }
+        get selected() {
+            return this.elem.hasClass(this.selected_class);
+        }
+        set selected(value) {
+            if (value) {
+                this.elem
+                    .removeClass(this.unselected_class)
+                    .addClass(this.selected_class);
+            } else {
+                this.elem
+                    .removeClass(this.selected_class)
+                    .addClass(this.unselected_class);
+            }
+        }
+    }
+
+    class FormInput {
+        constructor(opts) {
+            this.form = opts.form,
+            this.name = opts.name;
+            this.elem = opts.elem || get_elem(
+                `#input-${this.form.name}-${this.name}`, this.form.elem, true
+            );
+        }
+        get value() {
+            return this.elem.val();
+        }
+        set value(value) {
+            this.elem.val(value);
+        }
+        get disabled() {
+            return this.elem.prop('disabled');
+        }
+        set disabled(value) {
+            this.elem.prop('disabled', value);
+        }
+    }
+    class FormSelect extends changeListener(FormInput) {
+        get options() {
+            return this.elem.prop('options');
+        }
+        set options(value) {
+            this.clear();
+            let selection = this.elem[0];
+            for (let option of value) {
+                if (!(option instanceof Option)) {
+                    selection.add(new Option(option[1], option[0]));
+                } else {
+                    selection.add(option);
+                }
+            }
+        }
+        clear() {
+            this.elem.empty();
+        }
+    }
+    class FormRemoteSelect extends FormSelect {
+        constructor(opts) {
+            super(opts);
+            this.vocab = opts.vocab;
+        }
+        fetch(params) {
+            bdajax.request({
+                type: 'json',
+                url: this.vocab,
+                params: params,
+                success: function(data, status, request) {
+                    this.options = data;
+                }.bind(this)
+            });
+        }
+    }
+    class FormCheckbox extends changeListener(FormInput) {
+        get checked() {
+            return this.elem.is(':checked');
+        }
+        set checked(value) {
+            return this.elem.prop('checked', value);
+        }
+    }
+    class FormField extends Visibility {
+        constructor(opts) {
+            let form = opts.form,
+                name = opts.name,
+                input = opts.input;
+            opts.elem = opts.elem || get_elem(
+                `#field-${form.name}-${name}`, form.elem, true
+            );
+            super(opts);
+            this.form = form;
+            this.name = name;
+            if (input && !(input instanceof FormInput)) {
+                input = new input({
+                    form: form,
+                    name: name
+                });
+            }
+            this.input = input;
+        }
+        get has_error() {
+            return this.elem.hasClass('has-error');
+        }
+        set has_error(value) {
+            let elem = this.elem;
+            if (value) {
+                elem.addClass('has-error');
+            } else {
+                elem.removeClass('has-error');
+            }
+        }
+        reset(value='') {
+            this.input.value = value;
+            this.has_error = false;
+            $('.help-block', this.elem).remove();
+        }
+    }
+    class Form {
+        static initialize(context, factory, name) {
+            let elem = query_elem(`#form-${name}`, context, true);
+            if (!elem) {
+                return;
+            }
+            let form = new factory({
+                name: name,
+                elem: elem
+            });
+            elem.data(name, form);
+        }
+        static instance(name) {
+            return $(`#form-${name}`).data(name);
+        }
+        constructor(opts) {
+            this.name = opts.name;
+            this.elem = opts.elem;
+        }
+        set_field_visibility(fields, visible) {
+            for (let field of fields) {
+                field.visible = visible;
+            }
+        }
+    }
+
+    class KeyState extends Events {
+        constructor(filter_keyevent) {
+            super();
+            this.filter_keyevent = filter_keyevent;
+            this._keys = [];
+            this._add_key('ctrl', 17);
+            this._add_key('shift', 16);
+            this._add_key('alt', 18);
+            this._add_key('enter', 13);
+            this._add_key('esc', 27);
+            this._add_key('delete', 46);
+            this.bind();
+        }
+        unload() {
+            $(window).off('keydown', this._keydown_handle);
+            $(window).off('keyup', this._keyup_handle);
+        }
+        bind() {
+            this._keydown_handle = this._keydown.bind(this);
+            this._keyup_handle = this._keyup.bind(this);
+            $(window).on('keydown', this._keydown_handle);
+            $(window).on('keyup', this._keyup_handle);
+        }
+        _add_key(name, key_code) {
+            this._keys.push(name);
+            this[`_${name}`] = false;
+            Object.defineProperty(this, name, {
+                get: function() {
+                    return this[`_${name}`];
+                },
+                set: function(evt) {
+                    let val = this[`_${name}`];
+                    if (evt.type == 'keydown') {
+                        if (!val && evt.keyCode == key_code) {
+                            this[`_${name}`] = true;
+                        }
+                    } else {
+                        if (val && evt.keyCode == key_code) {
+                            this[`_${name}`] = false;
+                        }
+                    }
+                }
+            });
+        }
+        _set_keys(evt) {
+            for (let name of this._keys) {
+                this[name] = evt;
+            }
+        }
+        _filter_event(evt) {
+            return this.filter_keyevent && this.filter_keyevent(evt);
+        }
+        _keydown(evt) {
+            this._set_keys(evt);
+            if (!this._filter_event(evt)) {
+                this.trigger('keydown', evt);
+            }
+        }
+        _keyup(evt) {
+            this._set_keys(evt);
+            if (!this._filter_event(evt)) {
+                this.trigger('keyup', evt);
+            }
+        }
+    }
+
+    const WS_STATE_CONNECTING = 0;
+    const WS_STATE_OPEN = 1;
+    const WS_STATE_CLOSING = 2;
+    const WS_STATE_CLOSED = 3;
+    class Websocket extends Events {
+        constructor(path) {
+            super();
+            this.path = path;
+            this.on_open = this.on_open.bind(this);
+            this.on_close = this.on_close.bind(this);
+            this.on_error = this.on_error.bind(this);
+            this.on_message = this.on_message.bind(this);
+            this.on_raw_message = this.on_raw_message.bind(this);
+            this.sock = null;
+        }
+        get uri() {
+            let scheme;
+            if (window.location.protocol == 'http:') {
+                scheme = 'ws://';
+            } else {
+                scheme = 'wss://';
+            }
+            return scheme + window.location.hostname + this.path;
+        }
+        get state() {
+            return this.sock.readyState;
+        }
+        open() {
+            if (this.sock !== null) {
+                this.sock.close();
+            }
+            let sock = this.sock = new WebSocket(this.uri);
+            sock.onopen = function() {
+                this.trigger('on_open');
+            }.bind(this);
+            sock.onclose = function(evt) {
+                this.trigger('on_close', evt);
+            }.bind(this);
+            sock.onerror = function() {
+                this.trigger('on_error');
+            }.bind(this);
+            sock.onmessage = function(evt) {
+                this.trigger('on_raw_message', evt);
+            }.bind(this);
+        }
+        send(data) {
+            this.sock.send(data);
+        }
+        send_json(data) {
+            this.sock.send(JSON.stringify(data));
+        }
+        close() {
+            if (this.sock !== null) {
+                this.sock.close();
+                this.sock = null;
+            }
+        }
+        on_open() {
+        }
+        on_close(evt) {
+        }
+        on_error() {
+        }
+        on_message(data) {
+        }
+        on_raw_message(evt) {
+            let data = JSON.parse(evt.data);
+            if (data.HEARTBEAT !== undefined) {
+                return;
+            }
+            this.trigger('on_message', data);
+        }
+    }
 
     $(function() {
         ajax.spinner.hide();
@@ -1557,11 +1891,21 @@ var ts = (function (exports, $) {
     exports.AjaxUtil = AjaxUtil;
     exports.AttrProperty = AttrProperty;
     exports.BoundProperty = BoundProperty;
+    exports.Button = Button;
     exports.ButtonProperty = ButtonProperty;
     exports.CSSProperty = CSSProperty;
+    exports.ChangeListener = ChangeListener;
+    exports.ClickListener = ClickListener;
+    exports.Collapsible = Collapsible;
     exports.DataProperty = DataProperty;
     exports.Dialog = Dialog;
     exports.Events = Events;
+    exports.Form = Form;
+    exports.FormCheckbox = FormCheckbox;
+    exports.FormField = FormField;
+    exports.FormInput = FormInput;
+    exports.FormRemoteSelect = FormRemoteSelect;
+    exports.FormSelect = FormSelect;
     exports.HTMLParser = HTMLParser;
     exports.HTMLWidget = HTMLWidget;
     exports.InputProperty = InputProperty;
@@ -1576,14 +1920,23 @@ var ts = (function (exports, $) {
     exports.SVGProperty = SVGProperty;
     exports.TemplateParser = TemplateParser;
     exports.TextProperty = TextProperty;
+    exports.Visibility = Visibility;
+    exports.WS_STATE_CLOSED = WS_STATE_CLOSED;
+    exports.WS_STATE_CLOSING = WS_STATE_CLOSING;
+    exports.WS_STATE_CONNECTING = WS_STATE_CONNECTING;
+    exports.WS_STATE_OPEN = WS_STATE_OPEN;
+    exports.Websocket = Websocket;
     exports.Widget = Widget;
     exports.ajax = ajax;
+    exports.changeListener = changeListener;
+    exports.clickListener = clickListener;
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
     exports.create_cookie = create_cookie;
     exports.create_svg_elem = create_svg_elem;
     exports.deprecate = deprecate;
     exports.extract_number = extract_number;
+    exports.get_elem = get_elem;
     exports.get_overlay = get_overlay;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
@@ -1591,9 +1944,11 @@ var ts = (function (exports, $) {
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
     exports.parse_url = parse_url;
+    exports.query_elem = query_elem;
     exports.read_cookie = read_cookie;
     exports.set_default = set_default;
     exports.set_svg_attrs = set_svg_attrs;
+    exports.set_visible = set_visible;
     exports.show_dialog = show_dialog;
     exports.show_error = show_error;
     exports.show_info = show_info;

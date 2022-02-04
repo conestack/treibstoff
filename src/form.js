@@ -4,7 +4,7 @@ import {
     get_elem,
     query_elem
 } from './utils.js';
-import {Visibility} from './widgets.js';
+import {Visibility} from './widget.js';
 
 /**
  * Form input object.
