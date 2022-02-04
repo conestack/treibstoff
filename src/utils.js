@@ -16,6 +16,62 @@ export function deprecate(dep, sub, as_of) {
 }
 
 /**
+ * Query element by selector from context.
+ *
+ * @param {string} selector - Lookup selector.
+ * @param {(HTMLElement|$)} context - Search context.
+ * @param {boolean} unique - Flag whether unique element is requested.
+ * @throws If unique is true and more than one element found by selector, an
+ * exception gets thrown.
+ * @returns {($|null)} jQuery wrapped element. Return null if no element found by
+ * given selector.
+ */
+export function query_elem(selector, context, unique=true) {
+    let elem = $(selector, context);
+    if (unique && elem.length > 1) {
+        throw `Element by selector ${selector} not unique.`;
+    } else if (!elem.length) {
+        return null;
+    }
+    return elem;
+}
+
+/**
+ * Get element by selector from context.
+ *
+ * @param {string} selector - Lookup selector.
+ * @param {(HTMLElement|$)} context - Search context.
+ * @param {boolean} unique - Flag whether unique element is requested.
+ * @throws If unique is true and more than one element found by selector, an
+ * exception gets thrown.
+ * @throws If no element is found, and exception gets thrown.
+ * @returns {$} jQuery wrapped element.
+ */
+export function get_elem(selector, context, unique=true) {
+    let elem = query_elem(selector, context, unique);
+    if (elem === null) {
+        throw `Element by selector ${selector} not found.`;
+    }
+    return elem;
+}
+
+
+/**
+ * Set visibility of element.
+ *
+ * @param {$} elem - jQuery wrapped DOM element.
+ * @param {boolean} visible - Flag whether element is visible.
+ */
+export function set_visible(elem, visible) {
+    if (visible) {
+        elem.removeClass('hidden');
+    } else {
+        elem.addClass('hidden');
+    }
+}
+
+
+/**
  * Generate uuid 4.
  *
  * @returns {string} UUID string.

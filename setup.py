@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '0.1.0'
+version = '0.2.0'
 shortdesc = (
     'A set of useful javascript tools for writing browser '
     'based applications (or parts of it).'

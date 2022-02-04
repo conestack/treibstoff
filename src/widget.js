@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import {ClickListener} from './listener.js';
 import {Motion} from './motion.js';
 import {
     CSSProperty,
@@ -7,6 +8,7 @@ import {
 import {
     create_svg_elem,
     set_svg_attrs,
+    set_visible,
     svg_ns
 } from './utils.js';
 
@@ -66,5 +68,147 @@ export class SVGContext extends HTMLWidget {
 
     svg_elem(name, opts, container) {
         return create_svg_elem(name, opts, container);
+    }
+}
+
+/**
+ * Class providing visibility for related element.
+ */
+export class Visibility {
+
+    /**
+     * Create Visibility instance.
+     *
+     * @param {Object} opts - Visibility options.
+     * @param {$} opts.elem - jQuery wrapped DOM element.
+     */
+    constructor(opts) {
+        if (!opts.elem) {
+            throw `No element given`;
+        }
+        this.elem = opts.elem;
+    }
+
+    /**
+     * Flag whether related element is visible.
+     *
+     * @returns {boolean} True if element is visible.
+     */
+    get visible() {
+        return !this.elem.hasClass('hidden');
+    }
+
+    /**
+     * Set related element visibility.
+     *
+     * @param {boolean} value - `true` to show related element, `false` to hide.
+     */
+    set visible(value) {
+        set_visible(this.elem, value);
+    }
+
+    /**
+     * Flag whether related element is hidden.
+     *
+     * @returns {boolean} True if element is hidden.
+     */
+    get hidden() {
+        return !this.visible;
+    }
+
+    /**
+     * Set related element visibility.
+     *
+     * @param {boolean} value - `false` to show related element, `true` to hide.
+     */
+    set hidden(value) {
+        this.visible = !value;
+    }
+}
+
+/**
+ * Class providing collapsing of related element.
+ */
+export class Collapsible {
+
+    /**
+     * Create Collapsible instance.
+     *
+     * @param {Object} opts - Collapsible options.
+     * @param {$} opts.elem - jQuery wrapped DOM element.
+     */
+    constructor(opts) {
+        if (!opts.elem) {
+            throw `No element given`;
+        }
+        this.elem = opts.elem;
+    }
+
+    /**
+     * Flag whether related element is collapsed.
+     *
+     * @returns {boolean} True if element is collapsed.
+     */
+    get collapsed() {
+        return !this.elem.hasClass('in');
+    }
+
+    /**
+     * Set related element collapsed.
+     *
+     * @param {boolean} value - `false` to show related element, `true` to hide.
+     */
+    set collapsed(value) {
+        if (value) {
+            this.elem.collapse('hide');
+        } else {
+            this.elem.collapse('show');
+        }
+    }
+}
+
+/**
+ * Button widget.
+ *
+ * @extends ClickListener
+ */
+export class Button extends ClickListener {
+
+    /**
+     * Create button instance.
+     *
+     * @param {Object} opts - Button options.
+     * @param {$} opts.elem - jQuery wrapped button element.
+     */
+    constructor(opts) {
+        super(opts);
+        this.unselected_class = 'btn-default';
+        this.selected_class = 'btn-success';
+    }
+
+    /**
+     * Button selected.
+     *
+     * @returns {boolean} Flag whether button is selected.
+     */
+    get selected() {
+        return this.elem.hasClass(this.selected_class);
+    }
+
+    /**
+     * Set button selected.
+     *
+     * @param {boolean} value - Flag whether button is selected.
+     */
+    set selected(value) {
+        if (value) {
+            this.elem
+                .removeClass(this.unselected_class)
+                .addClass(this.selected_class);
+        } else {
+            this.elem
+                .removeClass(this.selected_class)
+                .addClass(this.unselected_class);
+        }
     }
 }

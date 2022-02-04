@@ -1,12 +1,31 @@
 TODO
 ====
 
+[ ] - Convention docs.
+    - Opts passed to widget constructors.
+    - Lifecycle -> constructor -> compile -> update -> destroy.
+
+[ ] - ``widget.Widget``
+    - add_widget
+    - remove_widget
+    - children
+
+[ ] - Button widget in form?
+
+[ ] - Fix collapsible widget.
+
+[ ] - Listener consolidation. Inherit from Events, consume DOM event but
+      delegate as ts events.
+
+[ ] - ``widget.Widget``, ``widget.HTMLWidget``, ``widget.SVGContext`` ->
+      constructor consolidation -> use ``opts``.
+
 [ ] - Either include jquery and bootstrap dist here or create dedicated
       delivery package with webresource declarations.
 
 [ ] - Change all ``ajax:*`` attributes to ``data-t-ssr-*`` attributes.
 
-[ ] - Introduce JS instance attaching to DOM nodes and implement an ``unload``
+[ ] - Introduce JS instance attaching to DOM nodes and implement an ``destroy``
       mechanism in ```AjaxHandle``.
 
 [ ] - Use ``document.createTreeWalker`` in parsers.
