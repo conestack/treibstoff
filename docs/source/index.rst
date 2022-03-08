@@ -17,6 +17,7 @@ utilities.
 
    Ajax <ajax>
    Events <events>
+   Form <form>
    Properties <properties>
    Overlay <overlay>
    Utils <utils>
