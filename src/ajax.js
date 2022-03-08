@@ -677,6 +677,24 @@ export class AjaxDispatcher extends AjaxUtil {
 }
 
 /**
+ * DOM parser for destroying JavaScript instances attached to DOM elements
+ * going to be removed.
+ */
+export class AjaxDestroy extends Parser {
+
+    parse(node) {
+        let instances = node._ajax_attached;
+        if (instances !== undefined) {
+            for (let instance of instances) {
+                if (instance.destroy !== undefined) {
+                    instance.destroy();
+                }
+            }
+        }
+    }
+}
+
+/**
  * Handle for DOM manipulation and Ajax continuation operations.
  */
 export class AjaxHandle extends AjaxUtil {
@@ -687,13 +705,22 @@ export class AjaxHandle extends AjaxUtil {
         this.spinner = ajax.spinner;
     }
 
+    destroy(context) {
+        let parser = new AjaxDestroy();
+        context.each(function() {
+            parser.walk(this);
+        });
+    }
+
     update(opts) {
         let payload = opts.payload,
             selector = opts.selector,
             mode = opts.mode,
             context;
         if (mode === 'replace') {
-            $(selector).replaceWith(payload);
+            let old_context = $(selector);
+            this.destroy(old_context);
+            old_context.replaceWith(payload);
             context = $(selector);
             if (context.length) {
                 this.ajax.bind(context.parent());
@@ -702,6 +729,7 @@ export class AjaxHandle extends AjaxUtil {
             }
         } else if (mode === 'inner') {
             context = $(selector);
+            this.destroy(context.children());
             context.html(payload);
             this.ajax.bind(context);
         }
@@ -868,6 +896,57 @@ export class Ajax extends AjaxUtil {
             }
         }
         return context;
+    }
+
+    /**
+     * Attach JavaScript instance to DOM element.
+     *
+     * ``destroy`` function of attached instance gets called when DOM element
+     * is removed.
+     *
+     * This is the supposed mechanism if a user needs to gracefully destruct
+     * things when DOM parts get removed.
+     *
+     * Attaching of instances is normally done inside a binder function or a
+     * subsequent operation of it.
+     *
+     * A best practice pattern look like so::
+     *
+     *     class Widget {
+     *
+     *         static initialize(context) {
+     *             $('.sel', context).each(function() {
+     *                 new Widget($(this));
+     *             });
+     *         }
+     *
+     *         constructor(elem) {
+     *             ts.ajax.attach(this, elem);
+     *         }
+     *
+     *         destroy() {
+     *             // graceful destruction goes here
+     *         }
+     *     }
+     *
+     *     $(function() {
+     *         ts.ajax.register(Widget.initialize, true);
+     *     });
+     *
+     * @param {Object} instance - Arbitrary JavaScript object instance.
+     * @param {HTMLElement|$} elem - DOM element to attach instance to.
+     */
+    attach(instance, elem) {
+        if (elem instanceof $) {
+            if (elem.length != 1) {
+                throw 'Instance can be attached to exactly one DOM element';
+            }
+            elem = elem[0];
+        }
+        if (elem._ajax_attached === undefined) {
+            elem._ajax_attached = [];
+        }
+        elem._ajax_attached.push(instance);
     }
 
     /**
@@ -1127,7 +1206,7 @@ export class Ajax extends AjaxUtil {
      * integration documentation for details.
      *
      * @param {Object} opts - Form options.
-     * @param {DOMElement} opts.payload - The rendered form.
+     * @param {HTMLElement} opts.payload - The rendered form.
      * @param {string} opts.selector - CSS selector of the form.
      * @param {string} opts.mode - DOM manipulation mode.
      * @param {Array} opts.next - Continuation operation definitions.

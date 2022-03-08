@@ -4,6 +4,9 @@ Changes
 0.2.0 (unreleased)
 ------------------
 
+- Add ``Ajax.attach``.
+  [rnix]
+
 - Add ``Visibility``, ``Collapsible`` and ``Button`` widgets.
   [rnix]
 

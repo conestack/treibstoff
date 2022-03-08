@@ -598,6 +598,7 @@ The public API is available via the ``ajax`` singleton.
     :members:
         register,
         bind,
+        attach,
         request,
         action,
         trigger,

@@ -10,6 +10,7 @@ QUnit.module('Test treibstoff', hooks => {
         assert.deepEqual(members, [
             'Ajax',
             'AjaxAction',
+            'AjaxDestroy',
             'AjaxDispatcher',
             'AjaxEvent',
             'AjaxForm',
