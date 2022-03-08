@@ -92,17 +92,12 @@ export class Visibility {
     /**
      * Flag whether related element is visible.
      *
-     * @returns {boolean} True if element is visible.
+     * @type {boolean}
      */
     get visible() {
         return !this.elem.hasClass('hidden');
     }
 
-    /**
-     * Set related element visibility.
-     *
-     * @param {boolean} value - `true` to show related element, `false` to hide.
-     */
     set visible(value) {
         set_visible(this.elem, value);
     }
@@ -110,17 +105,12 @@ export class Visibility {
     /**
      * Flag whether related element is hidden.
      *
-     * @returns {boolean} True if element is hidden.
+     * @type {boolean}
      */
     get hidden() {
         return !this.visible;
     }
 
-    /**
-     * Set related element visibility.
-     *
-     * @param {boolean} value - `false` to show related element, `true` to hide.
-     */
     set hidden(value) {
         this.visible = !value;
     }
@@ -147,17 +137,12 @@ export class Collapsible {
     /**
      * Flag whether related element is collapsed.
      *
-     * @returns {boolean} True if element is collapsed.
+     * @type {boolean}
      */
     get collapsed() {
         return !this.elem.hasClass('in');
     }
 
-    /**
-     * Set related element collapsed.
-     *
-     * @param {boolean} value - `false` to show related element, `true` to hide.
-     */
     set collapsed(value) {
         if (value) {
             this.elem.collapse('hide');
@@ -187,19 +172,14 @@ export class Button extends ClickListener {
     }
 
     /**
-     * Button selected.
+     * Flag whether button is selected.
      *
-     * @returns {boolean} Flag whether button is selected.
+     * @type {boolean}
      */
     get selected() {
         return this.elem.hasClass(this.selected_class);
     }
 
-    /**
-     * Set button selected.
-     *
-     * @param {boolean} value - Flag whether button is selected.
-     */
     set selected(value) {
         if (value) {
             this.elem

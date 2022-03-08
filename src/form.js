@@ -29,37 +29,27 @@ export class FormInput {
     }
 
     /**
-     * Input value.
+     * Value of input element.
      *
-     * @returns {string} Value of input element.
+     * @type {string}
      */
     get value() {
         return this.elem.val();
     }
 
-    /**
-     * Set input value.
-     *
-     * @param {string} value - Value of input element.
-     */
     set value(value) {
         this.elem.val(value);
     }
 
     /**
-     * Input disabled.
+     * Flag whether input is disabled.
      *
-     * @returns {boolean} Flag whether input is disabled.
+     * @type {boolean}
      */
     get disabled() {
         return this.elem.prop('disabled');
     }
 
-    /**
-     * Set input disabled.
-     *
-     * @param {boolean} value - Flag whether input is disabled.
-     */
     set disabled(value) {
         this.elem.prop('disabled', value);
     }
@@ -76,18 +66,16 @@ export class FormSelect extends changeListener(FormInput) {
     /**
      * Selection options.
      *
-     * @returns {HTMLOptionsCollection} Selection options.
+     * Since HTMLOptionsCollection cannot be instantiated directly, an
+     * {Iterable} is expected when setting options. Single options either can
+     * be Option instances or Arrays containing key and value.
+     *
+     * @type {HTMLOptionsCollection}
      */
     get options() {
         return this.elem.prop('options');
     }
 
-    /**
-     * Set selection options.
-     *
-     * @param {Iterable} value - Iterable containing new options. An option
-     * either can be Option instances or an Array containing key and value.
-     */
     set options(value) {
         this.clear();
         let selection = this.elem[0];
@@ -156,19 +144,14 @@ export class FormRemoteSelect extends FormSelect {
 export class FormCheckbox extends changeListener(FormInput) {
 
     /**
-     * Checkbox checked.
+     * Flag whether checkbox is checked.
      *
-     * @returns {boolean} Flag whether checkbox is checked.
+     * @type {boolean}
      */
     get checked() {
         return this.elem.is(':checked');
     }
 
-    /**
-     * Set checkbox checked.
-     *
-     * @param {boolean} value - Flag whether checkbox is checked.
-     */
     set checked(value) {
         return this.elem.prop('checked', value);
     }
@@ -215,17 +198,12 @@ export class FormField extends Visibility {
     /**
      * Flag indicating field has an error.
      *
-     * @returns {boolean} `true` if field has an error.
+     * @type {boolean}
      */
     get has_error() {
         return this.elem.hasClass('has-error');
     }
 
-    /**
-     * Set field error.
-     *
-     * @param {boolean} value - `true` if field has an error.
-     */
     set has_error(value) {
         let elem = this.elem;
         if (value) {

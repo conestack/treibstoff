@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'treibstoff'
-copyright = '2021, Treibstoff Contributors'
+copyright = '2021-2022, Treibstoff Contributors'
 author = 'Treibstoff Contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.2.0'
 
 
 # -- General configuration ---------------------------------------------------

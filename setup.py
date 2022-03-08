@@ -46,6 +46,7 @@ setup(
     extras_require=dict(
         docs=[
             'Jinja2<3.0',
+            'markupsafe<2.1.0',
             'Sphinx',
             'sphinx-conestack-theme',
             'sphinx_js'
