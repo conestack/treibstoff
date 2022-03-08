@@ -10,7 +10,7 @@ for events on the class directly.
 
 .. code-block:: js
 
-    import {Events} from 'events'
+    import {Events} from 'events';
 
     /**
       * Custom event dispatcher.
@@ -48,3 +48,15 @@ for events on the class directly.
 
     // Unbind external subscriber function.
     dsp.off('on_my_event', my_subscriber);
+
+
+API
+---
+
+.. js:autoclass:: Events
+    :members:
+        on,
+        off,
+        trigger,
+        suppress_events,
+        bind_from_options

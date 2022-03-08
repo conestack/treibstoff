@@ -1,9 +1,11 @@
 TODO
 ====
 
-[ ] - Convention docs.
-    - Opts passed to widget constructors.
-    - Lifecycle -> constructor -> compile -> update -> destroy.
+[ ] - Conventions:
+    - ``opts`` passed to widget constructors.
+    - Widget lifecycle -> constructor -> compile -> update -> destroy.
+    - Event naming; always ``on_*``.
+    - Event callback naming; handler, listener or subscriber?
 
 [ ] - ``widget.Widget``
     - add_widget
