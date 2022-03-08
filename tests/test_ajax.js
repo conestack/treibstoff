@@ -2,6 +2,7 @@ import $ from 'jquery';
 import {
     Ajax,
     AjaxAction,
+    AjaxDestroy,
     AjaxDispatcher,
     AjaxEvent,
     AjaxForm,
@@ -1578,6 +1579,30 @@ QUnit.module('treibstoff.ajax', hooks => {
     });
 
     ///////////////////////////////////////////////////////////////////////////
+    // Test AjaxDestroy
+    ///////////////////////////////////////////////////////////////////////////
+
+    QUnit.test('Test AjaxDestroy', assert => {
+        class Inst {
+            constructor() {
+                this.destroyed = false;
+            }
+            destroy() {
+                this.destroyed = true;
+            }
+        }
+
+        let inst = new Inst();
+        let elem = $('<span />').appendTo(container);
+        elem[0]._ajax_attached = [inst];
+
+        assert.deepEqual(inst.destroyed, false);
+        let parser = new AjaxDestroy();
+        parser.walk(container[0]);
+        assert.deepEqual(inst.destroyed, true);
+    });
+
+    ///////////////////////////////////////////////////////////////////////////
     // Test AjaxHandle
     ///////////////////////////////////////////////////////////////////////////
 
@@ -1643,6 +1668,42 @@ QUnit.module('treibstoff.ajax', hooks => {
             mode: 'invalid'
         });
         assert.deepEqual(bind_context, null);
+
+        // instance destruction
+        class Inst {
+            constructor() {
+                this.destroyed = false;
+            }
+            destroy() {
+                this.destroyed = true;
+            }
+        }
+
+        container = $('<div class="container" />').appendTo(body);
+        let container_inst = new Inst();
+        container[0]._ajax_attached = [container_inst];
+
+        let child = $('<div class="child" />').appendTo(container),
+            child_inst = new Inst();
+        child[0]._ajax_attached = [child_inst];
+
+        assert.deepEqual(child_inst.destroyed, false);
+        handle.update({
+            payload: '<div>New Child</div>',
+            selector: '.container',
+            mode: 'inner'
+        });
+        assert.deepEqual(container_inst.destroyed, false);
+        assert.deepEqual(child_inst.destroyed, true);
+
+        handle.update({
+            payload: '<div>New Container</div>',
+            selector: '.container',
+            mode: 'replace'
+        });
+        assert.deepEqual(container_inst.destroyed, true);
+
+        container.remove();
     });
 
     QUnit.test('Test AjaxHandle.next', assert => {
@@ -1859,6 +1920,30 @@ QUnit.module('treibstoff.ajax', hooks => {
             count++;
         }
         assert.deepEqual(count, 2);
+    });
+
+    QUnit.test('Test Ajax.attach', assert => {
+        let ajax = new Ajax();
+
+        let inst = new Object();
+        let elem = document.createElement('span');
+
+        assert.deepEqual(elem._ajax_attached, undefined);
+        ajax.attach(inst, elem);
+        assert.deepEqual(elem._ajax_attached, [inst]);
+
+        elem = $('<span />');
+        assert.deepEqual(elem[0]._ajax_attached, undefined);
+        ajax.attach(inst, elem);
+        assert.deepEqual(elem[0]._ajax_attached, [inst]);
+
+        container.append('<span /><span />');
+        elem = $('span', container);
+        assert.deepEqual(elem.length, 2);
+
+        assert.throws(function() {
+            ajax.attach(inst, elem);
+        });
     });
 
     QUnit.test('Test Ajax.parseurl', assert => {
