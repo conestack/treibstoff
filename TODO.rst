@@ -4,8 +4,13 @@ TODO
 [ ] - Conventions:
     - ``opts`` passed to widget constructors.
     - Widget lifecycle -> constructor -> compile -> update -> destroy.
-    - Event naming; always ``on_*``.
-    - Event callback naming; handler, listener or subscriber?
+    - Naming - Events always ``on_*``.
+    - Event handling -> ``on_*`` and ``on_dom_*``
+    - Renaming - unload -> destroy
+    - Event callback naming -> handler, listener or subscriber?
+    - Strict distinction between DOM event and TS event in docs
+    - Do we want ``ts`` as namespace shortcut? Possible confusion with typescript.
+      Alternative?
 
 [ ] - ``widget.Widget``
     - add_widget

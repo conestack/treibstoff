@@ -1,8 +1,15 @@
 import $ from 'jquery';
 import {Events} from './events.js';
 
+/**
+ * Keystate event dispatcher.
+ */
 export class KeyState extends Events {
 
+    /**
+     * @param {function} filter_keyevent - callback function to filter out
+     * key events.
+     */
     constructor(filter_keyevent) {
         super();
         this.filter_keyevent = filter_keyevent;
@@ -16,16 +23,32 @@ export class KeyState extends Events {
         this.bind();
     }
 
+    /**
+     * Unloads this event dispatcher from window `keydown` and `keyup` DOM
+     * events.
+     *
+     * XXX: Rename to ``destroy``
+     */
     unload() {
-        $(window).off('keydown', this._keydown_handle);
-        $(window).off('keyup', this._keyup_handle);
+        $(window)
+            .off('keydown', this._on_dom_keydown)
+            .off('keyup', this._on_dom_keyup);
     }
 
+    /**
+     * Bind this event dispatcher to window `keydown` and `keyup` DOM
+     * events.
+     *
+     * This function gets called from the constructor.
+     *
+     * XXX: Probably no need to expose as API.
+     */
     bind() {
-        this._keydown_handle = this._keydown.bind(this);
-        this._keyup_handle = this._keyup.bind(this);
-        $(window).on('keydown', this._keydown_handle);
-        $(window).on('keyup', this._keyup_handle);
+        this._on_dom_keydown = this._on_dom_keydown.bind(this);
+        this._on_dom_keyup = this._on_dom_keyup.bind(this);
+        $(window)
+            .on('keydown', this._on_dom_keydown)
+            .on('keyup', this._on_dom_keyup);
     }
 
     _add_key(name, key_code) {
@@ -60,14 +83,14 @@ export class KeyState extends Events {
         return this.filter_keyevent && this.filter_keyevent(evt);
     }
 
-    _keydown(evt) {
+    _on_dom_keydown(evt) {
         this._set_keys(evt);
         if (!this._filter_event(evt)) {
             this.trigger('keydown', evt);
         }
     }
 
-    _keyup(evt) {
+    _on_dom_keyup(evt) {
         this._set_keys(evt);
         if (!this._filter_event(evt)) {
             this.trigger('keyup', evt);
