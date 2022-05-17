@@ -21,9 +21,6 @@ TODO
 
 [ ] - Fix collapsible widget.
 
-[ ] - Listener consolidation. Inherit from Events, consume DOM event but
-      delegate as ts events.
-
 [ ] - ``widget.Widget``, ``widget.HTMLWidget``, ``widget.SVGContext`` ->
       constructor consolidation -> use ``opts``.
 

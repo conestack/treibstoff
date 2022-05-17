@@ -5,6 +5,7 @@ process.env.CHROME_BIN = '/usr/bin/chromium';
 module.exports = function(config) {
     config.set({
         basePath: 'karma',
+        singleRun: true,
         frameworks: [
             'qunit'
         ],
@@ -41,7 +42,7 @@ module.exports = function(config) {
         moduleResolverPreprocessor: {
             addExtension: 'js',
             customResolver: null,
-            ecmaVersion: 6,
+            ecmaVersion: 2022,
             aliases: {
                 jquery: '../node_modules/jquery/src/jquery.js'
             }
