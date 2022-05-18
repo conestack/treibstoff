@@ -17,15 +17,45 @@ export class Widget extends Motion {
     /**
      * Create Widget instance.
      *
+     * The widget class provides a way to build relations for entities.
+     * Widgets can have other widgets as children.
+     *
      * @param {Object} opts - Widget options.
      * @param {Object} opts.parent - Parent object
      */
     constructor(opts) {
         super();
+        this.children = [];
         new Property(this, 'parent');
         this.parent = opts.parent || null;
     }
 
+    /**
+     * Add another widget as a child. The child widget will have this widget as
+     * parent.
+     * @param {Object} widget The widget which to add as child.
+     */
+    add_widget(widget){
+        widget.parent = this;
+        this.children.push(widget)
+    }
+
+    /**
+     * Remove a child widget. That widget will have its parent set to null.
+     * @param {Object} widget The widget which to remove as child.
+     */
+    remove_widget(widget){
+        widget.parent = null;
+        this.children.splice(
+            this.children.indexOf(widget), 1
+        )
+    }
+
+    /**
+     * Get the first object by class going up in the hierarchy.
+     * @param {Class} cls
+     * @returns object if found, else null
+     */
     acquire(cls) {
         let parent = this.parent;
         while(parent) {
@@ -42,6 +72,11 @@ export class HTMLWidget extends Widget {
 
     /**
      * Create HTMLWidget instance.
+     *
+     * The HTMLWidget class wraps a DOM element.
+     *
+     * It comes with a few predefined properties to allow for
+     * easy access of base values of the wrapped DOM element.
      *
      * @param {Object} opts - HTMLWidget options.
      * @param {Object} opts.parent - Parent object
@@ -66,6 +101,9 @@ export class SVGContext extends HTMLWidget {
     /**
      * Create SVGContext instance.
      *
+     * The SVGContext class wraps an svg element and provides functions to
+     * create and modify attributes and sub-elements.
+     *
      * @param {Object} opts - SVGContext options.
      * @param {Object} opts.parent - Parent object
      * @param {String} opts.name - Name of the svg element
@@ -82,10 +120,22 @@ export class SVGContext extends HTMLWidget {
         };
     }
 
+    /**
+     * Set the attributes of an SVG element.
+     * @param {$} el
+     * @param {Object} opts
+     */
     svg_attrs(el, opts) {
         set_svg_attrs(el, opts);
     }
 
+    /**
+     * Create a new SVG element.
+     * @param {String} name
+     * @param {Object} opts
+     * @param {$} container
+     * @returns SVG element
+     */
     svg_elem(name, opts, container) {
         return create_svg_elem(name, opts, container);
     }

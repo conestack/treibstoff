@@ -33,3 +33,4 @@ Contributors
 ------------
 
 - Robert Niederreiter (Author)
+- Leopold Auersperg-Castell
