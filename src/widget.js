@@ -21,12 +21,10 @@ export class Widget extends Motion {
      * @param {Object} opts.parent - Parent object
      * @param {$} opts.parent - jQuery wrapped DOM element.
      */
-
     constructor(opts) {
         super();
-        let parent = opts.parent || null;
         new Property(this, 'parent');
-        this.parent = parent ? parent : null;
+        this.parent = opts.parent || null;
     }
 
     acquire(cls) {
@@ -50,7 +48,6 @@ export class HTMLWidget extends Widget {
      * @param {Object} opts.parent - Parent object
      * @param {$} opts.elem - jQuery wrapped DOM element.
      */
-
     constructor(opts) {
         super(opts);
         this.elem = opts.elem;
@@ -75,7 +72,6 @@ export class SVGContext extends HTMLWidget {
      * @param {String} opts.name - Name of the svg element
      * @param {$} opts.elem - jQuery wrapped DOM element.
      */
-
     constructor(opts) {
         let container = opts.parent.elem.get(0),
             elem = create_svg_elem('svg', {'class': opts.name}, container);

@@ -14,11 +14,7 @@ QUnit.module('treibstoff.widget', hooks => {
                 res = val;
             }
         }
-
-        let opts = {
-            parent: 'parent'
-        };
-        let w = new TestWidget(opts);
+        let w = new TestWidget({parent: 'parent'});
         // Parent set and default subscriber called
         assert.strictEqual(w.parent, 'parent');
 
@@ -45,21 +41,10 @@ QUnit.module('treibstoff.widget', hooks => {
             }
         }
 
-        opts = {
-            parent: null
-        }
+        let root = new Root({parent: null});
 
-        let root = new Root(opts);
-
-        opts = {
-            parent: root
-        }
-        let w1 = new W1(opts);
-
-        opts = {
-            parent: w1
-        }
-        let w2 = new W2(opts);
+        let w1 = new W1({parent: root});
+        let w2 = new W2({parent: w1});
 
         // Root has no parent
         assert.strictEqual(root.parent, null);
@@ -84,11 +69,7 @@ QUnit.module('treibstoff.widget', hooks => {
         let parent = {};
         let elem = $('<div style="position: absolute;" />');
         $('body').append(elem);
-        let opts = {
-            parent: parent,
-            elem: elem
-        }
-        let w = new HTMLWidget(opts);
+        let w = new HTMLWidget({parent: parent, elem: elem});
         w.x = 1;
         w.y = 2;
         w.width = 3;
@@ -111,12 +92,11 @@ QUnit.module('treibstoff.widget', hooks => {
         let parent = {
             elem: $(`<div />`)
         };
-        let opts = {
+        let ctx = new SVGContext({
             parent: parent,
             name: 'ctx_name',
             elem: $(`<div />`)
-        }
-        let ctx = new SVGContext(opts);
+        });
         // SVG Namespace set
         assert.strictEqual(ctx.svg_ns, svg_ns);
         // Parent set
