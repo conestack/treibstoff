@@ -34,8 +34,10 @@ export class Websocket extends Events {
      *
      * @param {string} path - The path to connect to.
      */
-    constructor(path) {
+    constructor(path, factory=WebSocket) {
         super();
+        // factory injection for tests
+        this._ws_factory = factory;
         this.path = path;
         this.on_open = this.on_open.bind(this);
         this.on_close = this.on_close.bind(this);
@@ -78,7 +80,7 @@ export class Websocket extends Events {
         if (this.sock !== null) {
             this.sock.close();
         }
-        let sock = this.sock = new WebSocket(this.uri);
+        let sock = this.sock = new this._ws_factory(this.uri);
         sock.onopen = function() {
             this.trigger('on_open');
         }.bind(this);
