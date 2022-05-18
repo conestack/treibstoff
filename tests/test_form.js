@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import {
+    Form,
     FormCheckbox,
     FormField,
     FormInput,
@@ -7,6 +8,7 @@ import {
     FormSelect,
     lookup_form_elem
 } from '../src/form.js';
+import {Visibility} from '../src/widget.js';
 
 QUnit.module('treibstoff.form', hooks => {
     let container;
@@ -283,5 +285,51 @@ QUnit.module('treibstoff.form', hooks => {
         assert.false(field.has_error);
         assert.deepEqual(field.input.value, 'new value');
         assert.deepEqual($('.help-block', field_elem).length, 0);
+
+        assert.ok(field instanceof Visibility);
+        assert.ok(field.visible);
+        assert.false(field.hidden);
+
+        field.visible = false;
+        assert.false(field.visible);
+        assert.ok(field.hidden);
+
+        field.hidden = false;
+        assert.ok(field.visible);
+        assert.false(field.hidden);
+    });
+
+    QUnit.test('Test Form', assert => {
+        container.append(`
+            <form id="form-formname">
+                <div id="field-formname-field-1">
+                    <input id="input-formname-field-1" type="text" value="1" />
+                </div>
+                <div id="field-formname-field-2">
+                    <input id="input-formname-field-2" type="text" value="2" />
+                </div>
+            </form>
+        `);
+        Form.initialize(container, Form, 'formname');
+        let form = Form.instance('formname'),
+            field_1 = new FormField({
+                form: form,
+                name: 'field-1',
+                input: FormInput
+            }),
+            field_2 = new FormField({
+                form: form,
+                name: 'field-2',
+                input: FormInput
+            });
+        assert.deepEqual(field_1.input.value, '1');
+        assert.deepEqual(field_2.input.value, '2');
+
+        assert.ok(field_1.visible);
+        assert.ok(field_2.visible);
+
+        form.set_field_visibility([field_1, field_2], false);
+        assert.false(field_1.visible);
+        assert.false(field_2.visible);
     });
 });
