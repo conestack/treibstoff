@@ -30,6 +30,7 @@ QUnit.module('Test treibstoff', hooks => {
             'FormInput',
             'FormRemoteSelect',
             'FormSelect',
+            'lookup_form_elem',
             'KeyState',
             'ChangeListener',
             'ClickListener',

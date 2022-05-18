@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import {Events} from '../src/events.js';
 import {changeListener} from './listener.js';
 import {
     get_elem,
@@ -7,9 +8,29 @@ import {
 import {Visibility} from './widget.js';
 
 /**
+ * Lookup form related element.
+ *
+ * @param {Object} opts - options.
+ * @param {Form} opts.form - Form instance the element belongs to.
+ * @param {string} opts.name - Name.
+ * @param {$} opts.elem - jQuery wrapped element. If omitted, search for DOM
+ * element by `${prefix}-${form.name}-${name}` selector.
+ * @param {string} prefix - Selector prefix.
+ */
+export function lookup_form_elem(opts, prefix) {
+    if (opts.elem) {
+        return opts.elem;
+    }
+    let form = opts.form,
+        name = opts.name,
+        elem = get_elem(`${prefix}-${form.name}-${name}`, form.elem, true);
+    return elem;
+}
+
+/**
  * Form input object.
  */
-export class FormInput {
+export class FormInput extends Events {
 
     /**
      * Create form input instance.
@@ -21,11 +42,10 @@ export class FormInput {
      * for DOM element by `#input-${form.name}-${name}` selector.
      */
     constructor(opts) {
-        this.form = opts.form,
+        super();
+        this.form = opts.form;
         this.name = opts.name;
-        this.elem = opts.elem || get_elem(
-            `#input-${this.form.name}-${this.name}`, this.form.elem, true
-        );
+        this.elem = lookup_form_elem(opts, '#input');
     }
 
     /**
@@ -62,6 +82,20 @@ export class FormInput {
  * @mixes ClickListenerMixin
  */
 export class FormSelect extends changeListener(FormInput) {
+
+    /**
+     * Create form select instance.
+     *
+     * @param {Object} opts - FormSelect options.
+     * @param {Form} opts.form - Form instance this selection belongs to.
+     * @param {string} opts.name - Selection name.
+     * @param {$} opts.elem - jQuery wrapped selection element. If omitted,
+     * search for DOM element by `#input-${form.name}-${name}` selector.
+     */
+    constructor(opts) {
+        opts.elem = lookup_form_elem(opts, '#input');
+        super(opts);
+    }
 
     /**
      * Selection options.
@@ -144,6 +178,20 @@ export class FormRemoteSelect extends FormSelect {
 export class FormCheckbox extends changeListener(FormInput) {
 
     /**
+     * Create form checkbox instance.
+     *
+     * @param {Object} opts - FormCheckbox options.
+     * @param {Form} opts.form - Form instance this checkbox belongs to.
+     * @param {string} opts.name - Checkbox name.
+     * @param {$} opts.elem - jQuery wrapped checkbox element. If omitted,
+     * search for DOM element by `#input-${form.name}-${name}` selector.
+     */
+    constructor(opts) {
+        opts.elem = lookup_form_elem(opts, '#input');
+        super(opts);
+    }
+
+    /**
      * Flag whether checkbox is checked.
      *
      * @type {boolean}
@@ -177,19 +225,14 @@ export class FormField extends Visibility {
      * search for DOM element by `#field-${form.name}-${name}` selector.
      */
     constructor(opts) {
-        let form = opts.form,
-            name = opts.name,
-            input = opts.input;
-        opts.elem = opts.elem || get_elem(
-            `#field-${form.name}-${name}`, form.elem, true
-        );
+        opts.elem = lookup_form_elem(opts, '#field');
         super(opts);
-        this.form = form;
-        this.name = name;
+        this.form = opts.form;
+        this.name = opts.name;
         if (input && !(input instanceof FormInput)) {
             input = new input({
-                form: form,
-                name: name
+                form: this.form,
+                name: this.name
             });
         }
         this.input = input;
