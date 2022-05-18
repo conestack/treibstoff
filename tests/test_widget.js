@@ -44,15 +44,15 @@ QUnit.module('treibstoff.widget', hooks => {
         let root = new Root({parent: null});
 
         let w1 = new W1({parent: root});
-        let w2 = new W2({parent: w1});
+        let w2 = new W2({parent: null});
 
         // Root has no parent
         assert.strictEqual(root.parent, null);
         // Widget 1 has root as parent
         assert.deepEqual(w1.parent, root);
         //Widget 2 has widget 1 as parent
+        w1.add_widget(w2);
         assert.deepEqual(w2.parent, w1);
-
         // Acquire on widget with no parent returns null
         assert.strictEqual(root.acquire(TestWidget), null);
         // Acquire does not consider self
@@ -63,6 +63,13 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.deepEqual(w2.acquire(Root), root);
         // Acquire w1 from base class works
         assert.deepEqual(w2.acquire(TestWidget), w1);
+        // Put w2 into children of w1
+        assert.deepEqual(w1.children, [w2])
+        w1.remove_widget(w2);
+        // Unset parent of w2 widget
+        assert.deepEqual(w2.parent, null);
+        // Remove w2 from children of w1
+        assert.deepEqual(w1.children, [])
     });
 
     QUnit.test('Test HTMLWidget', assert => {
