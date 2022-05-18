@@ -6,58 +6,45 @@ QUnit.module('treibstoff.events', hooks => {
     QUnit.test('Test Events', assert => {
         let res;
         let ob = new Events();
-        assert.deepEqual(Object.keys(ob._subscribers), [], 'No subscribers yet');
+        // No subscribers yet
+        assert.deepEqual(Object.keys(ob._subscribers), []);
 
         ob.default = function(opts) {
             res = opts;
         }
         ob.trigger('default', 'opts');
-        assert.strictEqual(res, 'opts', 'Default subscriber called');
+        // Default subscriber called
+        assert.strictEqual(res, 'opts');
 
         let subscriber = function(opts) {
             res = 'subscriber';
         }
         ob.on('evt', subscriber);
         ob.trigger('evt');
-        assert.strictEqual(res, 'subscriber', 'Subscriber for evt called');
+        // Subscriber for evt called
+        assert.strictEqual(res, 'subscriber');
 
-        assert.deepEqual(
-            Object.keys(ob._subscribers),
-            ['evt'],
-            'Object contains one subscriber'
-        );
-        assert.strictEqual(
-            ob._contains_subscriber('evt', subscriber),
-            true,
-            'Object contains specific subscriber for evt'
-        );
+        // Object contains one subscriber
+        assert.deepEqual(Object.keys(ob._subscribers), ['evt']);
+        // Object contains specific subscriber for evt
+        assert.strictEqual(ob._contains_subscriber('evt', subscriber), true);
 
-        let other_subscriber = function(opts) {
-        }
+        let other_subscriber = function(opts) {}
+        // Other subscriber not registered for evt on object
         assert.strictEqual(
             ob._contains_subscriber('evt', other_subscriber),
-            false,
-            'Other subscriber not registered for evt on object'
+            false
         );
 
         ob.on('evt', other_subscriber);
-        assert.strictEqual(
-            ob._subscribers.evt.length,
-            2,
-            'Object contains two subscribers for the same event'
-        );
+        // Object contains two subscribers for the same event
+        assert.strictEqual(ob._subscribers.evt.length, 2);
         ob.off('evt', other_subscriber);
-        assert.strictEqual(
-            ob._subscribers.evt.length,
-            1,
-            'Dedicated subscriber for evt unregistered'
-        );
+        // Dedicated subscriber for evt unregistered
+        assert.strictEqual(ob._subscribers.evt.length, 1);
         ob.off('evt');
-        assert.strictEqual(
-            ob._subscribers.evt,
-            undefined,
-            'All subscribers for evt unregistered'
-        );
+        // All subscribers for evt unregistered
+        assert.strictEqual(ob._subscribers.evt, undefined);
 
         class Klass extends Events {
             constructor() {
@@ -79,13 +66,16 @@ QUnit.module('treibstoff.events', hooks => {
         }
         ob = new Klass();
         ob.do_suppressed();
-        assert.strictEqual(ob.flag, true, 'Flag was set properly');
-        assert.strictEqual(ob.on_flag_called, false, 'Event suppressed');
+        // Flag was set properly
+        assert.strictEqual(ob.flag, true);
+        // Event suppressed
+        assert.strictEqual(ob.on_flag_called, false);
 
         ob = new Klass();
         ob.do_unsuppressed();
-        assert.strictEqual(ob.flag, true, 'Flag was set properly');
-        assert.strictEqual(ob.on_flag_called, true, 'Event triggered');
+        // Flag was set properly
+        assert.strictEqual(ob.flag, true);
+        // Event triggered
+        assert.strictEqual(ob.on_flag_called, true);
     });
-
 });
