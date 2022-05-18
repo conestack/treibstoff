@@ -1,12 +1,14 @@
 import $ from 'jquery';
 import {
     FormInput,
+    FormRemoteSelect,
     FormSelect,
     lookup_form_elem
 } from '../src/form.js';
 
 QUnit.module('treibstoff.form', hooks => {
     let container;
+    let ajax_orgin = $.ajax;
 
     hooks.beforeEach(assert => {
         container = $('<div></div>');
@@ -15,6 +17,8 @@ QUnit.module('treibstoff.form', hooks => {
 
     hooks.afterEach(() => {
         container.remove();
+        // Reset $.ajax patch if any
+        $.ajax = ajax_orgin;
     });
 
     QUnit.test('Test lookup_form_elem', assert => {
@@ -139,5 +143,32 @@ QUnit.module('treibstoff.form', hooks => {
 
         selection.clear();
         assert.deepEqual(selection.options.length, 0);
+    });
+
+    QUnit.test('Test FormRemoteSelect', assert => {
+        $.ajax = function(opts) {
+            assert.step(JSON.stringify(opts));
+            opts.success([['1', 'Option 1'], ['2', 'Option 2']], '200', {});
+        }
+        let elem = $('<select />');
+        let selection = new FormRemoteSelect({
+            elem: elem,
+            vocab: 'json_vocab'
+        });
+        selection.fetch({param: 'value'});
+        let options = [];
+        for (let opt of selection.options) {
+            options.push([opt.value, opt.text]);
+        }
+        assert.deepEqual(options, [['1', 'Option 1'], ['2', 'Option 2']]);
+        assert.verifySteps([
+            '{' +
+                '"url":"json_vocab",' +
+                '"dataType":"json",' +
+                '"data":{"param":"value"},' +
+                '"method":"GET",' +
+                '"cache":false' +
+            '}'
+        ]);
     });
 });

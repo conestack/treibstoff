@@ -5,7 +5,6 @@ TODO
     - ``opts`` passed to widget constructors.
     - Widget lifecycle -> constructor -> compile -> update -> destroy.
     - Naming - Events always ``on_*``.
-    - Event handling -> ``on_*`` and ``on_dom_*``
     - Renaming - unload -> destroy
     - Event callback naming -> handler, listener or subscriber?
     - Strict distinction between DOM event and TS event in docs
@@ -20,9 +19,6 @@ TODO
 [ ] - Button widget in form?
 
 [ ] - Fix collapsible widget.
-
-[ ] - ``widget.Widget``, ``widget.HTMLWidget``, ``widget.SVGContext`` ->
-      constructor consolidation -> use ``opts``.
 
 [ ] - Either include jquery and bootstrap dist here or create dedicated
       delivery package with webresource declarations.

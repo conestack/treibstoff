@@ -57,7 +57,7 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.strictEqual(root.acquire(TestWidget), null);
         // Acquire does not consider self
         assert.strictEqual(w2.acquire(W2), null);
-        // Acquire w1
+        // Acquire w1 works
         assert.deepEqual(w2.acquire(W1), w1);
         // Acquire root works
         assert.deepEqual(w2.acquire(Root), root);
