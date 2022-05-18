@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import {
+    FormCheckbox,
     FormInput,
     FormRemoteSelect,
     FormSelect,
@@ -170,5 +171,46 @@ QUnit.module('treibstoff.form', hooks => {
                 '"cache":false' +
             '}'
         ]);
+    });
+
+    QUnit.test('Test FormCheckbox', assert => {
+        let elem = $('<input type="checkbox" checked="checked" />');
+        let cb = new FormCheckbox({elem: elem});
+        assert.ok(cb.checked);
+        assert.ok(cb.elem.is(':checked'));
+
+        cb.checked = false;
+        assert.false(cb.checked);
+        assert.false(cb.elem.is(':checked'));
+
+        cb.on('on_change', function(evt) {
+            assert.step(this.checked ? 'checked' : 'unchecked');
+        }.bind(cb));
+        cb.elem.trigger('change');
+        assert.verifySteps(['unchecked']);
+
+        container.append(`
+            <input type="checkbox" id="input-formname-fieldname" />
+        `);
+        cb = new FormCheckbox({
+            form: {name: 'formname'},
+            name: 'fieldname'
+        });
+        assert.deepEqual(cb.elem.attr('id'), 'input-formname-fieldname');
+        assert.deepEqual(cb.form, {name: 'formname'});
+        assert.deepEqual(cb.name, 'fieldname');
+
+        assert.false(cb.checked);
+        assert.false(cb.elem.is(':checked'));
+
+        cb.checked = true;
+        assert.ok(cb.checked);
+        assert.ok(cb.elem.is(':checked'));
+
+        cb.on('on_change', function(evt) {
+            assert.step(this.checked ? 'checked' : 'unchecked');
+        }.bind(cb));
+        cb.elem.trigger('change');
+        assert.verifySteps(['checked']);
     });
 });
