@@ -230,6 +230,7 @@ export class FormField extends Visibility {
         super(opts);
         this.form = opts.form;
         this.name = opts.name;
+        let input = opts.input;
         if (input && !(input instanceof FormInput)) {
             input = new input({
                 form: this.form,

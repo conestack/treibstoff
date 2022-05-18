@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import {
     FormCheckbox,
+    FormField,
     FormInput,
     FormRemoteSelect,
     FormSelect,
@@ -212,5 +213,75 @@ QUnit.module('treibstoff.form', hooks => {
         }.bind(cb));
         cb.elem.trigger('change');
         assert.verifySteps(['checked']);
+    });
+
+    QUnit.test('Test FormField', assert => {
+        let elem = $(`
+            <div id="field-formname-fieldname">
+              <input id="input-formname-fieldname" type="text" />
+            </div>
+        `);
+        container.append(elem);
+
+        let field = new FormField({
+            elem: elem,
+            form: {
+                elem: container,
+                name: 'formname'
+            },
+            name: 'fieldname',
+            input: FormInput
+        });
+        assert.ok(field.elem === elem);
+
+        assert.deepEqual(field.form.name, 'formname');
+        assert.ok(field.form.elem === container);
+
+        assert.deepEqual(field.name, 'fieldname');
+        assert.ok(field.input instanceof FormInput);
+        assert.deepEqual(
+            field.input.elem.attr('id'),
+            'input-formname-fieldname'
+        );
+
+        assert.false(field.has_error);
+        field.has_error = true;
+        assert.deepEqual(field.elem.attr('class'), 'has-error');
+        field.has_error = false;
+        assert.deepEqual(field.elem.attr('class'), '');
+
+        field.input.value = 'value'
+        assert.deepEqual(field.input.elem.val(), 'value');
+        assert.deepEqual(field.input.value, 'value');
+
+        field.has_error = true;
+        field.reset('new value');
+        assert.deepEqual(field.input.elem.val(), 'new value');
+        assert.deepEqual(field.input.value, 'new value');
+        assert.false(field.has_error);
+
+        let field_elem = $(`
+            <div class="has-error" id="field-formname-fieldname">
+              <input id="input-formname-fieldname" type="text" value="value" />
+              <span class="help-block">Error Message</span>
+            </div>
+        `);
+        let input_elem = $('input', field_elem);
+        field = new FormField({
+            elem: field_elem,
+            input: new FormInput({elem: input_elem})
+        });
+        assert.ok(field.elem === field_elem);
+
+        assert.ok(field.input.elem === input_elem);
+        assert.deepEqual(field.input.value, 'value');
+
+        assert.ok(field.has_error);
+        assert.deepEqual($('.help-block', field_elem).length, 1);
+
+        field.reset('new value');
+        assert.false(field.has_error);
+        assert.deepEqual(field.input.value, 'new value');
+        assert.deepEqual($('.help-block', field_elem).length, 0);
     });
 });
