@@ -19,7 +19,6 @@ export class Widget extends Motion {
      *
      * @param {Object} opts - Widget options.
      * @param {Object} opts.parent - Parent object
-     * @param {$} opts.parent - jQuery wrapped DOM element.
      */
     constructor(opts) {
         super();
@@ -42,7 +41,7 @@ export class Widget extends Motion {
 export class HTMLWidget extends Widget {
 
     /**
-     * Create Widget instance.
+     * Create HTMLWidget instance.
      *
      * @param {Object} opts - HTMLWidget options.
      * @param {Object} opts.parent - Parent object
@@ -65,9 +64,9 @@ export class HTMLWidget extends Widget {
 export class SVGContext extends HTMLWidget {
 
     /**
-     * Create Widget instance.
+     * Create SVGContext instance.
      *
-     * @param {Object} opts - HTMLWidget options.
+     * @param {Object} opts - SVGContext options.
      * @param {Object} opts.parent - Parent object
      * @param {String} opts.name - Name of the svg element
      * @param {$} opts.elem - jQuery wrapped DOM element.
