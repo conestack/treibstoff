@@ -14,8 +14,17 @@ import {
 
 export class Widget extends Motion {
 
-    constructor(parent) {
+    /**
+     * Create Widget instance.
+     *
+     * @param {Object} opts - Widget options.
+     * @param {Object} opts.parent - Parent object
+     * @param {$} opts.parent - jQuery wrapped DOM element.
+     */
+
+    constructor(opts) {
         super();
+        let parent = opts.parent || null;
         new Property(this, 'parent');
         this.parent = parent ? parent : null;
     }
@@ -34,9 +43,17 @@ export class Widget extends Motion {
 
 export class HTMLWidget extends Widget {
 
-    constructor(parent, elem) {
-        super(parent);
-        this.elem = elem;
+    /**
+     * Create Widget instance.
+     *
+     * @param {Object} opts - HTMLWidget options.
+     * @param {Object} opts.parent - Parent object
+     * @param {$} opts.elem - jQuery wrapped DOM element.
+     */
+
+    constructor(opts) {
+        super(opts);
+        this.elem = opts.elem;
         new CSSProperty(this, 'x', {tgt: 'left'});
         new CSSProperty(this, 'y', {tgt: 'top'});
         new CSSProperty(this, 'width');
@@ -50,10 +67,20 @@ export class HTMLWidget extends Widget {
 
 export class SVGContext extends HTMLWidget {
 
-    constructor(parent, name) {
-        let container = parent.elem.get(0),
-            elem = create_svg_elem('svg', {'class': name}, container);
-        super(parent, elem);
+    /**
+     * Create Widget instance.
+     *
+     * @param {Object} opts - HTMLWidget options.
+     * @param {Object} opts.parent - Parent object
+     * @param {String} opts.name - Name of the svg element
+     * @param {$} opts.elem - jQuery wrapped DOM element.
+     */
+
+    constructor(opts) {
+        let container = opts.parent.elem.get(0),
+            elem = create_svg_elem('svg', {'class': opts.name}, container);
+        opts.elem = elem;
+        super(opts);
         this.svg_ns = svg_ns;
         this.xyz = {
             x: 0,
