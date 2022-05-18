@@ -33,7 +33,8 @@ export class Widget extends Motion {
     /**
      * Add another widget as a child. The child widget will have this widget as
      * parent.
-     * @param {Object} widget The widget which to add as child.
+     *
+     * @param {Object} widget - The widget which to add as child.
      */
     add_widget(widget){
         widget.parent = this;
@@ -42,7 +43,8 @@ export class Widget extends Motion {
 
     /**
      * Remove a child widget. That widget will have its parent set to null.
-     * @param {Object} widget The widget which to remove as child.
+     *
+     * @param {Object} widget - The widget which to remove as child.
      */
     remove_widget(widget){
         widget.parent = null;
@@ -53,7 +55,8 @@ export class Widget extends Motion {
 
     /**
      * Get the first object by class going up in the hierarchy.
-     * @param {Class} cls
+     *
+     * @param {Class} cls - Object class to search for.
      * @returns object if found, else null
      */
     acquire(cls) {
@@ -122,6 +125,7 @@ export class SVGContext extends HTMLWidget {
 
     /**
      * Set the attributes of an SVG element.
+     *
      * @param {$} el
      * @param {Object} opts
      */
@@ -131,6 +135,7 @@ export class SVGContext extends HTMLWidget {
 
     /**
      * Create a new SVG element.
+     *
      * @param {String} name
      * @param {Object} opts
      * @param {$} container
