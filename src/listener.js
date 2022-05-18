@@ -4,7 +4,7 @@ import {Events} from '../src/events.js';
  * Create listener base or mixin class handling given DOM event.
  *
  * The created listener receives the DOM event and triggers it as treibstoff
- * event, prefixed by 'on_'.
+ * event, prefixed by ``on_``.
  *
  * Create a listener base class to inherit from::
  *
@@ -52,7 +52,7 @@ import {Events} from '../src/events.js';
  * @param {Object} event - DOM event to bind to.
  * @param {class} base - Optional base class to extend. Must extend ``Events``.
  * @returns {class} Newly created listener class.
- **/
+ */
 export function create_listener(event, base=null) {
     base = base || Events;
     return class extends base {
