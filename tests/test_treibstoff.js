@@ -35,6 +35,7 @@ QUnit.module('Test treibstoff', hooks => {
             'ClickListener',
             'changeListener',
             'clickListener',
+            'create_listener',
             'Motion',
             'Dialog',
             'Message',
