@@ -76,7 +76,6 @@ QUnit.module('treibstoff.widget', hooks => {
         w.height = 4;
         // Offset matches
         assert.deepEqual(w.offset, {"left": 1, "top": 2});
-
         // X Position Set
         assert.strictEqual(w.elem.css('left'), '1px');
         // Y Position Set
@@ -94,8 +93,7 @@ QUnit.module('treibstoff.widget', hooks => {
         };
         let ctx = new SVGContext({
             parent: parent,
-            name: 'ctx_name',
-            elem: $(`<div />`)
+            name: 'ctx_name'
         });
         // SVG Namespace set
         assert.strictEqual(ctx.svg_ns, svg_ns);

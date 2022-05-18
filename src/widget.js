@@ -69,12 +69,10 @@ export class SVGContext extends HTMLWidget {
      * @param {Object} opts - SVGContext options.
      * @param {Object} opts.parent - Parent object
      * @param {String} opts.name - Name of the svg element
-     * @param {$} opts.elem - jQuery wrapped DOM element.
      */
     constructor(opts) {
-        let container = opts.parent.elem.get(0),
-            elem = create_svg_elem('svg', {'class': opts.name}, container);
-        opts.elem = elem;
+        let container = opts.parent.elem.get(0);
+        opts.elem = create_svg_elem('svg', {'class': opts.name}, container);
         super(opts);
         this.svg_ns = svg_ns;
         this.xyz = {
