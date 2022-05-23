@@ -1,6 +1,8 @@
 import {
+    Button,
     HTMLWidget,
     SVGContext,
+    Visibility,
     Widget
 } from '../src/widget.js';
 import {svg_ns} from '../src/utils.js';
@@ -125,5 +127,58 @@ QUnit.module('treibstoff.widget', hooks => {
         // Set SVG attrs from SVGContext
         assert.strictEqual($(elem).attr('id'), 'joseph');
         ctx.reset_state();
+    });
+
+    QUnit.test('Test Visibility', assert => {
+        let visibility;
+        try {
+            visibility = new Visibility({});
+        } catch (error) {
+            assert.step(error);
+        }
+        assert.verifySteps(['No element given']);
+
+        let elem = $('<div />');
+        visibility = new Visibility({elem: elem});
+
+        visibility.visible = false;
+        assert.ok(elem.hasClass('hidden'));
+        visibility.visible = true;
+        assert.false(elem.hasClass('hidden'));
+
+        visibility.hidden = true;
+        assert.ok(elem.hasClass('hidden'));
+        visibility.hidden = false;
+        assert.false(elem.hasClass('hidden'));
+    });
+
+    QUnit.test('Test Button', assert => {
+        let elem = $('<button />');
+        class TestButton extends Button {
+            on_click() {
+                assert.step('TestButton on_click');
+            }
+        }
+        let button = new TestButton({elem: elem});
+        button.on('on_click', function(inst, evt) {
+            assert.step('External on_click');
+        });
+
+        assert.deepEqual(button.unselected_class, 'btn-default');
+        assert.deepEqual(button.selected_class, 'btn-success');
+
+        button.selected = true;
+        assert.ok(elem.hasClass(button.selected_class));
+        assert.false(elem.hasClass(button.unselected_class));
+
+        button.selected = false;
+        assert.false(elem.hasClass(button.selected_class));
+        assert.ok(elem.hasClass(button.unselected_class));
+
+        elem.trigger('click');
+        assert.verifySteps([
+            'TestButton on_click',
+            'External on_click'
+        ]);
     });
 });

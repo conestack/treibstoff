@@ -23,9 +23,7 @@ export default args => {
             globals: {
                 jquery: 'jQuery'
             },
-            interop: 'default',
-            sourcemap: true,
-            sourcemapExcludeSources: true
+            interop: 'default'
         }],
         external: [
             'jquery'
@@ -43,9 +41,7 @@ export default args => {
             globals: {
                 jquery: 'jQuery'
             },
-            interop: 'default',
-            sourcemap: true,
-            sourcemapExcludeSources: true
+            interop: 'default'
         });
     }
     return conf;

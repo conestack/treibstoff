@@ -1166,11 +1166,29 @@ var ts = (function (exports, $) {
             }
         }
     }
+    class AjaxDestroy extends Parser {
+        parse(node) {
+            let instances = node._ajax_attached;
+            if (instances !== undefined) {
+                for (let instance of instances) {
+                    if (instance.destroy !== undefined) {
+                        instance.destroy();
+                    }
+                }
+            }
+        }
+    }
     class AjaxHandle extends AjaxUtil {
         constructor(ajax) {
             super();
             this.ajax = ajax;
             this.spinner = ajax.spinner;
+        }
+        destroy(context) {
+            let parser = new AjaxDestroy();
+            context.each(function() {
+                parser.walk(this);
+            });
         }
         update(opts) {
             let payload = opts.payload,
@@ -1178,7 +1196,9 @@ var ts = (function (exports, $) {
                 mode = opts.mode,
                 context;
             if (mode === 'replace') {
-                $(selector).replaceWith(payload);
+                let old_context = $(selector);
+                this.destroy(old_context);
+                old_context.replaceWith(payload);
                 context = $(selector);
                 if (context.length) {
                     this.ajax.bind(context.parent());
@@ -1187,6 +1207,7 @@ var ts = (function (exports, $) {
                 }
             } else if (mode === 'inner') {
                 context = $(selector);
+                this.destroy(context.children());
                 context.html(payload);
                 this.ajax.bind(context);
             }
@@ -1307,6 +1328,18 @@ var ts = (function (exports, $) {
             }
             return context;
         }
+        attach(instance, elem) {
+            if (elem instanceof $) {
+                if (elem.length != 1) {
+                    throw 'Instance can be attached to exactly one DOM element';
+                }
+                elem = elem[0];
+            }
+            if (elem._ajax_attached === undefined) {
+                elem._ajax_attached = [];
+            }
+            elem._ajax_attached.push(instance);
+        }
         request(opts) {
             this._request.execute(opts);
         }
@@ -1382,57 +1415,32 @@ var ts = (function (exports, $) {
         return this;
     };
 
-    function create_listener(mixin, base=null) {
-        let listen = mixin.listen,
-            mixin_ = {};
-        Object.assign(mixin_, mixin);
-        delete mixin_.listen;
-        let listener;
-        if (base) {
-            listener = class extends base {
-                constructor(...args) {
-                    super(...args);
-                    listen.bind(this)();
+    function create_listener(event, base=null) {
+        base = base || Events;
+        return class extends base {
+            constructor(opts) {
+                if (opts === undefined) {
+                    throw 'No options given';
                 }
-            };
-        } else {
-            listener = class {
-                constructor(opts) {
-                    if (!opts.elem) {
-                        throw `No element given`;
-                    }
-                    this.elem = opts.elem;
-                    listen.bind(this)();
+                if (!opts.elem) {
+                    throw 'No element given';
                 }
-            };
-        }
-        Object.assign(listener.prototype, mixin_);
-        return listener;
+                if (base === Events) {
+                    super();
+                } else {
+                    super(opts);
+                }
+                this.elem = opts.elem;
+                this.elem.on(event, (evt) => {
+                    this.trigger(`on_${event}`, evt);
+                });
+            }
+        };
     }
-    let ClickListenerMixin = {
-        listen: function() {
-            this.on_click = this.on_click.bind(this);
-            if (this.elem) {
-                this.elem.on('click', this.on_click);
-            }
-        },
-        on_click: function(evt) {
-        }
-    };
-    let ClickListener = create_listener(ClickListenerMixin);
-    let clickListener = Base => create_listener(ClickListenerMixin, Base);
-    let ChangeListenerMixin = {
-        listen: function() {
-            this.on_change = this.on_change.bind(this);
-            if (this.elem) {
-                this.elem.on('change', this.on_change);
-            }
-        },
-        on_change: function(evt) {
-        }
-    };
-    let ChangeListener = create_listener(ChangeListenerMixin);
-    let changeListener = Base => create_listener(ChangeListenerMixin, Base);
+    let ClickListener = create_listener('click');
+    let clickListener = Base => create_listener('click', Base);
+    let ChangeListener = create_listener('change');
+    let changeListener = Base => create_listener('change', Base);
 
     class Motion extends Events {
         constructor() {
@@ -1497,10 +1505,21 @@ var ts = (function (exports, $) {
     }
 
     class Widget extends Motion {
-        constructor(parent) {
+        constructor(opts) {
             super();
+            this.children = [];
             new Property(this, 'parent');
-            this.parent = parent ? parent : null;
+            this.parent = opts.parent || null;
+        }
+        add_widget(widget){
+            widget.parent = this;
+            this.children.push(widget);
+        }
+        remove_widget(widget){
+            widget.parent = null;
+            this.children.splice(
+                this.children.indexOf(widget), 1
+            );
         }
         acquire(cls) {
             let parent = this.parent;
@@ -1514,9 +1533,9 @@ var ts = (function (exports, $) {
         }
     }
     class HTMLWidget extends Widget {
-        constructor(parent, elem) {
-            super(parent);
-            this.elem = elem;
+        constructor(opts) {
+            super(opts);
+            this.elem = opts.elem;
             new CSSProperty(this, 'x', {tgt: 'left'});
             new CSSProperty(this, 'y', {tgt: 'top'});
             new CSSProperty(this, 'width');
@@ -1527,10 +1546,10 @@ var ts = (function (exports, $) {
         }
     }
     class SVGContext extends HTMLWidget {
-        constructor(parent, name) {
-            let container = parent.elem.get(0),
-                elem = create_svg_elem('svg', {'class': name}, container);
-            super(parent, elem);
+        constructor(opts) {
+            let container = opts.parent.elem.get(0);
+            opts.elem = create_svg_elem('svg', {'class': opts.name}, container);
+            super(opts);
             this.svg_ns = svg_ns;
             this.xyz = {
                 x: 0,
@@ -1548,7 +1567,7 @@ var ts = (function (exports, $) {
     class Visibility {
         constructor(opts) {
             if (!opts.elem) {
-                throw `No element given`;
+                throw 'No element given';
             }
             this.elem = opts.elem;
         }
@@ -1605,13 +1624,21 @@ var ts = (function (exports, $) {
         }
     }
 
-    class FormInput {
+    function lookup_form_elem(opts, prefix) {
+        if (opts.elem) {
+            return opts.elem;
+        }
+        let form = opts.form,
+            name = opts.name,
+            elem = get_elem(`${prefix}-${form.name}-${name}`, form.elem, true);
+        return elem;
+    }
+    class FormInput extends Events {
         constructor(opts) {
-            this.form = opts.form,
+            super();
+            this.form = opts.form;
             this.name = opts.name;
-            this.elem = opts.elem || get_elem(
-                `#input-${this.form.name}-${this.name}`, this.form.elem, true
-            );
+            this.elem = lookup_form_elem(opts, '#input');
         }
         get value() {
             return this.elem.val();
@@ -1627,6 +1654,10 @@ var ts = (function (exports, $) {
         }
     }
     class FormSelect extends changeListener(FormInput) {
+        constructor(opts) {
+            opts.elem = lookup_form_elem(opts, '#input');
+            super(opts);
+        }
         get options() {
             return this.elem.prop('options');
         }
@@ -1651,7 +1682,7 @@ var ts = (function (exports, $) {
             this.vocab = opts.vocab;
         }
         fetch(params) {
-            bdajax.request({
+            ajax.request({
                 type: 'json',
                 url: this.vocab,
                 params: params,
@@ -1662,6 +1693,10 @@ var ts = (function (exports, $) {
         }
     }
     class FormCheckbox extends changeListener(FormInput) {
+        constructor(opts) {
+            opts.elem = lookup_form_elem(opts, '#input');
+            super(opts);
+        }
         get checked() {
             return this.elem.is(':checked');
         }
@@ -1671,19 +1706,15 @@ var ts = (function (exports, $) {
     }
     class FormField extends Visibility {
         constructor(opts) {
-            let form = opts.form,
-                name = opts.name,
-                input = opts.input;
-            opts.elem = opts.elem || get_elem(
-                `#field-${form.name}-${name}`, form.elem, true
-            );
+            opts.elem = lookup_form_elem(opts, '#field');
             super(opts);
-            this.form = form;
-            this.name = name;
+            this.form = opts.form;
+            this.name = opts.name;
+            let input = opts.input;
             if (input && !(input instanceof FormInput)) {
                 input = new input({
-                    form: form,
-                    name: name
+                    form: this.form,
+                    name: this.name
                 });
             }
             this.input = input;
@@ -1745,14 +1776,16 @@ var ts = (function (exports, $) {
             this.bind();
         }
         unload() {
-            $(window).off('keydown', this._keydown_handle);
-            $(window).off('keyup', this._keyup_handle);
+            $(window)
+                .off('keydown', this._on_dom_keydown)
+                .off('keyup', this._on_dom_keyup);
         }
         bind() {
-            this._keydown_handle = this._keydown.bind(this);
-            this._keyup_handle = this._keyup.bind(this);
-            $(window).on('keydown', this._keydown_handle);
-            $(window).on('keyup', this._keyup_handle);
+            this._on_dom_keydown = this._on_dom_keydown.bind(this);
+            this._on_dom_keyup = this._on_dom_keyup.bind(this);
+            $(window)
+                .on('keydown', this._on_dom_keydown)
+                .on('keyup', this._on_dom_keyup);
         }
         _add_key(name, key_code) {
             this._keys.push(name);
@@ -1783,13 +1816,13 @@ var ts = (function (exports, $) {
         _filter_event(evt) {
             return this.filter_keyevent && this.filter_keyevent(evt);
         }
-        _keydown(evt) {
+        _on_dom_keydown(evt) {
             this._set_keys(evt);
             if (!this._filter_event(evt)) {
                 this.trigger('keydown', evt);
             }
         }
-        _keyup(evt) {
+        _on_dom_keyup(evt) {
             this._set_keys(evt);
             if (!this._filter_event(evt)) {
                 this.trigger('keyup', evt);
@@ -1802,8 +1835,9 @@ var ts = (function (exports, $) {
     const WS_STATE_CLOSING = 2;
     const WS_STATE_CLOSED = 3;
     class Websocket extends Events {
-        constructor(path) {
+        constructor(path, factory=WebSocket) {
             super();
+            this._ws_factory = factory;
             this.path = path;
             this.on_open = this.on_open.bind(this);
             this.on_close = this.on_close.bind(this);
@@ -1828,7 +1862,7 @@ var ts = (function (exports, $) {
             if (this.sock !== null) {
                 this.sock.close();
             }
-            let sock = this.sock = new WebSocket(this.uri);
+            let sock = this.sock = new this._ws_factory(this.uri);
             sock.onopen = function() {
                 this.trigger('on_open');
             }.bind(this);
@@ -1878,6 +1912,7 @@ var ts = (function (exports, $) {
 
     exports.Ajax = Ajax;
     exports.AjaxAction = AjaxAction;
+    exports.AjaxDestroy = AjaxDestroy;
     exports.AjaxDispatcher = AjaxDispatcher;
     exports.AjaxEvent = AjaxEvent;
     exports.AjaxForm = AjaxForm;
@@ -1933,6 +1968,7 @@ var ts = (function (exports, $) {
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
     exports.create_cookie = create_cookie;
+    exports.create_listener = create_listener;
     exports.create_svg_elem = create_svg_elem;
     exports.deprecate = deprecate;
     exports.extract_number = extract_number;
@@ -1940,6 +1976,7 @@ var ts = (function (exports, $) {
     exports.get_overlay = get_overlay;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
+    exports.lookup_form_elem = lookup_form_elem;
     exports.parse_path = parse_path;
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
@@ -1970,4 +2007,3 @@ var ts = (function (exports, $) {
     return exports;
 
 })({}, jQuery);
-//# sourceMappingURL=treibstoff.bundle.js.map

@@ -159,7 +159,7 @@ export class Visibility {
      */
     constructor(opts) {
         if (!opts.elem) {
-            throw `No element given`;
+            throw 'No element given';
         }
         this.elem = opts.elem;
     }
