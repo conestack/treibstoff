@@ -1,20 +1,22 @@
 import webresource as wr
 
 
-treibstoff_js = wr.ScriptResource(
-    name='treibstoff_js',
-    depends='jquery_js',
+resources = wr.ResourceGroup(
+    name='treibstoff',
     directory='./bundle',
+    path='treibstoff'
+)
+resources.add(wr.ScriptResource(
+    name='treibstoff-js',
+    depends='jquery-js',
     resource='treibstoff.bundle.js',
     compressed='treibstoff.bundle.min.js'
-)
-
-treibstoff_css = wr.StyleResource(
-    name='treibstoff_css',
-    depends='bootstrap_css',
-    directory='./bundle',
+))
+resources.add(wr.StyleResource(
+    name='treibstoff-css',
+    depends='bootstrap-css',
     resource='treibstoff.css'
-)
+))
 
 
 ###############################################################################
