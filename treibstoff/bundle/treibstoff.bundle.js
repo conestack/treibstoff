@@ -678,16 +678,16 @@ var ts = (function (exports, $) {
         }).open();
     }
 
+    let ajax_loading_icon = '/resources/treibstoff/loading-spokes.svg';
     class AjaxSpinner {
         constructor() {
             this._request_count = 0;
-            this.icon_source = '/treibstoff-static/loading-spokes.svg';
             this.compile();
         }
         compile() {
             compile_template(this, `
           <div id="ajax-spinner" t-elem="elem">
-            <img src="${this.icon_source}" width="64" height="64" alt="" />
+            <img src="${ajax_loading_icon}" width="64" height="64" alt="" />
           </div>
         `);
         }
