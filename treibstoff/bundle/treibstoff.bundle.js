@@ -8,6 +8,19 @@ var ts = (function (exports, $) {
             `Use ${sub} instead.`
         );
     }
+    function object_by_path(path) {
+        if (!path) {
+            return null;
+        }
+        let ob = window;
+        for (const part of path.split('.')) {
+            ob = ob[part];
+            if (ob === undefined) {
+                throw `Object by path not exists: ${path}`;
+            }
+        }
+        return ob;
+    }
     function query_elem(selector, context, unique=true) {
         let elem = $(selector, context);
         if (unique && elem.length > 1) {
@@ -1977,6 +1990,7 @@ var ts = (function (exports, $) {
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
     exports.lookup_form_elem = lookup_form_elem;
+    exports.object_by_path = object_by_path;
     exports.parse_path = parse_path;
     exports.parse_query = parse_query;
     exports.parse_svg = parse_svg;
