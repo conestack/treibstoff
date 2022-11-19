@@ -3,6 +3,7 @@ import {
     create_svg_elem,
     deprecate,
     json_merge,
+    object_by_path,
     parse_path,
     parse_query,
     parse_svg,
@@ -26,6 +27,22 @@ QUnit.module('treibstoff.utils', hooks => {
         let expected = 'DEPRECATED: deprecated_func is deprecated and will ' +
                        'be removed as of 1.0. Use new_func instead.';
         assert.verifySteps([expected]);
+    });
+
+    QUnit.test('Test object_by_path', assert => {
+        window.namespace = {
+            some_object: 'Some object'
+        }
+        assert.strictEqual(object_by_path(''), null);
+        assert.deepEqual(object_by_path('namespace'), window.namespace);
+        assert.deepEqual(
+            object_by_path('namespace.some_object'),
+            window.namespace.some_object
+        );
+        assert.throws(
+            () => object_by_path('inexistent'),
+            'Object by path not exists: inexistent'
+        );
     });
 
     QUnit.test('Test uuid4', assert => {

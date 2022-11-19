@@ -16,6 +16,27 @@ export function deprecate(dep, sub, as_of) {
 }
 
 /**
+ * Lookup object by path from window.
+ *
+ * @param {string} path - Dot separated path to object.
+ * @throws If object by given path not exists, an exception gets thrown.
+ * @returns {*|null} Return object found by path or null if empty path given.
+ */
+export function object_by_path(path) {
+    if (!path) {
+        return null;
+    }
+    let ob = window;
+    for (const part of path.split('.')) {
+        ob = ob[part];
+        if (ob === undefined) {
+            throw `Object by path not exists: ${path}`;
+        }
+    }
+    return ob;
+}
+
+/**
  * Query element by selector from context.
  *
  * @param {string} selector - Lookup selector.

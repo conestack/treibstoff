@@ -69,6 +69,7 @@ QUnit.module('Test treibstoff', hooks => {
             'get_elem',
             'json_merge',
             'load_svg',
+            'object_by_path',
             'parse_path',
             'parse_query',
             'parse_svg',

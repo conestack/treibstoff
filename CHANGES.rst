@@ -4,6 +4,9 @@ Changes
 0.2.0 (unreleased)
 ------------------
 
+- Add ``object_by_path`` utility function.
+  [rnix]
+
 - Add ``Ajax.attach``.
   [rnix]
 
