@@ -1,7 +1,9 @@
 *.pyc
+/.mxmake/
 /bin/
 /build/
 /bundle/
+/constraints-mxdev.txt
 /dist/
 /docs/html/
 /include/
@@ -11,6 +13,8 @@
 /node_modules/
 /package-lock.json
 /pyvenv.cfg
+/requirements-mxdev.txt
 /share/
 /treibstoff-*.tgz
 /treibstoff.egg-info/
+/venv/
