@@ -34,7 +34,7 @@ NPM_PACKAGES?=
 
 # Packages which get installed with `--save-dev` option.
 # No default value.
-NPM_DEV_PACKAGES?=qunit https://github.com/jquery/jquery#main
+NPM_DEV_PACKAGES?=qunit karma-qunit https://github.com/jquery/jquery#main
 
 # Packages which get installed with `--save-prod` option.
 # No default value.
