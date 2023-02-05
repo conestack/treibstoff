@@ -8,7 +8,9 @@
 #: core.packages
 #: docs.jsdoc
 #: docs.sphinx
+#: js.karma
 #: js.npm
+#: js.rollup
 #: system.dependencies
 #
 # SETTINGS (ALL CHANGES MADE BELOW SETTINGS WILL BE LOST)
@@ -53,6 +55,22 @@ NPM_INSTALL_OPTS?=
 # No default value.
 SYSTEM_DEPENDENCIES?=
 
+## js.rollup
+
+# Rollup config file.
+# Default: rollup.conf.js
+ROLLUP_CONFIG?=rollup.conf.js
+
+## js.karma
+
+# Karma config file.
+# Default: karma.conf.js
+KARMA_CONFIG?=karma.conf.js
+
+# Karma additional command line options.
+# Default: --single-run
+KARMA_OPTIONS?=--single-run
+
 ## core.mxenv
 
 # Python interpreter to use.
@@ -63,8 +81,8 @@ PYTHON_BIN?=python3
 # Default: 3.7
 PYTHON_MIN_VERSION?=3.7
 
-# Flag whether to use virtual environment. If `false`, the global
-# interpreter is used.
+# Flag whether to use virtual environment.
+# If `false`, the interpreter according to `PYTHON_BIN` found in `PATH` is used.
 # Default: true
 VENV_ENABLED?=true
 
@@ -75,6 +93,9 @@ VENV_ENABLED?=true
 VENV_CREATE?=true
 
 # The folder of the virtual environment.
+# If `VENV_ENABLED` is `true` and `VENV_CREATE` is true it is used as the target folder for the virtual environment.
+# If `VENV_ENABLED` is `true` and `VENV_CREATE` is false it is expected to point to an existing virtual environment.
+# If `VENV_ENABLED` is `false` it is ignored.
 # Default: venv
 VENV_FOLDER?=venv
 
@@ -184,6 +205,28 @@ system-dependencies:
 	@test -z "$(SYSTEM_DEPENDENCIES)" && echo "No System dependencies defined"
 	@test -z "$(SYSTEM_DEPENDENCIES)" \
 		|| sudo apt-get install -y $(SYSTEM_DEPENDENCIES)
+
+##############################################################################
+# rollup
+##############################################################################
+
+# extend npm dev packages
+NPM_DEV_PACKAGES+=rollup rollup-plugin-cleanup rollup-plugin-terser
+
+.PHONY: rollup
+rollup:
+	@$(NPM_PREFIX)/node_modules/rollup/dist/bin/rollup --config $(ROLLUP_CONFIG)
+
+##############################################################################
+# karma
+##############################################################################
+
+# extend npm dev packages
+NPM_DEV_PACKAGES+=karma karma-coverage karma-chrome-launcher karma-module-resolver-preprocessor
+
+.PHONY: karma
+karma:
+	@$(NPM_PREFIX)/node_modules/karma/bin/karma start $(KARMA_CONFIG) $(KARMA_OPTIONS)
 
 ##############################################################################
 # jsdoc
@@ -326,8 +369,26 @@ define unset_mxfiles_env
 	@unset MXMAKE_FILES
 endef
 
-FILES_TARGET:=$(SENTINEL_FOLDER)/mxfiles.sentinel
-$(FILES_TARGET): $(PROJECT_CONFIG) $(MXENV_TARGET)
+$(PROJECT_CONFIG):
+ifneq ("$(wildcard $(PROJECT_CONFIG))","")
+	@touch $(PROJECT_CONFIG)
+else
+	@echo "[settings]" > $(PROJECT_CONFIG)
+endif
+
+LOCAL_PACKAGE_FILES:=
+ifneq ("$(wildcard pyproject.toml)","")
+	LOCAL_PACKAGE_FILES+=pyproject.toml
+endif
+ifneq ("$(wildcard setup.cfg)","")
+	LOCAL_PACKAGE_FILES+=setup.cfg
+endif
+ifneq ("$(wildcard setup.py)","")
+	LOCAL_PACKAGE_FILES+=setup.py
+endif
+
+FILES_TARGET:=requirements-mxdev.txt
+$(FILES_TARGET): $(PROJECT_CONFIG) $(MXENV_TARGET) $(LOCAL_PACKAGE_FILES)
 	@echo "Create project files"
 	@mkdir -p $(MXMAKE_FILES)
 	$(call set_mxfiles_env,$(MXENV_PATH),$(MXMAKE_FILES))
@@ -340,7 +401,7 @@ mxfiles: $(FILES_TARGET)
 
 .PHONY: mxfiles-dirty
 mxfiles-dirty:
-	@rm -f $(FILES_TARGET)
+	@touch $(PROJECT_CONFIG)
 
 .PHONY: mxfiles-clean
 mxfiles-clean: mxfiles-dirty
@@ -363,10 +424,10 @@ ADDITIONAL_SOURCES_TARGETS?=
 
 INSTALLED_PACKAGES=$(MXMAKE_FILES)/installed.txt
 
-PACKAGES_TARGET:=$(SENTINEL_FOLDER)/packages.sentinel
+PACKAGES_TARGET:=$(INSTALLED_PACKAGES)
 $(PACKAGES_TARGET): $(FILES_TARGET) $(SOURCES_TARGET) $(ADDITIONAL_SOURCES_TARGETS)
 	@echo "Install python packages"
-	@$(MXENV_PATH)pip install -r requirements-mxdev.txt
+	@$(MXENV_PATH)pip install -r $(FILES_TARGET)
 	@$(MXENV_PATH)pip freeze > $(INSTALLED_PACKAGES)
 	@touch $(PACKAGES_TARGET)
 
@@ -377,8 +438,14 @@ packages: $(PACKAGES_TARGET)
 packages-dirty:
 	@rm -f $(PACKAGES_TARGET)
 
+.PHONY: packages-clean
+packages-clean:
+	@pip uninstall -y -r $(FILES_TARGET)
+	@rm -f $(PACKAGES_TARGET)
+
 INSTALL_TARGETS+=packages
 DIRTY_TARGETS+=packages-dirty
+CLEAN_TARGETS+=packages-clean
 
 ##############################################################################
 # Default targets
