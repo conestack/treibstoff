@@ -24,7 +24,12 @@ DEPLOY_TARGETS?=
 
 # Additional files and folders to remove when running clean target
 # No default value.
-CLEAN_FS?=build bundle dist karma treibstoff-* treibstoff.egg-info
+CLEAN_FS?=build \
+	bundle \
+	dist \
+	karma \
+	treibstoff-* \
+	treibstoff.egg-info
 
 ## js.npm
 
@@ -38,7 +43,10 @@ NPM_PACKAGES?=
 
 # Packages which get installed with `--save-dev` option.
 # No default value.
-NPM_DEV_PACKAGES?=qunit karma-qunit https://github.com/jquery/jquery#main
+NPM_DEV_PACKAGES?=\
+	qunit \
+	karma-qunit \
+	https://github.com/jquery/jquery#main
 
 # Packages which get installed with `--save-prod` option.
 # No default value.
@@ -215,7 +223,10 @@ system-dependencies:
 ##############################################################################
 
 # extend npm dev packages
-NPM_DEV_PACKAGES+=rollup rollup-plugin-cleanup rollup-plugin-terser
+NPM_DEV_PACKAGES+=\
+	rollup \
+	rollup-plugin-cleanup \
+	rollup-plugin-terser
 
 .PHONY: rollup
 rollup:
@@ -226,7 +237,11 @@ rollup:
 ##############################################################################
 
 # extend npm dev packages
-NPM_DEV_PACKAGES+=karma karma-coverage karma-chrome-launcher karma-module-resolver-preprocessor
+NPM_DEV_PACKAGES+=\
+	karma \
+	karma-coverage \
+	karma-chrome-launcher \
+	karma-module-resolver-preprocessor
 
 .PHONY: karma
 karma:
