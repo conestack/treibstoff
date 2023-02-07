@@ -229,7 +229,7 @@ NPM_DEV_PACKAGES+=\
 	rollup-plugin-terser
 
 .PHONY: rollup
-rollup:
+rollup: $(NPM_TARGET)
 	@$(NPM_PREFIX)/node_modules/rollup/dist/bin/rollup --config $(ROLLUP_CONFIG)
 
 ##############################################################################
@@ -244,7 +244,7 @@ NPM_DEV_PACKAGES+=\
 	karma-module-resolver-preprocessor
 
 .PHONY: karma
-karma:
+karma: $(NPM_TARGET)
 	@$(NPM_PREFIX)/node_modules/karma/bin/karma start $(KARMA_CONFIG) $(KARMA_OPTIONS)
 
 ##############################################################################
