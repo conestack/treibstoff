@@ -178,18 +178,29 @@ SYSTEM_DEPENDENCIES+=npm
 NPM_TARGET:=$(SENTINEL_FOLDER)/npm.sentinel
 $(NPM_TARGET): $(SENTINEL)
 	@echo "Install npm packages"
-ifneq ("$(NPM_PACKAGES)", "")
-	@npm install --prefix $(NPM_PREFIX) --no-save install $(NPM_PACKAGES)
-endif
-ifneq ("$(NPM_DEV_PACKAGES)", "")
-	@npm install --prefix $(NPM_PREFIX) --save-dev $(NPM_INSTALL_OPTS) install $(NPM_DEV_PACKAGES)
-endif
-ifneq ("$(NPM_PROD_PACKAGES)", "")
-	@npm install --prefix $(NPM_PREFIX) --save-prod $(NPM_INSTALL_OPTS) install $(NPM_PROD_PACKAGES)
-endif
-ifneq ("$(NPM_OPT_PACKAGES)", "")
-	@npm install --prefix $(NPM_PREFIX) --save-optional $(NPM_INSTALL_OPTS) install $(NPM_OPT_PACKAGES)
-endif
+	@test -z "$(NPM_DEV_PACKAGES)" \
+		&& echo "No dev packages to be installed" \
+		|| npm --prefix $(NPM_PREFIX) install \
+			--save-dev \
+			$(NPM_INSTALL_OPTS) \
+			$(NPM_DEV_PACKAGES)
+	@test -z "$(NPM_PROD_PACKAGES)" \
+		&& echo "No prod packages to be installed" \
+		|| npm --prefix $(NPM_PREFIX) install \
+			--save-prod \
+			$(NPM_INSTALL_OPTS) \
+			$(NPM_PROD_PACKAGES)
+	@test -z "$(NPM_OPT_PACKAGES)" \
+		&& echo "No opt packages to be installed" \
+		|| npm --prefix $(NPM_PREFIX) install \
+			--save-optional \
+			$(NPM_INSTALL_OPTS) \
+			$(NPM_OPT_PACKAGES)
+	@test -z "$(NPM_PACKAGES)" \
+		&& echo "No packages to be installed" \
+		|| npm --prefix $(NPM_PREFIX) install \
+			--no-save \
+			$(NPM_PACKAGES)
 	@touch $(NPM_TARGET)
 
 .PHONY: npm
@@ -226,11 +237,11 @@ system-dependencies:
 NPM_DEV_PACKAGES+=\
 	rollup \
 	rollup-plugin-cleanup \
-	rollup-plugin-terser
+	@rollup/plugin-terser
 
 .PHONY: rollup
 rollup: $(NPM_TARGET)
-	@$(NPM_PREFIX)/node_modules/rollup/dist/bin/rollup --config $(ROLLUP_CONFIG)
+	@$(NPM_PREFIX)/node_modules/.bin/rollup --config $(ROLLUP_CONFIG)
 
 ##############################################################################
 # karma
@@ -245,7 +256,7 @@ NPM_DEV_PACKAGES+=\
 
 .PHONY: karma
 karma: $(NPM_TARGET)
-	@$(NPM_PREFIX)/node_modules/karma/bin/karma start $(KARMA_CONFIG) $(KARMA_OPTIONS)
+	@$(NPM_PREFIX)/node_modules/.bin/karma start $(KARMA_CONFIG) $(KARMA_OPTIONS)
 
 ##############################################################################
 # jsdoc
@@ -398,16 +409,7 @@ else
 	@echo "[settings]" > $(PROJECT_CONFIG)
 endif
 
-LOCAL_PACKAGE_FILES:=
-ifneq ("$(wildcard pyproject.toml)","")
-	LOCAL_PACKAGE_FILES+=pyproject.toml
-endif
-ifneq ("$(wildcard setup.cfg)","")
-	LOCAL_PACKAGE_FILES+=setup.cfg
-endif
-ifneq ("$(wildcard setup.py)","")
-	LOCAL_PACKAGE_FILES+=setup.py
-endif
+LOCAL_PACKAGE_FILES:=$(wildcard pyproject.toml setup.cfg setup.py requirements.txt constraints.txt)
 
 FILES_TARGET:=requirements-mxdev.txt
 $(FILES_TARGET): $(PROJECT_CONFIG) $(MXENV_TARGET) $(SOURCES_TARGET) $(LOCAL_PACKAGE_FILES)
