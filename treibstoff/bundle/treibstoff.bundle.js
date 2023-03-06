@@ -1430,21 +1430,24 @@ var ts = (function (exports, $) {
 
     function create_listener(event, base=null) {
         base = base || Events;
+        if (!(base === Events || base.prototype instanceof Events)) {
+            throw 'Base class must be subclass of or Events';
+        }
         return class extends base {
             constructor(opts) {
-                if (opts === undefined) {
-                    throw 'No options given';
-                }
-                if (!opts.elem) {
-                    throw 'No element given';
-                }
                 if (base === Events) {
                     super();
                 } else {
                     super(opts);
                 }
-                this.elem = opts.elem;
-                this.elem.on(event, (evt) => {
+                let elem = this.elem;
+                if (!elem && opts !== undefined) {
+                    elem = this.elem = opts.elem;
+                }
+                if (!elem) {
+                    throw 'No element found';
+                }
+                elem.on(event, evt => {
                     this.trigger(`on_${event}`, evt);
                 });
             }

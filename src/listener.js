@@ -18,11 +18,11 @@ import {Events} from '../src/events.js';
  *         }
  *     }
  *
- * Create a listener mixin class::
+ * Create a listener mixin::
  *
  *     let clickListener = Base => create_listener('click', Base);
  *
- * Use the listener mixin class::
+ * Use the listener mixin. The base class must be an instance of ``Events``::
  *
  *     class MixedInClickEventHandle extends clickListener(Events) {
  *         on_click(evt) {
@@ -30,19 +30,21 @@ import {Events} from '../src/events.js';
  *         }
  *     }
  *
- * Listener classes expect an ``opts`` object at initialization time containing
- * an ``elem`` property with the jQuery wrapped DOM element to listen to. If
- * this is missing, an error gets thrown::
+ * Listeners expect the attribute ``elem`` on the instance, containing a jQuery
+ * wrapped DOM element, to which the DOM event gets bound to. It can either be
+ * passed in an ``opts`` object to the constructor or be set by the superclass
+ * (if created as mixin). If element is missing, an error gets thrown::
  *
  *     let listener = new ClickEventHandle({elem: $('<div />')});
  *
- * In case of use as mixin class, the opts gets passed to the superclass
+ * In case of use as mixin, the opts gets passed to the superclass
  * constructor::
  *
  *     class Superclass extends Events {
  *         constructor(opts) {
+ *             // opts get passed to superclass.
  *             super();
- *             // handle custom stuff from options here
+ *             this.elem = $('<div />');
  *         }
  *     }
  *
@@ -55,21 +57,24 @@ import {Events} from '../src/events.js';
  */
 export function create_listener(event, base=null) {
     base = base || Events;
+    if (!(base === Events || base.prototype instanceof Events)) {
+        throw 'Base class must be subclass of or Events';
+    }
     return class extends base {
         constructor(opts) {
-            if (opts === undefined) {
-                throw 'No options given';
-            }
-            if (!opts.elem) {
-                throw 'No element given';
-            }
             if (base === Events) {
                 super();
             } else {
                 super(opts);
             }
-            this.elem = opts.elem;
-            this.elem.on(event, (evt) => {
+            let elem = this.elem
+            if (!elem && opts !== undefined) {
+                elem = this.elem = opts.elem;
+            }
+            if (!elem) {
+                throw 'No element found';
+            }
+            elem.on(event, evt => {
                 this.trigger(`on_${event}`, evt);
             });
         }

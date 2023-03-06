@@ -5,6 +5,13 @@ import {create_listener} from '../src/listener.js';
 QUnit.module('treibstoff.listener', hooks => {
 
     QUnit.test('Test listener constructor', assert => {
+        try {
+            create_listener('click', {});
+        } catch (error) {
+            assert.step(error);
+        }
+        assert.verifySteps(['Base class must be subclass of or Events']);
+
         let ClickListener = create_listener('click');
         class TestClickListener extends ClickListener {}
 
@@ -13,14 +20,14 @@ QUnit.module('treibstoff.listener', hooks => {
         } catch (error) {
             assert.step(error);
         }
-        assert.verifySteps(['No options given']);
+        assert.verifySteps(['No element found']);
 
         try {
             new TestClickListener({});
         } catch (error) {
             assert.step(error);
         }
-        assert.verifySteps(['No element given']);
+        assert.verifySteps(['No element found']);
 
         let elem = $('<div />');
         let listener = new TestClickListener({elem: elem});
@@ -30,12 +37,13 @@ QUnit.module('treibstoff.listener', hooks => {
         class Superclass extends Events {
             constructor(opts) {
                 super();
+                this.elem = elem;
                 assert.step(`Superclass called with expected ${opts.opt}`);
             }
         }
         class MixedInClickEventHandle extends clickListener(Superclass) {}
 
-        listener = new MixedInClickEventHandle({elem: elem, opt: 'option'});
+        listener = new MixedInClickEventHandle({opt: 'option'});
         assert.verifySteps(['Superclass called with expected option']);
     });
 
