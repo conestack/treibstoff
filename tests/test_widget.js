@@ -150,6 +150,30 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.ok(elem.hasClass('hidden'));
         visibility.hidden = false;
         assert.false(elem.hasClass('hidden'));
+
+        visibility.on('on_visible', (inst, val) => {
+            assert.step('Visibility: ' + val);
+        })
+
+        visibility.visible = false;
+        assert.verifySteps(['Visibility: false']);
+        visibility.visible = false;
+        assert.verifySteps([]);
+
+        visibility.visible = true;
+        assert.verifySteps(['Visibility: true']);
+        visibility.visible = true;
+        assert.verifySteps([]);
+
+        visibility.hidden = true;
+        assert.verifySteps(['Visibility: false']);
+        visibility.hidden = true;
+        assert.verifySteps([]);
+
+        visibility.hidden = false;
+        assert.verifySteps(['Visibility: true']);
+        visibility.hidden = false;
+        assert.verifySteps([]);
     });
 
     QUnit.test('Test Button', assert => {

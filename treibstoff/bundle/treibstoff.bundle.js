@@ -1580,18 +1580,23 @@ var ts = (function (exports, $) {
             return create_svg_elem(name, opts, container);
         }
     }
-    class Visibility {
+    class Visibility extends Events {
         constructor(opts) {
             if (!opts.elem) {
                 throw 'No element given';
             }
+            super();
             this.elem = opts.elem;
         }
         get visible() {
             return !this.elem.hasClass('hidden');
         }
         set visible(value) {
+            let trigger = value !== !this.elem.hasClass('hidden');
             set_visible(this.elem, value);
+            if (trigger) {
+                this.trigger('on_visible', value);
+            }
         }
         get hidden() {
             return !this.visible;

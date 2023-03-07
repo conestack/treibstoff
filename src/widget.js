@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import {Events} from './events.js';
 import {ClickListener} from './listener.js';
 import {Motion} from './motion.js';
 import {
@@ -149,7 +150,7 @@ export class SVGContext extends HTMLWidget {
 /**
  * Class providing visibility for related element.
  */
-export class Visibility {
+export class Visibility extends Events {
 
     /**
      * Create Visibility instance.
@@ -161,11 +162,14 @@ export class Visibility {
         if (!opts.elem) {
             throw 'No element given';
         }
+        super();
         this.elem = opts.elem;
     }
 
     /**
      * Flag whether related element is visible.
+     *
+     * Triggers ``on_visible`` event if value gets changed.
      *
      * @type {boolean}
      */
@@ -174,11 +178,18 @@ export class Visibility {
     }
 
     set visible(value) {
+        let trigger = value !== !this.elem.hasClass('hidden');
         set_visible(this.elem, value);
+        if (trigger) {
+            this.trigger('on_visible', value);
+        }
     }
 
     /**
      * Flag whether related element is hidden.
+     *
+     * No dedicated event gets triggered if value changes, bind to
+     * ``on_visible`` to react on changes.
      *
      * @type {boolean}
      */
