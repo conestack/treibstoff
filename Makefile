@@ -22,6 +22,10 @@
 # No default value.
 DEPLOY_TARGETS?=
 
+# target to be executed when calling `make run`
+# No default value.
+RUN_TARGET?=
+
 # Additional files and folders to remove when running clean target
 # No default value.
 CLEAN_FS?=build \
@@ -30,6 +34,11 @@ CLEAN_FS?=build \
 	karma \
 	treibstoff-* \
 	treibstoff.egg-info
+
+# Optional makefile to include before default targets. This can
+# be used to provide custom targets or hook up to existing targets.
+# Default: include.mk
+INCLUDE_MAKEFILE?=include.mk
 
 ## js.npm
 
@@ -93,8 +102,8 @@ PYTHON_BIN?=python3
 # Default: 3.7
 PYTHON_MIN_VERSION?=3.7
 
-# Flag whether to use virtual environment.
-# If `false`, the interpreter according to `PYTHON_BIN` found in `PATH` is used.
+# Flag whether to use virtual environment. If `false`, the
+# interpreter according to `PYTHON_BIN` found in `PATH` is used.
 # Default: true
 VENV_ENABLED?=true
 
@@ -105,19 +114,20 @@ VENV_ENABLED?=true
 VENV_CREATE?=true
 
 # The folder of the virtual environment.
-# If `VENV_ENABLED` is `true` and `VENV_CREATE` is true it is used as the target folder for the virtual environment.
-# If `VENV_ENABLED` is `true` and `VENV_CREATE` is false it is expected to point to an existing virtual environment.
-# If `VENV_ENABLED` is `false` it is ignored.
+# If `VENV_ENABLED` is `true` and `VENV_CREATE` is true it is used as the
+# target folder for the virtual environment. If `VENV_ENABLED` is `true` and
+# `VENV_CREATE` is false it is expected to point to an existing virtual
+# environment. If `VENV_ENABLED` is `false` it is ignored.
 # Default: venv
 VENV_FOLDER?=venv
 
 # mxdev to install in virtual environment.
-# Default: https://github.com/mxstack/mxdev/archive/main.zip
-MXDEV?=https://github.com/mxstack/mxdev/archive/main.zip
+# Default: mxdev
+MXDEV?=mxdev
 
 # mxmake to install in virtual environment.
-# Default: https://github.com/mxstack/mxmake/archive/develop.zip
-MXMAKE?=https://github.com/mxstack/mxmake/archive/develop.zip
+# Default: mxmake
+MXMAKE?=mxmake
 
 ## docs.sphinx
 
@@ -471,6 +481,8 @@ INSTALL_TARGETS+=packages
 DIRTY_TARGETS+=packages-dirty
 CLEAN_TARGETS+=packages-clean
 
+-include $(INCLUDE_MAKEFILE)
+
 ##############################################################################
 # Default targets
 ##############################################################################
@@ -482,6 +494,9 @@ $(INSTALL_TARGET): $(INSTALL_TARGETS)
 .PHONY: install
 install: $(INSTALL_TARGET)
 	@touch $(INSTALL_TARGET)
+
+.PHONY: run
+run: $(RUN_TARGET)
 
 .PHONY: deploy
 deploy: $(DEPLOY_TARGETS)
