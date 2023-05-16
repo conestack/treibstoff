@@ -4,5 +4,5 @@ set -e
 
 rm -rf ./build
 
-./scripts/rollup.sh
+make rollup
 python3 setup.py bdist_wheel
