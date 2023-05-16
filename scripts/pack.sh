@@ -4,7 +4,7 @@
 
 set -e
 
-./scripts/rollup.sh
+make rollup
 
 mkdir -p ./bundle
 rm -f ./bundle/*

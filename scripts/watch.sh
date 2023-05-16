@@ -7,5 +7,5 @@
 
 while res=$(inotifywait -e create -e modify -e delete -e move ./src); do
     echo "changed: $res, run rollup"
-    ./scripts/rollup.sh --configDebug
+    make rollup
 done
