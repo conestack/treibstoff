@@ -1310,6 +1310,7 @@ var ts = (function (exports, $) {
             this._action = new AjaxAction(action_opts);
             this._overlay = new AjaxOverlay(action_opts);
             this._form = new AjaxForm({handle: hdl, spinner: spn});
+            this._is_bound = false;
         }
         register(func, instant) {
             let func_name = 'binder_' + uuid4();
@@ -1320,11 +1321,12 @@ var ts = (function (exports, $) {
                 func_name = 'binder_' + uuid4();
             }
             this.binders[func_name] = func;
-            if (instant) {
+            if (instant && this._is_bound) {
                 func();
             }
         }
         bind(context) {
+            this._is_bound = true;
             let parser = new AjaxParser({
                 dispatcher: this.dispatcher,
                 form: this._form

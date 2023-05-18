@@ -1899,6 +1899,7 @@ QUnit.module('treibstoff.ajax', hooks => {
 
     QUnit.test('Test Ajax.register', assert => {
         let ajax = new Ajax();
+        ajax.bind($(document));
 
         let binder = function(context) {
             assert.step('binder called');

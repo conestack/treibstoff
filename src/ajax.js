@@ -834,6 +834,7 @@ export class Ajax extends AjaxUtil {
         this._action = new AjaxAction(action_opts);
         this._overlay = new AjaxOverlay(action_opts);
         this._form = new AjaxForm({handle: hdl, spinner: spn});
+        this._is_bound = false;
     }
 
     /**
@@ -865,7 +866,12 @@ export class Ajax extends AjaxUtil {
             func_name = 'binder_' + uuid4();
         }
         this.binders[func_name] = func;
-        if (instant) {
+        // Only execute instant if ajax.bind() already has been initially
+        // called via document ready event. Otherwise the binder functions
+        // would be called twice on page load. This can happen if
+        // ``ajax.register`` gets called in a document ready event handler
+        // which is registered before treibstoff's document ready handler.
+        if (instant && this._is_bound) {
             func();
         }
     }
@@ -882,6 +888,7 @@ export class Ajax extends AjaxUtil {
      * @returns {$} The given jQuery wrapped context.
      */
     bind(context) {
+        this._is_bound = true;
         let parser = new AjaxParser({
             dispatcher: this.dispatcher,
             form: this._form

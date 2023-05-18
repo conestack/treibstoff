@@ -4,7 +4,9 @@ Changes
 0.3.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix instant binder function not to be called twice on page load if treibstoff
+  document ready handler gets called after ajax.register.
+  [rnix]
 
 
 0.2.0 (2023-05-16)
