@@ -4,6 +4,9 @@ Changes
 0.4.0 (unreleased)
 ------------------
 
+- Introduce ``clock`` module.
+  [rnix]
+
 - ``Events.trigger`` accepts arbitrary number of arguments passed to subscribers.
   [rnix]
 

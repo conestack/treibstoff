@@ -16,6 +16,7 @@ utilities.
    :caption: Contents:
 
    Ajax <ajax>
+   Clock <clock>
    Events <events>
    Form <form>
    Keystate <keystate>

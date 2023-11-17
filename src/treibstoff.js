@@ -1,4 +1,5 @@
 import * as ajax from './ajax.js';
+import * as clock from './clock.js';
 import * as events from './events.js';
 import * as form from './form.js';
 import * as keystate from './keystate.js';
@@ -14,6 +15,7 @@ import * as websocket from './websocket.js';
 let api = {};
 
 Object.assign(api, ajax);
+Object.assign(api, clock);
 Object.assign(api, events);
 Object.assign(api, form);
 Object.assign(api, keystate);

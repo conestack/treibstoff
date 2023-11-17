@@ -2,6 +2,7 @@ import $ from 'jquery';
 import {ajax} from './ajax.js';
 
 export * from './ajax.js';
+export * from './clock.js';
 export * from './events.js';
 export * from './form.js';
 export * from './keystate.js';

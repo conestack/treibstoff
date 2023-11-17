@@ -1430,6 +1430,58 @@ var ts = (function (exports, $) {
         return this;
     };
 
+    class ClockFrameEvent {
+        constructor(callback, ...opts) {
+            this._request_id = window.requestAnimationFrame((timestamp) => {
+                callback(timestamp, ...opts);
+            });
+        }
+        cancel() {
+            if (this._request_id !== null) {
+                window.cancelAnimationFrame(this._request_id);
+                this._request_id = null;
+            }
+        }
+    }
+    class ClockTimeoutEvent {
+        constructor(callback, delay, ...opts) {
+            this._timeout_id = window.setTimeout(() => {
+                callback(document.timeline.currentTime, ...opts);
+            }, delay);
+        }
+        cancel() {
+            if (this._timeout_id !== null) {
+                window.clearTimeout(this._timeout_id);
+                this._timeout_id = null;
+            }
+        }
+    }
+    class ClockIntervalEvent {
+        constructor(callback, interval, ...opts) {
+            this._interval_id = window.setInterval(() => {
+                callback(document.timeline.currentTime, this, ...opts);
+            }, interval);
+        }
+        cancel() {
+            if (this._interval_id !== null) {
+                window.clearInterval(this._interval_id);
+                this._interval_id = null;
+            }
+        }
+    }
+    class Clock {
+        schedule_frame(callback, ...opts) {
+            return new ClockFrameEvent(callback, ...opts);
+        }
+        schedule_timeout(callback, delay, ...opts) {
+            return new ClockTimeoutEvent(callback, delay, ...opts);
+        }
+        schedule_interval(callback, interval, ...opts) {
+            return new ClockIntervalEvent(callback, interval, ...opts);
+        }
+    }
+    let clock = new Clock();
+
     function create_listener(event, base=null) {
         base = base || Events;
         if (!(base === Events || base.prototype instanceof Events)) {
@@ -1954,6 +2006,10 @@ var ts = (function (exports, $) {
     exports.CSSProperty = CSSProperty;
     exports.ChangeListener = ChangeListener;
     exports.ClickListener = ClickListener;
+    exports.Clock = Clock;
+    exports.ClockFrameEvent = ClockFrameEvent;
+    exports.ClockIntervalEvent = ClockIntervalEvent;
+    exports.ClockTimeoutEvent = ClockTimeoutEvent;
     exports.Collapsible = Collapsible;
     exports.DataProperty = DataProperty;
     exports.Dialog = Dialog;
@@ -1988,6 +2044,7 @@ var ts = (function (exports, $) {
     exports.ajax = ajax;
     exports.changeListener = changeListener;
     exports.clickListener = clickListener;
+    exports.clock = clock;
     exports.compile_svg = compile_svg;
     exports.compile_template = compile_template;
     exports.create_cookie = create_cookie;
