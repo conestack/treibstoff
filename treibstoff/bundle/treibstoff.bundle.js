@@ -512,19 +512,19 @@ var ts = (function (exports, $) {
             this._subscribers[event] = subscribers;
             return this;
         }
-        trigger(event, opts) {
+        trigger(event, ...opts) {
             if (this._suppress_events) {
                 return;
             }
             if (this[event]) {
-                this[event](opts);
+                this[event](...opts);
             }
             let subscribers = this._subscribers[event];
             if (!subscribers) {
                 return this;
             }
             for (let i = 0; i < subscribers.length; i++) {
-                subscribers[i](this, opts);
+                subscribers[i](this, ...opts);
             }
             return this;
         }

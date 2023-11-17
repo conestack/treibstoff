@@ -55,22 +55,21 @@ export class Events {
      * Trigger event.
      *
      * @param {string} event - The event to trigger.
-     * @param {Object} opts - An optional options object which gets passed to
-     * subscriber.
+     * @param {...*} opts - Arbitrary arguments which gets passed to subscriber.
      */
-    trigger(event, opts) {
+    trigger(event, ...opts) {
         if (this._suppress_events) {
             return;
         }
         if (this[event]) {
-            this[event](opts);
+            this[event](...opts);
         }
         let subscribers = this._subscribers[event];
         if (!subscribers) {
             return this;
         }
         for (let i = 0; i < subscribers.length; i++) {
-            subscribers[i](this, opts);
+            subscribers[i](this, ...opts);
         }
         return this;
     }

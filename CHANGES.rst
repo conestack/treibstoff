@@ -4,7 +4,8 @@ Changes
 0.4.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- ``Events.trigger`` accepts arbitrary number of arguments passed to subscribers.
+  [rnix]
 
 
 0.3.0 (2023-05-18)
