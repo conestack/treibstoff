@@ -8,9 +8,11 @@ import * as motion from './motion.js';
 import * as overlay from './overlay.js';
 import * as parser from './parser.js';
 import * as properties from './properties.js';
+import * as request from './request.js';
+import * as spinner from './spinner.js';
 import * as utils from './utils.js';
-import * as widget from './widget.js';
 import * as websocket from './websocket.js';
+import * as widget from './widget.js';
 
 let api = {};
 
@@ -24,9 +26,11 @@ Object.assign(api, motion);
 Object.assign(api, overlay);
 Object.assign(api, parser);
 Object.assign(api, properties);
+Object.assign(api, request);
+Object.assign(api, spinner);
 Object.assign(api, utils);
-Object.assign(api, widget);
 Object.assign(api, websocket);
+Object.assign(api, widget);
 
 const ts = api;
 export default ts;

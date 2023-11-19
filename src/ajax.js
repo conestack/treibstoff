@@ -21,141 +21,8 @@ import {
     uuid4
 } from './utils.js';
 import {Events} from './events.js';
-
-let ajax_loading_icon = '/resources/treibstoff/loading-spokes.svg';
-
-/**
- * Ajax spinner.
- *
- * The Ajax spinner is a singleton and is accessible via the ``ajax`` object.
- * Internally it holds a request count which gets increased every time the
- * ``show`` function is called. With each ``hide`` call, the request count
- * gets decreased, and as soon as it reaches 0 the spinner disappears. This
- * way it's possible to perform simultaneous requests while avoiding flickering
- * of the animation or the spinner disappearing while a request is still in
- * progress.
- *
- * Show the spinner::
- *
- *     ts.ajax.spinner.show();
- *
- * Hide the spinner. Spinner not disappears before request count reaches 0::
- *
- *     ts.ajax.spinner.hide();
- *
- * Force closing of the spinner and reset request count::
- *
- *     ajax.spinner.close(true);
- */
-export class AjaxSpinner {
-
-    constructor() {
-        this._request_count = 0;
-        this.compile();
-    }
-
-    compile() {
-        compile_template(this, `
-          <div id="ajax-spinner" t-elem="elem">
-            <img src="${ajax_loading_icon}" width="64" height="64" alt="" />
-          </div>
-        `);
-    }
-
-    /**
-     * Show spinner animation.
-     */
-    show() {
-        this._request_count++;
-        if (this._request_count > 1) {
-            return;
-        }
-        $('body').append(this.elem);
-    }
-
-    /**
-     * Hide spinner animation.
-     *
-     * @param {boolean} force - Forces spinner to disappear and resets request
-     * count.
-     */
-    hide(force) {
-        this._request_count--;
-        if (force) {
-            this._request_count = 0;
-            this.elem.remove();
-            return;
-        } else if (this._request_count <= 0) {
-            this._request_count = 0;
-            this.elem.remove();
-        }
-    }
-}
-
-/**
- * XMLHttpRequest helper.
- */
-export class AjaxRequest {
-
-    constructor(opts) {
-        this.spinner = opts.spinner;
-        set_default(opts, 'win', window);
-        this.win = opts.win;
-        set_default(opts, 'default_403', '/login');
-        this.default_403 = opts.default_403;
-    }
-
-    execute(opts) {
-        if (opts.url.indexOf('?') !== -1) {
-            let params_ = opts.params;
-            opts.params = parse_query(opts.url);
-            opts.url = parse_url(opts.url);
-            for (let key in params_) {
-                opts.params[key] = params_[key];
-            }
-        } else {
-            set_default(opts, 'params', {});
-        }
-        set_default(opts, 'type', 'html');
-        set_default(opts, 'method', 'GET');
-        set_default(opts, 'cache', false);
-        set_default(opts, 'error', function(request, status, error) {
-            if (parseInt(status, 10) === 403) {
-                this.win.location.hash = '';
-                this.win.location.pathname = this.default_403;
-                return;
-            }
-            show_error(`<strong>${status}</strong>${error}`);
-        }.bind(this));
-
-        let wrapped_success = function(data, status, request) {
-            opts.success(data, status, request);
-            this.spinner.hide();
-        }.bind(this);
-
-        let wrapped_error = function(request, status, error) {
-            if (request.status === 0) {
-                this.spinner.hide(true);
-                return;
-            }
-            status = request.status || status;
-            error = request.statusText || error;
-            opts.error(request, status, error);
-            this.spinner.hide(true);
-        }.bind(this);
-
-        this.spinner.show();
-        $.ajax({
-            url: opts.url,
-            dataType: opts.type,
-            data: opts.params,
-            method: opts.method,
-            success: wrapped_success,
-            error: wrapped_error,
-            cache: opts.cache
-        });
-    }
-}
+import {HTTPRequest} from './request.js';
+import {spinner} from './spinner.js';
 
 /**
  * Ajax utility mixin.
@@ -814,26 +681,22 @@ export class Ajax extends AjaxUtil {
         super();
         this.win = win;
         this.binders = {};
-        let spn = this.spinner = new AjaxSpinner();
-        let dsp = this.dispatcher = new AjaxDispatcher();
-        let req = this._request = new AjaxRequest({
-            spinner: spn,
-            win: win,
-            default_403: '/login'
-        });
-        this._path = new AjaxPath({dispatcher: dsp, win: win});
-        this._event = new AjaxEvent({dispatcher: dsp});
-        let hdl = new AjaxHandle(this);
+        let spinner_ = this.spinner = spinner;
+        let dispatcher = this.dispatcher = new AjaxDispatcher();
+        let request = this._request = new HTTPRequest({win: win});
+        this._path = new AjaxPath({dispatcher: dispatcher, win: win});
+        this._event = new AjaxEvent({dispatcher: dispatcher});
+        let handle = new AjaxHandle(this);
         let action_opts = {
-            dispatcher: dsp,
+            dispatcher: dispatcher,
             win: win,
-            handle: hdl,
-            spinner: spn,
-            request: req
+            handle: handle,
+            spinner: spinner_,
+            request: request
         }
         this._action = new AjaxAction(action_opts);
         this._overlay = new AjaxOverlay(action_opts);
-        this._form = new AjaxForm({handle: hdl, spinner: spn});
+        this._form = new AjaxForm({handle: handle, spinner: spinner_});
         this._is_bound = false;
     }
 

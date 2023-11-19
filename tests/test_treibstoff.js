@@ -19,8 +19,6 @@ QUnit.module('Test treibstoff', hooks => {
             'AjaxOverlay',
             'AjaxParser',
             'AjaxPath',
-            'AjaxRequest',
-            'AjaxSpinner',
             'AjaxUtil',
             'ajax',
             'Clock',
@@ -68,6 +66,10 @@ QUnit.module('Test treibstoff', hooks => {
             'Property',
             'SVGProperty',
             'TextProperty',
+            'HTTPRequest',
+            'http_request',
+            'LoadingSpinner',
+            'spinner',
             'create_cookie',
             'create_svg_elem',
             'deprecate',
@@ -86,17 +88,17 @@ QUnit.module('Test treibstoff', hooks => {
             'set_visible',
             'svg_ns',
             'uuid4',
+            'WS_STATE_CLOSED',
+            'WS_STATE_CLOSING',
+            'WS_STATE_CONNECTING',
+            'WS_STATE_OPEN',
+            'Websocket',
             'Button',
             'Collapsible',
             'HTMLWidget',
             'SVGContext',
             'Visibility',
-            'Widget',
-            'WS_STATE_CLOSED',
-            'WS_STATE_CLOSING',
-            'WS_STATE_CONNECTING',
-            'WS_STATE_OPEN',
-            'Websocket'
+            'Widget'
         ]);
     });
 
