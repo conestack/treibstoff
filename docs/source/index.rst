@@ -23,6 +23,8 @@ utilities.
    Listener <listener>
    Overlay <overlay>
    Properties <properties>
+   Request <request>
+   Spinner <spinner>
    Widget <widget>
    Utils <utils>
    Development <development>

@@ -599,7 +599,6 @@ The public API is available via the ``ajax`` singleton.
         register,
         bind,
         attach,
-        request,
         action,
         trigger,
         path,
@@ -608,9 +607,6 @@ The public API is available via the ``ajax`` singleton.
 
 .. js:autoclass:: AjaxUtil
     :members: parse_target
-
-.. js:autoclass:: AjaxSpinner
-    :members: show, hide
 
 
 Deprecated functions
@@ -633,3 +629,5 @@ Deprecated functions
 .. js:autofunction:: Ajax#error
 
 .. js:autofunction:: Ajax#dialog
+
+.. js:autofunction:: Ajax#request

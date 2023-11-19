@@ -691,45 +691,45 @@ var ts = (function (exports, $) {
         }).open();
     }
 
-    let ajax_loading_icon = '/resources/treibstoff/loading-spokes.svg';
-    class AjaxSpinner {
+    const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
+    class LoadingSpinner {
         constructor() {
-            this._request_count = 0;
+            this._count = 0;
             this.compile();
         }
         compile() {
             compile_template(this, `
-          <div id="ajax-spinner" t-elem="elem">
-            <img src="${ajax_loading_icon}" width="64" height="64" alt="" />
+          <div id="t-loading-spinner" t-elem="elem">
+            <img src="${default_spinner_image}" width="64" height="64" alt="" />
           </div>
         `);
         }
         show() {
-            this._request_count++;
-            if (this._request_count > 1) {
+            this._count++;
+            if (this._count > 1) {
                 return;
             }
             $('body').append(this.elem);
         }
         hide(force) {
-            this._request_count--;
+            this._count--;
             if (force) {
-                this._request_count = 0;
+                this._count = 0;
                 this.elem.remove();
                 return;
-            } else if (this._request_count <= 0) {
-                this._request_count = 0;
+            } else if (this._count <= 0) {
+                this._count = 0;
                 this.elem.remove();
             }
         }
     }
-    class AjaxRequest {
+    const spinner = new LoadingSpinner();
+
+    class HTTPRequest {
         constructor(opts) {
-            this.spinner = opts.spinner;
-            set_default(opts, 'win', window);
-            this.win = opts.win;
-            set_default(opts, 'default_403', '/login');
-            this.default_403 = opts.default_403;
+            this.spinner = set_default(opts, 'spinner', null);
+            this.default_403 = set_default(opts, 'default_403', '/login');
+            this._win = set_default(opts, 'win', window);
         }
         execute(opts) {
             if (opts.url.indexOf('?') !== -1) {
@@ -742,43 +742,60 @@ var ts = (function (exports, $) {
             } else {
                 set_default(opts, 'params', {});
             }
-            set_default(opts, 'type', 'html');
-            set_default(opts, 'method', 'GET');
-            set_default(opts, 'cache', false);
-            set_default(opts, 'error', function(request, status, error) {
+            set_default(opts, 'error', (request, status, error) => {
                 if (parseInt(status, 10) === 403) {
-                    this.win.location.hash = '';
-                    this.win.location.pathname = this.default_403;
+                    this.redirect(this.default_403);
                     return;
                 }
                 show_error(`<strong>${status}</strong>${error}`);
-            }.bind(this));
-            let wrapped_success = function(data, status, request) {
-                opts.success(data, status, request);
-                this.spinner.hide();
-            }.bind(this);
-            let wrapped_error = function(request, status, error) {
-                if (request.status === 0) {
-                    this.spinner.hide(true);
-                    return;
-                }
-                status = request.status || status;
-                error = request.statusText || error;
-                opts.error(request, status, error);
-                this.spinner.hide(true);
-            }.bind(this);
-            this.spinner.show();
+            });
+            this.show_spinner();
             $.ajax({
                 url: opts.url,
-                dataType: opts.type,
+                dataType: set_default(opts, 'type', 'html'),
                 data: opts.params,
-                method: opts.method,
-                success: wrapped_success,
-                error: wrapped_error,
-                cache: opts.cache
+                method: set_default(opts, 'method', 'GET'),
+                success: (data, status, request) => {
+                    this.hide_spinner();
+                    opts.success(data, status, request);
+                },
+                error: (request, status, error) => {
+                    if (request.status === 0) {
+                        this.hide_spinner(true);
+                        return;
+                    }
+                    status = request.status || status;
+                    error = request.statusText || error;
+                    this.hide_spinner(true);
+                    opts.error(request, status, error);
+                },
+                cache: set_default(opts, 'cache', false)
             });
         }
+        redirect(path) {
+            const location = this._win.location;
+            location.hash = '';
+            location.pathname = path;
+        }
+        show_spinner() {
+            if (this.spinner !== null) {
+                this.spinner.show();
+            }
+        }
+        hide_spinner(force) {
+            if (this.spinner !== null) {
+                this.spinner.hide(force);
+            }
+        }
     }
+    function http_request(opts) {
+        new HTTPRequest({
+            spinner: set_default(opts, 'spinner', spinner),
+            win: set_default(opts, 'win', window),
+            default_403: set_default(opts, 'default_403', '/login')
+        }).execute(opts);
+    }
+
     class AjaxUtil extends Events {
         parse_target(target) {
             return {
@@ -1290,26 +1307,22 @@ var ts = (function (exports, $) {
             super();
             this.win = win;
             this.binders = {};
-            let spn = this.spinner = new AjaxSpinner();
-            let dsp = this.dispatcher = new AjaxDispatcher();
-            let req = this._request = new AjaxRequest({
-                spinner: spn,
-                win: win,
-                default_403: '/login'
-            });
-            this._path = new AjaxPath({dispatcher: dsp, win: win});
-            this._event = new AjaxEvent({dispatcher: dsp});
-            let hdl = new AjaxHandle(this);
+            let spinner_ = this.spinner = spinner;
+            let dispatcher = this.dispatcher = new AjaxDispatcher();
+            let request = this._request = new HTTPRequest({win: win});
+            this._path = new AjaxPath({dispatcher: dispatcher, win: win});
+            this._event = new AjaxEvent({dispatcher: dispatcher});
+            let handle = new AjaxHandle(this);
             let action_opts = {
-                dispatcher: dsp,
+                dispatcher: dispatcher,
                 win: win,
-                handle: hdl,
-                spinner: spn,
-                request: req
+                handle: handle,
+                spinner: spinner_,
+                request: request
             };
             this._action = new AjaxAction(action_opts);
             this._overlay = new AjaxOverlay(action_opts);
-            this._form = new AjaxForm({handle: hdl, spinner: spn});
+            this._form = new AjaxForm({handle: handle, spinner: spinner_});
             this._is_bound = false;
         }
         register(func, instant) {
@@ -1354,9 +1367,6 @@ var ts = (function (exports, $) {
                 elem._ajax_attached = [];
             }
             elem._ajax_attached.push(instance);
-        }
-        request(opts) {
-            this._request.execute(opts);
         }
         path(opts) {
             this._path.execute(opts);
@@ -1422,6 +1432,10 @@ var ts = (function (exports, $) {
                     callback(opts);
                 }
             });
+        }
+        request(opts) {
+            deprecate('ts.ajax.request', 'ts.http_request', '1.0');
+            http_request(opts);
         }
     }
     let ajax = new Ajax();
@@ -1996,8 +2010,6 @@ var ts = (function (exports, $) {
     exports.AjaxOverlay = AjaxOverlay;
     exports.AjaxParser = AjaxParser;
     exports.AjaxPath = AjaxPath;
-    exports.AjaxRequest = AjaxRequest;
-    exports.AjaxSpinner = AjaxSpinner;
     exports.AjaxUtil = AjaxUtil;
     exports.AttrProperty = AttrProperty;
     exports.BoundProperty = BoundProperty;
@@ -2022,8 +2034,10 @@ var ts = (function (exports, $) {
     exports.FormSelect = FormSelect;
     exports.HTMLParser = HTMLParser;
     exports.HTMLWidget = HTMLWidget;
+    exports.HTTPRequest = HTTPRequest;
     exports.InputProperty = InputProperty;
     exports.KeyState = KeyState;
+    exports.LoadingSpinner = LoadingSpinner;
     exports.Message = Message;
     exports.Motion = Motion;
     exports.Overlay = Overlay;
@@ -2054,6 +2068,7 @@ var ts = (function (exports, $) {
     exports.extract_number = extract_number;
     exports.get_elem = get_elem;
     exports.get_overlay = get_overlay;
+    exports.http_request = http_request;
     exports.json_merge = json_merge;
     exports.load_svg = load_svg;
     exports.lookup_form_elem = lookup_form_elem;
@@ -2072,6 +2087,7 @@ var ts = (function (exports, $) {
     exports.show_info = show_info;
     exports.show_message = show_message;
     exports.show_warning = show_warning;
+    exports.spinner = spinner;
     exports.svg_ns = svg_ns;
     exports.uuid4 = uuid4;
 

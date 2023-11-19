@@ -21,7 +21,10 @@ import {
     uuid4
 } from './utils.js';
 import {Events} from './events.js';
-import {HTTPRequest} from './request.js';
+import {
+    HTTPRequest,
+    http_request
+} from './request.js';
 import {spinner} from './spinner.js';
 
 /**
@@ -821,49 +824,6 @@ export class Ajax extends AjaxUtil {
     }
 
     /**
-     * Perform XMLHttpRequest request.
-     *
-     * By default it sends requests of type ``html`` with method ``get`` and
-     * displays a ``ts.ajax.error`` message if request fails::
-     *
-     *     ts.ajax.request({
-     *         url: 'https://tld.com/some/path',
-     *         params: {
-     *             a: 'a',
-     *             b: 'b'
-     *         },
-     *         type: 'json',
-     *         method: 'POST',
-     *         cache: true,
-     *         success: function(data, status, request) {
-     *         },
-     *         error: function(request, status, error) {
-     *         }
-     *     });
-     *
-     * Given ``url`` might contain a query string. It gets parsed and written to
-     * request parameters. If same request parameter is defined in URL query and
-     * params object, latter one takes precedence.
-     *
-     * Success and error callback functions gets wrapped to handle ajax spinner
-     * automatically.
-     *
-     * @param {Object} opts - Request options.
-     * @param {string} opts.url - Request URL.
-     * @param {Object} opts.params - Optional query parameters for request.
-     * @param {string} opts.type - Optional request type. Defaults to 'html'.
-     * @param {string} opts.method - Optional request method. Defaults to 'GET'.
-     * @param {boolean} opts.cache - Optional flag whether to cache the response.
-     * Defaults to False.
-     * @param {function} opts.success - Callback if request is successful.
-     * @param {function} opts.error - Optional callback if request fails.
-     * Default callback displays error message with response status.
-     */
-    request(opts) {
-        this._request.execute(opts);
-    }
-
-    /**
      * Execute path operation.
      *
      * Wites browser session history stack. Executes Ajax operations on
@@ -1165,6 +1125,14 @@ export class Ajax extends AjaxUtil {
                 callback(opts);
             }
         });
+    }
+
+    /**
+     * This function is deprecated. Use ``ts.http_request`` instead.
+     */
+    request(opts) {
+        deprecate('ts.ajax.request', 'ts.http_request', '1.0');
+        http_request(opts);
     }
 }
 

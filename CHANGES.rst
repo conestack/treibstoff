@@ -4,6 +4,16 @@ Changes
 0.4.0 (unreleased)
 ------------------
 
+- Deprecate usage of ``ts.ajax.request``. ``ts.http_request`` shall be used
+  instead.
+  [rnix]
+
+- Rename ``AjaxSpinner`` to ``LoadingSpinner`` and move it to ``spinner`` module.
+  [rnix]
+
+- Rename ``AjaxRequest`` to ``HTTPRequest`` and move it to ``request`` module.
+  [rnix]
+
 - Introduce ``clock`` module.
   [rnix]
 
