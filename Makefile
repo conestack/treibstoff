@@ -55,7 +55,7 @@ NPM_PACKAGES?=
 NPM_DEV_PACKAGES?=\
 	qunit \
 	karma-qunit \
-	https://github.com/jquery/jquery#2b6b5e0a3ba3029ec3ad1525a178920765e3adf1
+	git://github.com/jquery/jquery.git\#2b6b5e0a3ba3029ec3ad1525a178920765e3adf1
 
 # Packages which get installed with `--save-prod` option.
 # No default value.
