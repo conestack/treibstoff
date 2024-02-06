@@ -12,14 +12,14 @@ export default {
         'tests/**/test_*.js'
     ],
     plugins: [
-		importMapsPlugin({
-			inject: {
-				importMap: {
-					imports: {
+        importMapsPlugin({
+            inject: {
+                importMap: {
+                    imports: {
                         'jquery': './node_modules/jquery/src/jquery.js'
-					},
-				},
-			},
-		}),
-	],
+                    },
+                },
+            },
+        }),
+    ],
 }
