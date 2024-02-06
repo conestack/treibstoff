@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {ajax} from '../src/ajax.js';
+import {http_request} from '../src/request.js';
 import {Events} from '../src/events.js';
 import {changeListener} from './listener.js';
 import {
@@ -159,7 +159,7 @@ export class FormRemoteSelect extends FormSelect {
      * @param {Object} params - Request query parameters.
      */
     fetch(params) {
-        ajax.request({
+        http_request({
             type: 'json',
             url: this.vocab,
             params: params,

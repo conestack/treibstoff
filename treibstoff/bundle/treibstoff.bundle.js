@@ -1771,7 +1771,7 @@ var ts = (function (exports, $) {
             this.vocab = opts.vocab;
         }
         fetch(params) {
-            ajax.request({
+            http_request({
                 type: 'json',
                 url: this.vocab,
                 params: params,
