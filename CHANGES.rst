@@ -4,6 +4,9 @@ Changes
 0.4.0 (unreleased)
 ------------------
 
+- Use web test runner instead of deprecated karma.
+  [rnix]
+
 - Deprecate usage of ``ts.ajax.request``. ``ts.http_request`` shall be used
   instead.
   [rnix]
