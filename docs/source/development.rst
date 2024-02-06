@@ -10,29 +10,29 @@ Install development environment:
 
 .. code-block:: sh
 
-    ./scripts/install.sh
+    make install
 
 Cleanup development environment:
 
 .. code-block:: sh
 
-    ./scripts/clean.sh
+    make clean
 
 Run tests:
 
 .. code-block:: sh
 
-    ./scripts/karma.sh
+    make wtr
 
 To view coverage report, open in browser::
 
-    karma/coverage/[browser name]/index.html
+    coverage/lcov-report/index.html
 
 Create Javascript bundles:
 
 .. code-block:: sh
 
-    ./scripts/rollup.sh
+    make rollup
 
 Automatically build JS bundles while development:
 
@@ -56,4 +56,4 @@ Build documentation:
 
 .. code-block:: sh
 
-    ./scripts/docs.sh
+    make docs
