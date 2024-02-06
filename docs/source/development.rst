@@ -26,13 +26,13 @@ Run tests:
 
 To view coverage report, open in browser::
 
-    coverage/[browser name]/index.html
+    coverage/lcov-report/index.html
 
 Create Javascript bundles:
 
 .. code-block:: sh
 
-    ./scripts/rollup.sh
+    make rollup
 
 Automatically build JS bundles while development:
 
@@ -56,4 +56,4 @@ Build documentation:
 
 .. code-block:: sh
 
-    ./scripts/docs.sh
+    make docs
