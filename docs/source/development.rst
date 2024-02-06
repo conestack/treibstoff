@@ -10,23 +10,23 @@ Install development environment:
 
 .. code-block:: sh
 
-    ./scripts/install.sh
+    make install
 
 Cleanup development environment:
 
 .. code-block:: sh
 
-    ./scripts/clean.sh
+    make clean
 
 Run tests:
 
 .. code-block:: sh
 
-    ./scripts/karma.sh
+    make wtr
 
 To view coverage report, open in browser::
 
-    karma/coverage/[browser name]/index.html
+    coverage/[browser name]/index.html
 
 Create Javascript bundles:
 

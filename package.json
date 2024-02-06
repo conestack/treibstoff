@@ -11,9 +11,10 @@
         "install": "^0.13.0",
         "jquery": "github:jquery/jquery#2b6b5e0a3ba3029ec3ad1525a178920765e3adf1",
         "jsdoc": "^3.6.11",
+        "karma-qunit": "^4.1.2",
         "qunit": "^2.20.0",
-        "rollup-plugin-cleanup": "^3.2.1",
         "rollup": "^2.79.1",
+        "rollup-plugin-cleanup": "^3.2.1",
         "web-test-runner-qunit": "^1.0.0"
     }
 }

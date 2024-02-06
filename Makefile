@@ -8,9 +8,9 @@
 #: core.packages
 #: docs.jsdoc
 #: docs.sphinx
-#: js.karma
 #: js.npm
 #: js.rollup
+#: js.wtr
 #: system.dependencies
 #
 # SETTINGS (ALL CHANGES MADE BELOW SETTINGS WILL BE LOST)
@@ -31,7 +31,7 @@ RUN_TARGET?=
 CLEAN_FS?=build \
 	bundle \
 	dist \
-	karma \
+	coverage \
 	treibstoff-* \
 	treibstoff.egg-info
 
@@ -54,7 +54,7 @@ NPM_PACKAGES?=
 # No default value.
 NPM_DEV_PACKAGES?=\
 	qunit \
-	karma-qunit \
+	web-test-runner-qunit \
 	git://github.com/jquery/jquery.git\#2b6b5e0a3ba3029ec3ad1525a178920765e3adf1
 
 # Packages which get installed with `--save-prod` option.
@@ -76,21 +76,21 @@ NPM_INSTALL_OPTS?=
 # No default value.
 SYSTEM_DEPENDENCIES?=
 
+## js.wtr
+
+# Web test runner config file.
+# Default: wtr.config.mjs
+WTR_CONFIG?=wtr.config.mjs
+
+# Web test runner additional command line options.
+# Default: --coverage
+WTR_OPTIONS?=--coverage
+
 ## js.rollup
 
 # Rollup config file.
 # Default: rollup.conf.js
 ROLLUP_CONFIG?=rollup.conf.js
-
-## js.karma
-
-# Karma config file.
-# Default: karma.conf.js
-KARMA_CONFIG?=karma.conf.js
-
-# Karma additional command line options.
-# Default: --single-run
-KARMA_OPTIONS?=--single-run
 
 ## core.mxenv
 
@@ -240,6 +240,19 @@ system-dependencies:
 		|| sudo apt-get install -y $(SYSTEM_DEPENDENCIES)
 
 ##############################################################################
+# web test runner
+##############################################################################
+
+# extend npm dev packages
+NPM_DEV_PACKAGES+=\
+	@web/test-runner \
+	@web/dev-server-import-maps
+
+.PHONY: wtr
+wtr: $(NPM_TARGET)
+	@$(NPM_PREFIX)/node_modules/.bin/web-test-runner $(WTR_OPTIONS) --config $(WTR_CONFIG)
+
+##############################################################################
 # rollup
 ##############################################################################
 
@@ -252,21 +265,6 @@ NPM_DEV_PACKAGES+=\
 .PHONY: rollup
 rollup: $(NPM_TARGET)
 	@$(NPM_PREFIX)/node_modules/.bin/rollup --config $(ROLLUP_CONFIG)
-
-##############################################################################
-# karma
-##############################################################################
-
-# extend npm dev packages
-NPM_DEV_PACKAGES+=\
-	karma \
-	karma-coverage \
-	karma-chrome-launcher \
-	karma-module-resolver-preprocessor
-
-.PHONY: karma
-karma: $(NPM_TARGET)
-	@$(NPM_PREFIX)/node_modules/.bin/karma start $(KARMA_CONFIG) $(KARMA_OPTIONS)
 
 ##############################################################################
 # jsdoc
@@ -282,7 +280,7 @@ $(JSDOC_TARGET): $(NPM_TARGET)
 
 .PHONY: jsdoc
 jsdoc: $(JSDOC_TARGET)
-	@export PATH=$PATH:$(JSDOC_PATH)
+	@export PATH=$(PATH):$(JSDOC_PATH)
 
 # extend npm dev packages
 NPM_DEV_PACKAGES+=jsdoc
