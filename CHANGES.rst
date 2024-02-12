@@ -1,7 +1,7 @@
 Changes
 =======
 
-0.4.0 (unreleased)
+0.4.0 (2024-02-12)
 ------------------
 
 - Use web test runner instead of deprecated karma.
