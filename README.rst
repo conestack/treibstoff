@@ -26,7 +26,7 @@ The sources are in a GIT DVCS with its main branches at
 Copyright
 ---------
 
-- Copyright (c) 2021-2022 Cone Contributors
+- Copyright (c) 2021-2024 Cone Contributors
 
 
 Contributors

@@ -2,13 +2,12 @@
 /.github/
 /.mxmake/
 /.readthedocs.yaml
-/MANIFEST.in
-/Makefile
-/TODO.rst
 /build/
+/coverage/
 /dist/
 /docs/
-/coverage/
+/Makefile
+/MANIFEST.in
 /mx.ini
 /node_modules/
 /requirements-mxdev.txt
@@ -16,7 +15,9 @@
 /scripts/
 /setup.cfg
 /setup.py
+/TODO.rst
 /treibstoff-*.tgz
 /treibstoff.egg-info/
 /treibstoff/
 /venv/
+/wtr.config.mjs
