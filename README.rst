@@ -5,6 +5,10 @@ Treibstoff
     :target: https://pypi.python.org/pypi/treibstoff
     :alt: Latest PyPI version
 
+. image:: https://github.com/conestack/treibstoff/actions/workflows/test.yml/badge.svg
+    :target: https://github.com/conestack/treibstoff/actions/workflows/test.yml
+    :alt: Test treibstoff
+
 Treibstoff contains a set of useful javascript tools for writing browser based
 applications (or parts of it).
 
