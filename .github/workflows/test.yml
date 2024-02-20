@@ -13,7 +13,7 @@ jobs:
 
       - name: Install
         run: |
-          make install
+          make npm
 
       - name: Run tests
         run: |

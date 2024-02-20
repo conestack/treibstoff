@@ -5,7 +5,7 @@ Treibstoff
     :target: https://pypi.python.org/pypi/treibstoff
     :alt: Latest PyPI version
 
-. image:: https://github.com/conestack/treibstoff/actions/workflows/test.yml/badge.svg
+.. image:: https://github.com/conestack/treibstoff/actions/workflows/test.yml/badge.svg
     :target: https://github.com/conestack/treibstoff/actions/workflows/test.yml
     :alt: Test treibstoff
 
