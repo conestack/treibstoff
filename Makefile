@@ -94,16 +94,17 @@ ROLLUP_CONFIG?=rollup.conf.js
 
 ## core.mxenv
 
-# Python interpreter to use.
+# Primary Python interpreter to use. It is used to create the
+# virtual environment if `VENV_ENABLED` and `VENV_CREATE` are set to `true`.
 # Default: python3
-PYTHON_BIN?=python3
+PRIMARY_PYTHON?=python3
 
 # Minimum required Python version.
 # Default: 3.7
 PYTHON_MIN_VERSION?=3.7
 
 # Flag whether to use virtual environment. If `false`, the
-# interpreter according to `PYTHON_BIN` found in `PATH` is used.
+# interpreter according to `PRIMARY_PYTHON` found in `PATH` is used.
 # Default: true
 VENV_ENABLED?=true
 
@@ -182,6 +183,8 @@ $(SENTINEL):
 # npm
 ##############################################################################
 
+export PATH:=$(shell pwd)/$(NPM_PREFIX)/node_modules/.bin/:$(PATH)
+
 # case `system.dependencies` domain is included
 SYSTEM_DEPENDENCIES+=npm
 
@@ -250,7 +253,7 @@ NPM_DEV_PACKAGES+=\
 
 .PHONY: wtr
 wtr: $(NPM_TARGET)
-	@$(NPM_PREFIX)/node_modules/.bin/web-test-runner $(WTR_OPTIONS) --config $(WTR_CONFIG)
+	@web-test-runner $(WTR_OPTIONS) --config $(WTR_CONFIG)
 
 ##############################################################################
 # rollup
@@ -264,45 +267,29 @@ NPM_DEV_PACKAGES+=\
 
 .PHONY: rollup
 rollup: $(NPM_TARGET)
-	@$(NPM_PREFIX)/node_modules/.bin/rollup --config $(ROLLUP_CONFIG)
+	@rollup --config $(ROLLUP_CONFIG)
 
 ##############################################################################
 # jsdoc
 ##############################################################################
-
-JSDOC_PATH=$(shell pwd)/$(NPM_PREFIX)/node_modules/jsdoc
-
-JSDOC_TARGET:=$(SENTINEL_FOLDER)/jsdoc.sentinel
-$(JSDOC_TARGET): $(NPM_TARGET)
-	@echo "Link jsdoc executable to name expected by Sphinx"
-	@ln -sf $(JSDOC_PATH)/jsdoc.js $(JSDOC_PATH)/jsdoc
-	@touch $(JSDOC_TARGET)
-
-.PHONY: jsdoc
-jsdoc: $(JSDOC_TARGET)
-	@export PATH=$(PATH):$(JSDOC_PATH)
 
 # extend npm dev packages
 NPM_DEV_PACKAGES+=jsdoc
 
 # extend sphinx requirements and docs targets
 DOCS_REQUIREMENTS+=sphinx_js
-DOCS_TARGETS+=jsdoc
-
-# extend default targets
-INSTALL_TARGETS+=$(JSDOC_TARGET)
 
 ##############################################################################
 # mxenv
 ##############################################################################
 
 # Check if given Python is installed
-ifeq (,$(shell which $(PYTHON_BIN)))
-$(error "PYTHON=$(PYTHON_BIN) not found in $(PATH)")
+ifeq (,$(shell which $(PRIMARY_PYTHON)))
+$(error "PYTHON=$(PRIMARY_PYTHON) not found in $(PATH)")
 endif
 
 # Check if given Python version is ok
-PYTHON_VERSION_OK=$(shell $(PYTHON_BIN) -c "import sys; print((int(sys.version_info[0]), int(sys.version_info[1])) >= tuple(map(int, '$(PYTHON_MIN_VERSION)'.split('.'))))")
+PYTHON_VERSION_OK=$(shell $(PRIMARY_PYTHON) -c "import sys; print((int(sys.version_info[0]), int(sys.version_info[1])) >= tuple(map(int, '$(PYTHON_MIN_VERSION)'.split('.'))))")
 ifeq ($(PYTHON_VERSION_OK),0)
 $(error "Need Python >= $(PYTHON_MIN_VERSION)")
 endif
@@ -314,9 +301,11 @@ endif
 
 # determine the executable path
 ifeq ("$(VENV_ENABLED)", "true")
-MXENV_PATH=$(VENV_FOLDER)/bin/
+export PATH:=$(shell pwd)/$(VENV_FOLDER)/bin/:$(PATH)
+export VIRTUAL_ENV=$(VENV_FOLDER)
+MXENV_PYTHON=python
 else
-MXENV_PATH=
+MXENV_PYTHON=$(PRIMARY_PYTHON)
 endif
 
 MXENV_TARGET:=$(SENTINEL_FOLDER)/mxenv.sentinel
@@ -324,12 +313,13 @@ $(MXENV_TARGET): $(SENTINEL)
 ifeq ("$(VENV_ENABLED)", "true")
 ifeq ("$(VENV_CREATE)", "true")
 	@echo "Setup Python Virtual Environment under '$(VENV_FOLDER)'"
-	@$(PYTHON_BIN) -m venv $(VENV_FOLDER)
+	@$(PRIMARY_PYTHON) -m venv $(VENV_FOLDER)
 endif
 endif
-	@$(MXENV_PATH)pip install -U pip setuptools wheel
-	@$(MXENV_PATH)pip install -U $(MXDEV)
-	@$(MXENV_PATH)pip install -U $(MXMAKE)
+	@$(MXENV_PYTHON) -m ensurepip -U
+	@$(MXENV_PYTHON) -m pip install -U pip setuptools wheel
+	@$(MXENV_PYTHON) -m pip install -U $(MXDEV)
+	@$(MXENV_PYTHON) -m pip install -U $(MXMAKE)
 	@touch $(MXENV_TARGET)
 
 .PHONY: mxenv
@@ -346,8 +336,8 @@ ifeq ("$(VENV_CREATE)", "true")
 	@rm -rf $(VENV_FOLDER)
 endif
 else
-	@$(MXENV_PATH)pip uninstall -y $(MXDEV)
-	@$(MXENV_PATH)pip uninstall -y $(MXMAKE)
+	@$(MXENV_PYTHON) -m pip uninstall -y $(MXDEV)
+	@$(MXENV_PYTHON) -m pip uninstall -y $(MXMAKE)
 endif
 
 INSTALL_TARGETS+=mxenv
@@ -361,13 +351,13 @@ CLEAN_TARGETS+=mxenv-clean
 # additional targets required for building docs.
 DOCS_TARGETS+=
 
-SPHINX_BIN=$(MXENV_PATH)sphinx-build
-SPHINX_AUTOBUILD_BIN=$(MXENV_PATH)sphinx-autobuild
+SPHINX_BIN=sphinx-build
+SPHINX_AUTOBUILD_BIN=sphinx-autobuild
 
 DOCS_TARGET:=$(SENTINEL_FOLDER)/sphinx.sentinel
 $(DOCS_TARGET): $(MXENV_TARGET)
 	@echo "Install Sphinx"
-	@$(MXENV_PATH)pip install -U sphinx sphinx-autobuild $(DOCS_REQUIREMENTS)
+	@$(MXENV_PYTHON) -m pip install -U sphinx sphinx-autobuild $(DOCS_REQUIREMENTS)
 	@touch $(DOCS_TARGET)
 
 .PHONY: docs
@@ -386,6 +376,8 @@ docs-dirty:
 
 .PHONY: docs-clean
 docs-clean: docs-dirty
+	@test -e $(MXENV_PYTHON) && $(MXENV_PYTHON) -m pip uninstall -y \
+		sphinx sphinx-autobuild $(DOCS_REQUIREMENTS) || :
 	@rm -rf $(DOCS_TARGET_FOLDER)
 
 INSTALL_TARGETS+=$(DOCS_TARGET)
@@ -404,13 +396,11 @@ MXMAKE_FILES?=$(MXMAKE_FOLDER)/files
 
 # set environment variables for mxmake
 define set_mxfiles_env
-	@export MXMAKE_MXENV_PATH=$(1)
-	@export MXMAKE_FILES=$(2)
+	@export MXMAKE_FILES=$(1)
 endef
 
 # unset environment variables for mxmake
 define unset_mxfiles_env
-	@unset MXMAKE_MXENV_PATH
 	@unset MXMAKE_FILES
 endef
 
@@ -427,9 +417,9 @@ FILES_TARGET:=requirements-mxdev.txt
 $(FILES_TARGET): $(PROJECT_CONFIG) $(MXENV_TARGET) $(SOURCES_TARGET) $(LOCAL_PACKAGE_FILES)
 	@echo "Create project files"
 	@mkdir -p $(MXMAKE_FILES)
-	$(call set_mxfiles_env,$(MXENV_PATH),$(MXMAKE_FILES))
-	@$(MXENV_PATH)mxdev -n -c $(PROJECT_CONFIG)
-	$(call unset_mxfiles_env,$(MXENV_PATH),$(MXMAKE_FILES))
+	$(call set_mxfiles_env,$(MXMAKE_FILES))
+	@mxdev -n -c $(PROJECT_CONFIG)
+	$(call unset_mxfiles_env)
 	@test -e $(MXMAKE_FILES)/pip.conf && cp $(MXMAKE_FILES)/pip.conf $(VENV_FOLDER)/pip.conf || :
 	@touch $(FILES_TARGET)
 
@@ -461,8 +451,8 @@ INSTALLED_PACKAGES=$(MXMAKE_FILES)/installed.txt
 PACKAGES_TARGET:=$(INSTALLED_PACKAGES)
 $(PACKAGES_TARGET): $(FILES_TARGET) $(ADDITIONAL_SOURCES_TARGETS)
 	@echo "Install python packages"
-	@$(MXENV_PATH)pip install -r $(FILES_TARGET)
-	@$(MXENV_PATH)pip freeze > $(INSTALLED_PACKAGES)
+	@$(MXENV_PYTHON) -m pip install -r $(FILES_TARGET)
+	@$(MXENV_PYTHON) -m pip freeze > $(INSTALLED_PACKAGES)
 	@touch $(PACKAGES_TARGET)
 
 .PHONY: packages
@@ -475,8 +465,8 @@ packages-dirty:
 .PHONY: packages-clean
 packages-clean:
 	@test -e $(FILES_TARGET) \
-		&& test -e $(MXENV_PATH)pip \
-		&& $(MXENV_PATH)pip uninstall -y -r $(FILES_TARGET) \
+		&& test -e $(MXENV_PYTHON) \
+		&& $(MXENV_PYTHON) -m pip uninstall -y -r $(FILES_TARGET) \
 		|| :
 	@rm -f $(PACKAGES_TARGET)
 
