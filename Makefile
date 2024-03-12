@@ -109,6 +109,20 @@ PRIMARY_PYTHON?=python3
 # Default: 3.7
 PYTHON_MIN_VERSION?=3.7
 
+# Install packages using the given package installer method.
+# Supported are `pip` and `uv`. If uv is used, its global availability is
+# checked. Otherwise, it is installed, either in the virtual environment or
+# using the `PRIMARY_PYTHON`, dependent on the `VENV_ENABLED` setting. If
+# `VENV_ENABLED` and uv is selected, uv is used to create the virtual
+# environment.
+# Default: pip
+PYTHON_PACKAGE_INSTALLER?=pip
+
+# Flag whether to use a global installed 'uv' or install
+# it in the virtual environment.
+# Default: false
+MXENV_UV_GLOBAL?=false
+
 # Flag whether to use virtual environment. If `false`, the
 # interpreter according to `PRIMARY_PYTHON` found in `PATH` is used.
 # Default: true
@@ -125,7 +139,7 @@ VENV_CREATE?=true
 # target folder for the virtual environment. If `VENV_ENABLED` is `true` and
 # `VENV_CREATE` is false it is expected to point to an existing virtual
 # environment. If `VENV_ENABLED` is `false` it is ignored.
-# Default: venv
+# Default: .venv
 VENV_FOLDER?=venv
 
 # mxdev to install in virtual environment.
@@ -156,6 +170,13 @@ DOCS_REQUIREMENTS?=sphinx-conestack-theme
 # Default: mx.ini
 PROJECT_CONFIG?=mx.ini
 
+## core.packages
+
+# Allow prerelease and development versions.
+# By default, the package installer only finds stable versions.
+# Default: false
+PACKAGES_ALLOW_PRERELEASES?=false
+
 ##############################################################################
 # END SETTINGS - DO NOT EDIT BELOW THIS LINE
 ##############################################################################
@@ -165,7 +186,7 @@ DIRTY_TARGETS?=
 CLEAN_TARGETS?=
 PURGE_TARGETS?=
 
-export PATH:=$(if $(EXTRA_PATH),"$(EXTRA_PATH):","")$(PATH)
+export PATH:=$(if $(EXTRA_PATH),$(EXTRA_PATH):,)$(PATH)
 
 # Defensive settings for make: https://tech.davis-hansson.com/p/make/
 SHELL:=bash
@@ -307,27 +328,55 @@ ifeq ($(shell [[ "$(VENV_ENABLED)" == "true" && "$(VENV_FOLDER)" == "" ]] && ech
 $(error "VENV_FOLDER must be configured if VENV_ENABLED is true")
 endif
 
-# determine the executable path
+# Check if global python is used with uv (this is not supported by uv)
+ifeq ("$(VENV_ENABLED)$(PYTHON_PACKAGE_INSTALLER)","falseuv")
+$(error "Package installer uv does not work with a global Python interpreter.")
+endif
+
+# Determine the executable path
 ifeq ("$(VENV_ENABLED)", "true")
-export PATH:=$(shell pwd)/$(VENV_FOLDER)/bin:$(PATH)
-export VIRTUAL_ENV=$(VENV_FOLDER)
+export VIRTUAL_ENV=$(abspath $(VENV_FOLDER))
+ifeq ("$(OS)", "Windows_NT")
+VENV_EXECUTABLE_FOLDER=$(VIRTUAL_ENV)/Scripts
+else
+VENV_EXECUTABLE_FOLDER=$(VIRTUAL_ENV)/bin
+endif
+export PATH:=$(VENV_EXECUTABLE_FOLDER):$(PATH)
 MXENV_PYTHON=python
 else
 MXENV_PYTHON=$(PRIMARY_PYTHON)
+endif
+
+# Determine the package installer
+ifeq ("$(PYTHON_PACKAGE_INSTALLER)","uv")
+PYTHON_PACKAGE_COMMAND=uv pip
+else
+PYTHON_PACKAGE_COMMAND=$(MXENV_PYTHON) -m pip
 endif
 
 MXENV_TARGET:=$(SENTINEL_FOLDER)/mxenv.sentinel
 $(MXENV_TARGET): $(SENTINEL)
 ifeq ("$(VENV_ENABLED)", "true")
 ifeq ("$(VENV_CREATE)", "true")
-	@echo "Setup Python Virtual Environment under '$(VENV_FOLDER)'"
+ifeq ("$(PYTHON_PACKAGE_INSTALLER)$(MXENV_UV_GLOBAL)","uvtrue")
+	@echo "Setup Python Virtual Environment using package 'uv' at '$(VENV_FOLDER)'"
+	@uv venv -p $(PRIMARY_PYTHON) --seed $(VENV_FOLDER)
+else
+	@echo "Setup Python Virtual Environment using module 'venv' at '$(VENV_FOLDER)'"
 	@$(PRIMARY_PYTHON) -m venv $(VENV_FOLDER)
-endif
-endif
 	@$(MXENV_PYTHON) -m ensurepip -U
-	@$(MXENV_PYTHON) -m pip install -U pip setuptools wheel
-	@$(MXENV_PYTHON) -m pip install -U $(MXDEV)
-	@$(MXENV_PYTHON) -m pip install -U $(MXMAKE)
+endif
+endif
+else
+	@echo "Using system Python interpreter"
+endif
+ifeq ("$(PYTHON_PACKAGE_INSTALLER)$(MXENV_UV_GLOBAL)","uvfalse")
+	@echo "Install uv"
+	@$(MXENV_PYTHON) -m pip install uv
+endif
+	@$(PYTHON_PACKAGE_COMMAND) install -U pip setuptools wheel
+	@echo "Install/Update MXStack Python packages"
+	@$(PYTHON_PACKAGE_COMMAND) install -U $(MXDEV) $(MXMAKE)
 	@touch $(MXENV_TARGET)
 
 .PHONY: mxenv
@@ -344,8 +393,8 @@ ifeq ("$(VENV_CREATE)", "true")
 	@rm -rf $(VENV_FOLDER)
 endif
 else
-	@$(MXENV_PYTHON) -m pip uninstall -y $(MXDEV)
-	@$(MXENV_PYTHON) -m pip uninstall -y $(MXMAKE)
+	@$(PYTHON_PACKAGE_COMMAND) uninstall -y $(MXDEV)
+	@$(PYTHON_PACKAGE_COMMAND) uninstall -y $(MXMAKE)
 endif
 
 INSTALL_TARGETS+=mxenv
@@ -365,7 +414,7 @@ SPHINX_AUTOBUILD_BIN=sphinx-autobuild
 DOCS_TARGET:=$(SENTINEL_FOLDER)/sphinx.sentinel
 $(DOCS_TARGET): $(MXENV_TARGET)
 	@echo "Install Sphinx"
-	@$(MXENV_PYTHON) -m pip install -U sphinx sphinx-autobuild $(DOCS_REQUIREMENTS)
+	@$(PYTHON_PACKAGE_COMMAND) install -U sphinx sphinx-autobuild $(DOCS_REQUIREMENTS)
 	@touch $(DOCS_TARGET)
 
 .PHONY: docs
@@ -456,11 +505,21 @@ ADDITIONAL_SOURCES_TARGETS?=
 
 INSTALLED_PACKAGES=$(MXMAKE_FILES)/installed.txt
 
+ifeq ("$(PACKAGES_ALLOW_PRERELEASES)","true")
+ifeq ("$(PYTHON_PACKAGE_INSTALLER)","uv")
+PACKAGES_PRERELEASES=--prerelease=allow
+else
+PACKAGES_PRERELEASES=--pre
+endif
+else
+PACKAGES_PRERELEASES=
+endif
+
 PACKAGES_TARGET:=$(INSTALLED_PACKAGES)
 $(PACKAGES_TARGET): $(FILES_TARGET) $(ADDITIONAL_SOURCES_TARGETS)
 	@echo "Install python packages"
-	@$(MXENV_PYTHON) -m pip install -r $(FILES_TARGET)
-	@$(MXENV_PYTHON) -m pip freeze > $(INSTALLED_PACKAGES)
+	@$(PYTHON_PACKAGE_COMMAND) install $(PACKAGES_PRERELEASES) -r $(FILES_TARGET)
+	@$(PYTHON_PACKAGE_COMMAND) freeze > $(INSTALLED_PACKAGES)
 	@touch $(PACKAGES_TARGET)
 
 .PHONY: packages
