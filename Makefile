@@ -58,10 +58,7 @@ NPM_PACKAGES?=
 
 # Packages which get installed with `--save-dev` option.
 # No default value.
-NPM_DEV_PACKAGES?=\
-	qunit \
-	web-test-runner-qunit \
-	git://github.com/jquery/jquery.git\#2b6b5e0a3ba3029ec3ad1525a178920765e3adf1
+NPM_DEV_PACKAGES?=
 
 # Packages which get installed with `--save-prod` option.
 # No default value.

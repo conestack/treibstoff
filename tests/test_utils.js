@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import {
     create_cookie,
     create_svg_elem,
