@@ -6,8 +6,8 @@
     "main": "src/treibstoff.js",
     "devDependencies": {
         "@rollup/plugin-terser": "^0.4.4",
-        "@web/dev-server-import-maps": "^0.2.0",
-        "@web/test-runner": "^0.18.1",
+        "@web/dev-server-import-maps": "^0.2.1",
+        "@web/test-runner": "^0.18.2",
         "install": "^0.13.0",
         "jquery": "^4.0.0-beta",
         "jsdoc": "^3.6.11",
