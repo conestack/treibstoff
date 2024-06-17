@@ -8,10 +8,9 @@
 #: core.packages
 #: docs.jsdoc
 #: docs.sphinx
-#: js.npm
+#: js.nodejs
 #: js.rollup
 #: js.wtr
-#: system.dependencies
 #
 # SETTINGS (ALL CHANGES MADE BELOW SETTINGS WILL BE LOST)
 ##############################################################################
@@ -46,38 +45,37 @@ INCLUDE_MAKEFILE?=include.mk
 # No default value.
 EXTRA_PATH?=
 
-## js.npm
+## js.nodejs
 
-# Value for `--prefix` option.
+# The package manager to use. Defaults to `npm`. Possible values
+# are `npm` and `pnpm`
+# Default: npm
+NODEJS_PACKAGE_MANAGER?=pnpm
+
+# Value for `--prefix` option when installing packages.
 # Default: .
-NPM_PREFIX?=.
+NODEJS_PREFIX?=.
 
-# Packages which get installed with `--no-save` option.
+# Packages to install with `--no-save` option.
 # No default value.
-NPM_PACKAGES?=
+NODEJS_PACKAGES?=
 
-# Packages which get installed with `--save-dev` option.
+# Packages to install with `--save-dev` option.
 # No default value.
-NPM_DEV_PACKAGES?=
+NODEJS_DEV_PACKAGES?=
 
-# Packages which get installed with `--save-prod` option.
+# Packages to install with `--save-prod` option.
 # No default value.
-NPM_PROD_PACKAGES?=
+NODEJS_PROD_PACKAGES?=
 
-# Packages which get installed with `--save-optional` option.
+# Packages to install with `--save-optional` option.
 # No default value.
-NPM_OPT_PACKAGES?=
+NODEJS_OPT_PACKAGES?=
 
 # Additional install options. Possible values are `--save-exact`
 # and `--save-bundle`.
 # No default value.
-NPM_INSTALL_OPTS?=
-
-## system.dependencies
-
-# Space separated system package names.
-# No default value.
-SYSTEM_DEPENDENCIES?=
+NODEJS_INSTALL_OPTS?=
 
 ## js.wtr
 
@@ -206,103 +204,85 @@ $(SENTINEL): $(firstword $(MAKEFILE_LIST))
 	@echo "Sentinels for the Makefile process." > $(SENTINEL)
 
 ##############################################################################
-# npm
+# nodejs
 ##############################################################################
 
-export PATH:=$(shell pwd)/$(NPM_PREFIX)/node_modules/.bin:$(PATH)
+export PATH:=$(shell pwd)/$(NODEJS_PREFIX)/node_modules/.bin:$(PATH)
 
-# case `system.dependencies` domain is included
-SYSTEM_DEPENDENCIES+=npm
 
-NPM_TARGET:=$(SENTINEL_FOLDER)/npm.sentinel
-$(NPM_TARGET): $(SENTINEL)
-	@echo "Install npm packages"
-	@test -z "$(NPM_DEV_PACKAGES)" \
+NODEJS_TARGET:=$(SENTINEL_FOLDER)/nodejs.sentinel
+$(NODEJS_TARGET): $(SENTINEL)
+	@echo "Install nodejs packages"
+	@test -z "$(NODEJS_DEV_PACKAGES)" \
 		&& echo "No dev packages to be installed" \
-		|| npm --prefix $(NPM_PREFIX) install \
+		|| $(NODEJS_PACKAGE_MANAGER) --prefix $(NODEJS_PREFIX) install \
 			--save-dev \
-			$(NPM_INSTALL_OPTS) \
-			$(NPM_DEV_PACKAGES)
-	@test -z "$(NPM_PROD_PACKAGES)" \
+			$(NODEJS_INSTALL_OPTS) \
+			$(NODEJS_DEV_PACKAGES)
+	@test -z "$(NODEJS_PROD_PACKAGES)" \
 		&& echo "No prod packages to be installed" \
-		|| npm --prefix $(NPM_PREFIX) install \
+		|| $(NODEJS_PACKAGE_MANAGER) --prefix $(NODEJS_PREFIX) install \
 			--save-prod \
-			$(NPM_INSTALL_OPTS) \
-			$(NPM_PROD_PACKAGES)
-	@test -z "$(NPM_OPT_PACKAGES)" \
+			$(NODEJS_INSTALL_OPTS) \
+			$(NODEJS_PROD_PACKAGES)
+	@test -z "$(NODEJS_OPT_PACKAGES)" \
 		&& echo "No opt packages to be installed" \
-		|| npm --prefix $(NPM_PREFIX) install \
+		|| $(NODEJS_PACKAGE_MANAGER) --prefix $(NODEJS_PREFIX) install \
 			--save-optional \
-			$(NPM_INSTALL_OPTS) \
-			$(NPM_OPT_PACKAGES)
-	@test -z "$(NPM_PACKAGES)" \
+			$(NODEJS_INSTALL_OPTS) \
+			$(NODEJS_OPT_PACKAGES)
+	@test -z "$(NODEJS_PACKAGES)" \
 		&& echo "No packages to be installed" \
-		|| npm --prefix $(NPM_PREFIX) install \
+		|| $(NODEJS_PACKAGE_MANAGER) --prefix $(NODEJS_PREFIX) install \
 			--no-save \
-			$(NPM_PACKAGES)
-	@touch $(NPM_TARGET)
+			$(NODEJS_PACKAGES)
+	@touch $(NODEJS_TARGET)
 
-.PHONY: npm
-npm: $(NPM_TARGET)
+.PHONY: nodejs
+nodejs: $(NODEJS_TARGET)
 
-.PHONY: npm-dirty
-npm-dirty:
-	@rm -f $(NPM_TARGET)
+.PHONY: nodejs-dirty
+nodejs-dirty:
+	@rm -f $(NODEJS_TARGET)
 
-.PHONY: npm-clean
-npm-clean: npm-dirty
-	@rm -rf $(NPM_PREFIX)/node_modules
+.PHONY: nodejs-clean
+nodejs-clean: nodejs-dirty
+	@rm -rf $(NODEJS_PREFIX)/node_modules
 
-INSTALL_TARGETS+=npm
-DIRTY_TARGETS+=npm-dirty
-CLEAN_TARGETS+=npm-clean
-
-##############################################################################
-# system dependencies
-##############################################################################
-
-.PHONY: system-dependencies
-system-dependencies:
-	@echo "Install system dependencies"
-	@test -z "$(SYSTEM_DEPENDENCIES)" && echo "No System dependencies defined"
-	@test -z "$(SYSTEM_DEPENDENCIES)" \
-		|| sudo apt-get install -y $(SYSTEM_DEPENDENCIES)
+INSTALL_TARGETS+=nodejs
+DIRTY_TARGETS+=nodejs-dirty
+CLEAN_TARGETS+=nodejs-clean
 
 ##############################################################################
 # web test runner
 ##############################################################################
 
-# extend npm dev packages
-NPM_DEV_PACKAGES+=\
+NODEJS_DEV_PACKAGES+=\
 	@web/test-runner \
 	@web/dev-server-import-maps
 
 .PHONY: wtr
-wtr: $(NPM_TARGET)
+wtr: $(NODEJS_TARGET)
 	@web-test-runner $(WTR_OPTIONS) --config $(WTR_CONFIG)
 
 ##############################################################################
 # rollup
 ##############################################################################
 
-# extend npm dev packages
-NPM_DEV_PACKAGES+=\
+NODEJS_DEV_PACKAGES+=\
 	rollup \
 	rollup-plugin-cleanup \
 	@rollup/plugin-terser
 
 .PHONY: rollup
-rollup: $(NPM_TARGET)
+rollup: $(NODEJS_TARGET)
 	@rollup --config $(ROLLUP_CONFIG)
 
 ##############################################################################
 # jsdoc
 ##############################################################################
 
-# extend npm dev packages
-NPM_DEV_PACKAGES+=jsdoc
-
-# extend sphinx requirements and docs targets
+NODEJS_DEV_PACKAGES+=jsdoc
 DOCS_REQUIREMENTS+=sphinx_js
 
 ##############################################################################
