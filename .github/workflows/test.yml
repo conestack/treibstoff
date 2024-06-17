@@ -13,6 +13,7 @@ jobs:
 
       - name: Install
         run: |
+          corepack enable
           make nodejs
 
       - name: Run tests
