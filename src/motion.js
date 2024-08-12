@@ -78,7 +78,6 @@ export class Motion extends Events {
     }
 
     _touchstart(evt) {
-        evt.stopPropagation();
         let touch = evt.originalEvent.touches[0];
         this._motion = false;
         this._prev_pos = {
@@ -95,7 +94,6 @@ export class Motion extends Events {
     }
 
     _touchmove(evt) {
-        evt.stopPropagation();
         let touch = evt.originalEvent.touches[0];
         this._motion = true;
         evt.motion = this._motion;

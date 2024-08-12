@@ -1595,7 +1595,6 @@ var ts = (function (exports, $) {
             this.reset_state();
         }
         _touchstart(evt) {
-            evt.stopPropagation();
             let touch = evt.originalEvent.touches[0];
             this._motion = false;
             this._prev_pos = {
@@ -1611,7 +1610,6 @@ var ts = (function (exports, $) {
             this.trigger('touchstart', evt);
         }
         _touchmove(evt) {
-            evt.stopPropagation();
             let touch = evt.originalEvent.touches[0];
             this._motion = true;
             evt.motion = this._motion;
