@@ -101,8 +101,8 @@ ROLLUP_CONFIG?=rollup.conf.js
 PRIMARY_PYTHON?=python3
 
 # Minimum required Python version.
-# Default: 3.7
-PYTHON_MIN_VERSION?=3.7
+# Default: 3.9
+PYTHON_MIN_VERSION?=3.9
 
 # Install packages using the given package installer method.
 # Supported are `pip` and `uv`. If uv is used, its global availability is
@@ -111,7 +111,7 @@ PYTHON_MIN_VERSION?=3.7
 # `VENV_ENABLED` and uv is selected, uv is used to create the virtual
 # environment.
 # Default: pip
-PYTHON_PACKAGE_INSTALLER?=pip
+PYTHON_PACKAGE_INSTALLER?=uv
 
 # Flag whether to use a global installed 'uv' or install
 # it in the virtual environment.
@@ -504,6 +504,10 @@ packages-clean:
 INSTALL_TARGETS+=packages
 DIRTY_TARGETS+=packages-dirty
 CLEAN_TARGETS+=packages-clean
+
+##############################################################################
+# Custom includes
+##############################################################################
 
 -include $(INCLUDE_MAKEFILE)
 

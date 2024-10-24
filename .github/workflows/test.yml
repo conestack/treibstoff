@@ -9,13 +9,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Install
-        run: |
-          corepack enable
-          make nodejs
+    - name: Install
+      run: |
+        corepack enable
+        make nodejs
 
-      - name: Run tests
-        run: |
-          make wtr
+    - name: Run tests
+      run: make wtr
