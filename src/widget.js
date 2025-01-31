@@ -253,7 +253,7 @@ export class Button extends ClickListener {
      */
     constructor(opts) {
         super(opts);
-        this.unselected_class = 'btn-default';
+        this.unselected_class = 'btn-primary';
         this.selected_class = 'btn-success';
     }
 

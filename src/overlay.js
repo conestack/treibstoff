@@ -27,7 +27,7 @@ export class Overlay extends Events {
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button class="close" t-prop="close_btn" t-bind-click="close">
+                  <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close" t-prop="close_btn" t-bind-click="close">
                     <span aria-hidden="true">&times;</span>
                     <span class="sr-only">Close</span>
                   </button>
@@ -94,7 +94,7 @@ export class Message extends Overlay {
 
     compile_actions() {
         compile_template(this, `
-          <button class="close btn btn-default allowMultiSubmit"
+          <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
         `, this.footer);
     }
@@ -182,9 +182,9 @@ export class Dialog extends Message {
 
     compile_actions() {
         compile_template(this, `
-          <button class="ok btn btn-default allowMultiSubmit"
+          <button class="ok btn btn-primary allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
-          <button class="cancel btn btn-default allowMultiSubmit"
+          <button class="cancel btn btn-outline-primary allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
         `, this.footer);
     }
