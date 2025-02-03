@@ -7,6 +7,9 @@
     margin-top:-32px;
     margin-left:-32px;
 }
+.modal-footer:empty {
+    display: none;
+}
 .modal-footer button.close {
     background-image:linear-gradient(to bottom, #fff 0%, #e0e0e0 100%);
     background-repeat:repeat-x;
@@ -28,27 +31,25 @@
 .modal.warning .modal-body:before,
 .modal.error .modal-body:before,
 .modal.dialog .modal-body:before {
-    top:2px;
-    position:relative;
-    display:inline-block;
-    font-family:'Glyphicons Halflings';
-    font-style:normal;
-    font-weight:400;
-    width:60px;
-    height:60px;
-    font-size:46px;
-    line-height:46px;
-    float:left;
+    font-family: 'bootstrap-icons'!important;
+    font-size: 40px;
+    line-height: 40px;
+    float: left;
+    margin-right: 1rem;
 }
 .modal.info .modal-body:before {
-    content:"";
+    content:"\F430";
+    color: var(--bs-cyan);
 }
 .modal.warning .modal-body:before {
-    content:"";
+    content:"\F46C";
+    color: var(--bs-orange);
 }
 .modal.error .modal-body:before {
-    content:"";
+    content:"\F33A";
+    color: var(--bs-red);
 }
 .modal.dialog .modal-body:before {
-    content:"\e085";
+    content:"\F505";
+    color: var(--bs-secondary);
 }

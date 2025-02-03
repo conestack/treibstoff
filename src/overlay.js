@@ -23,15 +23,14 @@ export class Overlay extends Events {
 
     compile() {
         compile_template(this, `
-          <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+          <div class="modal fade ${this.css}" id="${this.uid}" t-elem="elem" data-bs-backdrop="static">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close" t-prop="close_btn" t-bind-click="close">
-                    <span aria-hidden="true">&times;</span>
-                    <span class="sr-only">Close</span>
-                  </button>
                   <h5 class="modal-title">${this.title}</h5>
+                  <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                    <span class="visually-hidden">Close</span>
+                  </button>
                 </div>
                 <div class="modal-body" t-elem="body">${this.content}</div>
                 <div class="modal-footer" t-elem="footer"></div>
@@ -42,23 +41,19 @@ export class Overlay extends Events {
     }
 
     open() {
-        $('body')
-            .css('padding-right', '13px')
-            .css('overflow-x', 'hidden')
-            .addClass('modal-open');
+        $('body').addClass('modal-open');
         this.container.append(this.elem);
         this.elem.show();
+        this.elem.modal('show');
         this.is_open = true;
         this.trigger('on_open');
     }
 
     close() {
         if ($('.modal:visible').length === 1) {
-            $('body')
-                .css('padding-right', '')
-                .css('overflow-x', 'auto')
-                .removeClass('modal-open');
+            $('body').removeClass('modal-open');
         }
+        this.elem.modal('hide');
         this.elem.remove();
         this.is_open = false;
         this.trigger('on_close');
