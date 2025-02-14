@@ -557,11 +557,19 @@ export class AjaxDestroy extends Parser {
         let instances = node._ajax_attached;
         if (instances !== undefined) {
             for (let instance of instances) {
+                // XXX: maybe introduce skip_destroy flag for instances
+                // that do not need to be destroyed
                 if (instance.destroy !== undefined) {
                     instance.destroy();
+                } else {
+                    console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
                 }
             }
         }
+        // XXX: test functionality
+        // should prevent memory leaks due to detached DOM elements
+        $(node).off();
+        $(node).empty();
     }
 }
 

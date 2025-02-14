@@ -1197,10 +1197,15 @@ var ts = (function (exports, $) {
             if (instances !== undefined) {
                 for (let instance of instances) {
                     if (instance.destroy !== undefined) {
+                        console.log('destroy! ' + instance.constructor.name);
                         instance.destroy();
+                    } else {
+                        console.log('no destroy defined! '  + instance.constructor.name);
                     }
                 }
             }
+            $(node).off();
+            $(node).empty();
         }
     }
     class AjaxHandle extends AjaxUtil {
