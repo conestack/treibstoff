@@ -1197,10 +1197,9 @@ var ts = (function (exports, $) {
             if (instances !== undefined) {
                 for (let instance of instances) {
                     if (instance.destroy !== undefined) {
-                        console.log('destroy! ' + instance.constructor.name);
                         instance.destroy();
                     } else {
-                        console.log('no destroy defined! '  + instance.constructor.name);
+                        console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
                     }
                 }
             }
