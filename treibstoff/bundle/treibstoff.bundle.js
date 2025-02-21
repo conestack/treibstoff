@@ -686,7 +686,6 @@ var ts = (function (exports, $) {
         }).open();
     }
 
-    const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
     class LoadingSpinner {
         constructor() {
             this._count = 0;
@@ -694,8 +693,8 @@ var ts = (function (exports, $) {
         }
         compile() {
             compile_template(this, `
-          <div id="t-loading-spinner" t-elem="elem">
-            <img src="${default_spinner_image}" width="64" height="64" alt="" />
+          <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
         `);
         }

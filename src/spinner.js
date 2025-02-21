@@ -1,8 +1,6 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
 
-const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
-
 /**
  * Loading spinner.
  *
@@ -39,8 +37,8 @@ export class LoadingSpinner {
 
     compile() {
         compile_template(this, `
-          <div id="t-loading-spinner" t-elem="elem">
-            <img src="${default_spinner_image}" width="64" height="64" alt="" />
+          <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
         `);
     }
