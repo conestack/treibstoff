@@ -67,13 +67,14 @@ export function create_listener(event, base=null) {
             } else {
                 super(opts);
             }
-            let elem = this.elem
+            let elem = this.elem;
             if (!elem && opts !== undefined) {
                 elem = this.elem = opts.elem;
             }
             if (!elem) {
                 throw 'No element found';
             }
+            // XXX: is this ever unbound? Anonymous functions cannot be garbage collected
             elem.on(event, evt => {
                 this.trigger(`on_${event}`, evt);
             });
