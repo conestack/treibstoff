@@ -1208,6 +1208,19 @@ var ts = (function (exports, $) {
                 let evts = attrs['ajax:bind'];
                 $(node).off(evts);
             }
+            node._ajax_attached = null;
+            let dd = bootstrap.Dropdown.getInstance(node);
+            let tt = bootstrap.Tooltip.getInstance(node);
+            if (dd) {
+                dd.dispose();
+            }
+            if (tt) {
+                tt.dispose();
+            }
+            $(node).empty();
+            $(node).off();
+            $(node).removeData();
+            node = null;
         }
     }
     class AjaxHandle extends AjaxUtil {
@@ -1228,9 +1241,9 @@ var ts = (function (exports, $) {
                 mode = opts.mode,
                 context;
             if (mode === 'replace') {
-                console.log('REPLACE');
                 let old_context = $(selector);
-                this.destroy(old_context);
+                this.destroy(old_context.children());
+                old_context.empty();
                 old_context.replaceWith(payload);
                 context = $(selector);
                 if (context.length) {
@@ -1239,7 +1252,6 @@ var ts = (function (exports, $) {
                     this.ajax.bind($(document));
                 }
             } else if (mode === 'inner') {
-                console.log('INNER');
                 context = $(selector);
                 this.destroy(context.children());
                 context.html(payload);
@@ -1304,26 +1316,6 @@ var ts = (function (exports, $) {
                     this.form.bind(node);
                 }
             }
-            const Destroyer = {
-                destroy: () => {
-                    node._ajax_attached = null;
-                    if (node.id !== 'layout') {
-                        let dd = bootstrap.Dropdown.getInstance(node);
-                        let tt = bootstrap.Tooltip.getInstance(node);
-                        if (dd) {
-                            console.log('dropdown attached');
-                            dd.dispose();
-                        }
-                        if (tt) {
-                            tt.dispose();
-                            console.log('tooltip attached');
-                        }
-                        $(node).off().removeData().remove();
-                        node = null;
-                    }
-                }
-            };
-            ts.ajax.attach(Destroyer, $(node));
         }
     }
     class Ajax extends AjaxUtil {
@@ -1383,7 +1375,7 @@ var ts = (function (exports, $) {
         attach(instance, elem) {
             if (elem instanceof $) {
                 if (elem.length != 1) {
-                    throw 'Instance can be attached to exactly one DOM element';
+                    throw `${instance.constructor.name}: Instance can be attached to exactly one DOM element`;
                 }
                 elem = elem[0];
             }

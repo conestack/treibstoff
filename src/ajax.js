@@ -568,12 +568,23 @@ export class AjaxDestroy extends Parser {
         }
 
         let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind']) {
+        if (attrs['ajax:bind']) { // unbind events bound from AjaxDispatcher
             let evts = attrs['ajax:bind'];
-            // unbind events bound from AjaxDispatcher
             $(node).off(evts);
         }
-        // XXX: could destroy here, instead of in Destroyer
+        node._ajax_attached = null;
+        let dd = bootstrap.Dropdown.getInstance(node);
+        let tt = bootstrap.Tooltip.getInstance(node);
+        if (dd) {
+            dd.dispose();
+        }
+        if (tt) {
+            tt.dispose();
+        }
+        $(node).empty(); // remove retained comments
+        $(node).off(); // remove event listeners
+        $(node).removeData(); // remove cached data
+        node = null;
     }
 }
 
@@ -601,22 +612,9 @@ export class AjaxHandle extends AjaxUtil {
             mode = opts.mode,
             context;
         if (mode === 'replace') {
-            console.log('REPLACE')
             let old_context = $(selector);
-            this.destroy(old_context);
-            // memory leaks occur here
-            /*
-            It's not that the element is cached in jQuery.
-            To remove from cache, this should be sufficient:
-                $(node).removeData();
-                $(node).off();
-                $.removeData(node);
-
-            Reference must be somewhere else.
-            The count of detached elements in DOM directly corresponds to
-            the number of the context's children in the entire tree.
-            */
-            // debugger;
+            this.destroy(old_context.children());
+            old_context.empty();
             old_context.replaceWith(payload);
             context = $(selector);
             if (context.length) {
@@ -625,7 +623,6 @@ export class AjaxHandle extends AjaxUtil {
                 this.ajax.bind($(document));
             }
         } else if (mode === 'inner') {
-            console.log('INNER')
             context = $(selector);
             this.destroy(context.children());
             context.html(payload);
@@ -699,31 +696,6 @@ export class AjaxParser extends Parser {
                 this.form.bind(node);
             }
         }
-        const Destroyer = {
-            destroy: () => {
-                // comments in templates can also stay detached!
-                node._ajax_attached = null;
-                if (node.id !== 'layout') {
-                    // XXX: either prevent removal of root node or
-                    // change logic in AjaxHandle.update
-                    let dd = bootstrap.Dropdown.getInstance(node);
-                    let tt = bootstrap.Tooltip.getInstance(node);
-
-                    if (dd) {
-                        console.log('dropdown attached');
-                        dd.dispose();
-                    }
-                    if (tt) {
-                        tt.dispose();
-                        console.log('tooltip attached')
-                    }
-                    $(node).off().removeData().remove();
-                    node = null;
-                }
-
-            }
-        }
-        ts.ajax.attach(Destroyer, $(node));
     }
 }
 
@@ -865,7 +837,7 @@ export class Ajax extends AjaxUtil {
     attach(instance, elem) {
         if (elem instanceof $) {
             if (elem.length != 1) {
-                throw 'Instance can be attached to exactly one DOM element';
+                throw `${instance.constructor.name}: Instance can be attached to exactly one DOM element`;
             }
             elem = elem[0];
         }
