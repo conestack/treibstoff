@@ -1220,7 +1220,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         dispatcher.bind(elem.get(0), 'click');
 
         elem.trigger('click');
-        let dialog = $('body > .modal.dialog').data('overlay');
+        let dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.deepEqual(dialog.content, 'Really?');
         assert.ok(dialog.is_open);
 
@@ -1229,7 +1229,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(dispatch_opts, null);
 
         elem.trigger('click');
-        dialog = $('body > .modal.dialog').data('overlay');
+        dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.ok(dialog.is_open);
 
         $('button.ok', dialog.elem).trigger('click');
@@ -1561,7 +1561,7 @@ QUnit.module('treibstoff.ajax', hooks => {
             flavor: 'info',
             selector: null,
         }]);
-        let ol = $('body > .modal.info').data('overlay');
+        let ol = $('body > .modal-wrapper > .modal.info').data('overlay');
         assert.ok(ol.is_open);
         assert.deepEqual(ol.content, 'Message Content');
         ol.close();

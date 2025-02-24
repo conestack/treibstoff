@@ -607,26 +607,30 @@ var ts = (function (exports, $) {
             this.is_open = false;
         }
         compile() {
+            const zIndex = $('body').hasClass('modal-open') ? 1056 : 1055;
             compile_template(this, `
-          <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">${this.title}</h5>
-                  <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
-                    <span class="visually-hidden">Close</span>
-                  </button>
+            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${zIndex}">
+              <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
+              <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">${this.title}</h5>
+                      <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                        <span class="visually-hidden">Close</span>
+                      </button>
+                    </div>
+                    <div class="modal-body" t-elem="body">${this.content}</div>
+                    <div class="modal-footer" t-elem="footer"></div>
+                  </div>
                 </div>
-                <div class="modal-body" t-elem="body">${this.content}</div>
-                <div class="modal-footer" t-elem="footer"></div>
               </div>
             </div>
-          </div>
-        `);
+          `);
         }
         open() {
             $('body').addClass('modal-open');
-            this.container.append(this.elem);
+            this.container.append(this.wrapper);
             this.elem.show();
             this.is_open = true;
             this.trigger('on_open');
@@ -635,9 +639,9 @@ var ts = (function (exports, $) {
             if ($('.modal:visible').length === 1) {
                 $('body').removeClass('modal-open');
             }
-            ajax_destroy(this.elem);
+            ajax_destroy(this.wrapper);
+            this.wrapper.remove();
             this.is_open = false;
-            this.elem.removeData('overlay').remove();
             this.trigger('on_close');
         }
     }
