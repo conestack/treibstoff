@@ -607,7 +607,8 @@ var ts = (function (exports, $) {
             this.is_open = false;
         }
         compile() {
-            const zIndex = $('body').hasClass('modal-open') ? 1056 : 1055;
+            let zIndex = 1055;
+            zIndex += $('.modal:visible').length;
             compile_template(this, `
             <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${zIndex}">
               <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
