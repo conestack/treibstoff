@@ -5,6 +5,7 @@ import {
     set_default,
     uuid4
 } from './utils.js';
+import {ajax_destroy} from './ajaxdestroy.js';
 
 export class Overlay extends Events {
 
@@ -23,7 +24,7 @@ export class Overlay extends Events {
 
     compile() {
         compile_template(this, `
-          <div class="modal fade ${this.css}" id="${this.uid}" t-elem="elem" data-bs-backdrop="static">
+          <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
@@ -44,7 +45,6 @@ export class Overlay extends Events {
         $('body').addClass('modal-open');
         this.container.append(this.elem);
         this.elem.show();
-        this.elem.modal('show');
         this.is_open = true;
         this.trigger('on_open');
     }
@@ -53,9 +53,9 @@ export class Overlay extends Events {
         if ($('.modal:visible').length === 1) {
             $('body').removeClass('modal-open');
         }
-        this.elem.modal('hide');
-        this.elem.remove();
+        ajax_destroy(this.elem);
         this.is_open = false;
+        this.elem.removeData('overlay').remove();
         this.trigger('on_close');
     }
 }
@@ -84,7 +84,7 @@ export class Message extends Overlay {
         opts.content = opts.message ? opts.message : opts.content;
         opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
-        this.compile_actions()
+        this.compile_actions();
     }
 
     compile_actions() {

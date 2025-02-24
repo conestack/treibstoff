@@ -554,6 +554,45 @@ var ts = (function (exports, $) {
         }
     }
 
+    class AjaxDestroy extends Parser {
+        parse(node) {
+            let instances = node._ajax_attached;
+            if (instances !== undefined) {
+                for (let instance of instances) {
+                    if (instance.destroy !== undefined) {
+                        instance.destroy();
+                    } else {
+                        console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
+                    }
+                }
+            }
+            let attrs = this.node_attrs(node);
+            if (attrs['ajax:bind']) {
+                let evts = attrs['ajax:bind'];
+                $(node).off(evts);
+            }
+            if (window.bootstrap) {
+                let dd = window.bootstrap.Dropdown.getInstance(node);
+                let tt = window.bootstrap.Tooltip.getInstance(node);
+                if (dd) {
+                    dd.dispose();
+                }
+                if (tt) {
+                    tt.dispose();
+                }
+            }
+            $(node).empty();
+            $(node).off();
+            $(node).removeData();
+            node = null;
+        }
+    }
+    function ajax_destroy(elem) {
+        elem = elem instanceof $ ? elem.get(0) : elem;
+        let handle = new AjaxDestroy();
+        handle.walk(elem);
+    }
+
     class Overlay extends Events {
         constructor(opts) {
             super();
@@ -569,7 +608,7 @@ var ts = (function (exports, $) {
         }
         compile() {
             compile_template(this, `
-          <div class="modal fade ${this.css}" id="${this.uid}" t-elem="elem" data-bs-backdrop="static">
+          <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
@@ -589,7 +628,6 @@ var ts = (function (exports, $) {
             $('body').addClass('modal-open');
             this.container.append(this.elem);
             this.elem.show();
-            this.elem.modal('show');
             this.is_open = true;
             this.trigger('on_open');
         }
@@ -597,9 +635,9 @@ var ts = (function (exports, $) {
             if ($('.modal:visible').length === 1) {
                 $('body').removeClass('modal-open');
             }
-            this.elem.modal('hide');
-            this.elem.remove();
+            ajax_destroy(this.elem);
             this.is_open = false;
+            this.elem.removeData('overlay').remove();
             this.trigger('on_close');
         }
     }
@@ -1190,38 +1228,6 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxDestroy extends Parser {
-        parse(node) {
-            let instances = node._ajax_attached;
-            if (instances !== undefined) {
-                for (let instance of instances) {
-                    if (instance.destroy !== undefined) {
-                        instance.destroy();
-                    } else {
-                        console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
-                    }
-                }
-            }
-            let attrs = this.node_attrs(node);
-            if (attrs['ajax:bind']) {
-                let evts = attrs['ajax:bind'];
-                $(node).off(evts);
-            }
-            node._ajax_attached = null;
-            let dd = bootstrap.Dropdown.getInstance(node);
-            let tt = bootstrap.Tooltip.getInstance(node);
-            if (dd) {
-                dd.dispose();
-            }
-            if (tt) {
-                tt.dispose();
-            }
-            $(node).empty();
-            $(node).off();
-            $(node).removeData();
-            node = null;
-        }
-    }
     class AjaxHandle extends AjaxUtil {
         constructor(ajax) {
             super();
@@ -1241,8 +1247,7 @@ var ts = (function (exports, $) {
                 context;
             if (mode === 'replace') {
                 let old_context = $(selector);
-                this.destroy(old_context.children());
-                old_context.empty();
+                this.destroy(old_context);
                 old_context.replaceWith(payload);
                 context = $(selector);
                 if (context.length) {

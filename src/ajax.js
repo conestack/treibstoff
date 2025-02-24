@@ -26,6 +26,7 @@ import {
     http_request
 } from './request.js';
 import {spinner} from './spinner.js';
+import {AjaxDestroy} from './ajaxdestroy.js';
 
 /**
  * Ajax utility mixin.
@@ -548,47 +549,6 @@ export class AjaxDispatcher extends AjaxUtil {
 }
 
 /**
- * DOM parser for destroying JavaScript instances attached to DOM elements
- * going to be removed.
- */
-export class AjaxDestroy extends Parser {
-
-    parse(node) {
-        let instances = node._ajax_attached;
-        if (instances !== undefined) {
-            for (let instance of instances) {
-                // XXX: maybe introduce skip_destroy flag for instances
-                // that do not need to be destroyed
-                if (instance.destroy !== undefined) {
-                    instance.destroy();
-                } else {
-                    console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
-                }
-            }
-        }
-
-        let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind']) { // unbind events bound from AjaxDispatcher
-            let evts = attrs['ajax:bind'];
-            $(node).off(evts);
-        }
-        node._ajax_attached = null;
-        let dd = bootstrap.Dropdown.getInstance(node);
-        let tt = bootstrap.Tooltip.getInstance(node);
-        if (dd) {
-            dd.dispose();
-        }
-        if (tt) {
-            tt.dispose();
-        }
-        $(node).empty(); // remove retained comments
-        $(node).off(); // remove event listeners
-        $(node).removeData(); // remove cached data
-        node = null;
-    }
-}
-
-/**
  * Handle for DOM manipulation and Ajax continuation operations.
  */
 export class AjaxHandle extends AjaxUtil {
@@ -613,8 +573,7 @@ export class AjaxHandle extends AjaxUtil {
             context;
         if (mode === 'replace') {
             let old_context = $(selector);
-            this.destroy(old_context.children());
-            old_context.empty();
+            this.destroy(old_context);
             old_context.replaceWith(payload);
             context = $(selector);
             if (context.length) {
@@ -1161,7 +1120,7 @@ export class Ajax extends AjaxUtil {
 }
 
 let ajax = new Ajax();
-export {ajax};
+export {ajax, AjaxDestroy};
 
 $.fn.tsajax = function() {
     ajax.bind(this);
