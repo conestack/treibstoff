@@ -4,7 +4,17 @@ Changes
 0.5.0 (unreleased)
 ------------------
 
-- No changes yet.
+- Move ``AjaxDestroy`` to ``ajaxdestroy`` module to prevent circular import dependency.
+  [lenadax]
+
+- Fix widgets not being fully destroyed if rendered within an ``Overlay`` inside body.
+  [lenadax]
+
+- Modify ``AjaxDestroy`` parse method to prevent DOM memory leaks.
+  [lenadax]
+
+- Replace svg spinner with Bootstrap5 spinner.
+  [lenadax]
 
 
 0.4.0 (2024-02-12)

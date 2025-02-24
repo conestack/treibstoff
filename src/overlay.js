@@ -23,10 +23,10 @@ export class Overlay extends Events {
     }
 
     compile() {
-        let zIndex = 1055; // default bootstrap modal z-index
-        zIndex += $('.modal:visible').length; // increase zindex based on currently open modals
+        let z_index = 1055; // default bootstrap modal z-index
+        z_index += $('.modal:visible').length; // increase zindex based on currently open modals
         compile_template(this, `
-            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${zIndex}">
+            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
               <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
               <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
                 <div class="modal-dialog">

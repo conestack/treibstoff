@@ -1120,7 +1120,7 @@ export class Ajax extends AjaxUtil {
 }
 
 let ajax = new Ajax();
-export {ajax, AjaxDestroy};
+export {ajax, AjaxDestroy}; // ensure delivery within ajax
 
 $.fn.tsajax = function() {
     ajax.bind(this);

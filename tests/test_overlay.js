@@ -52,14 +52,12 @@ QUnit.module('treibstoff.overlay', hooks => {
 
         let body = $('body');
         assert.true(body.hasClass('modal-open'));
-        // assert.deepEqual(body.css('overflow-x'), 'hidden');
 
         ol.close();
         assert.deepEqual(container.children().length, 0);
         assert.false(ol.elem.is(':visible'));
 
         assert.false(body.hasClass('modal-open'));
-        // assert.deepEqual(body.css('overflow-x'), 'auto');
     });
 
     QUnit.test('Test Overlay events', assert => {
