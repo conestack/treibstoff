@@ -571,7 +571,7 @@ var ts = (function (exports, $) {
                 let evts = attrs['ajax:bind'];
                 $(node).off(evts);
             }
-            if (window.bootstrap) {
+            if (window.bootstrap !== undefined) {
                 let dd = window.bootstrap.Dropdown.getInstance(node);
                 let tt = window.bootstrap.Tooltip.getInstance(node);
                 if (dd) {
@@ -607,10 +607,10 @@ var ts = (function (exports, $) {
             this.is_open = false;
         }
         compile() {
-            let zIndex = 1055;
-            zIndex += $('.modal:visible').length;
+            let z_index = 1055;
+            z_index += $('.modal:visible').length;
             compile_template(this, `
-            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${zIndex}">
+            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
               <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
               <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
                 <div class="modal-dialog">

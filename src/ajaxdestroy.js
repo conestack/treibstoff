@@ -24,7 +24,7 @@ export class AjaxDestroy extends Parser {
             let evts = attrs['ajax:bind'];
             $(node).off(evts);
         }
-        if (window.bootstrap && window.bootstrap !== undefined) {
+        if (window.bootstrap !== undefined) {
             let dd = window.bootstrap.Dropdown.getInstance(node);
             let tt = window.bootstrap.Tooltip.getInstance(node);
             if (dd) {
