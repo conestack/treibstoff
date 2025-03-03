@@ -104,7 +104,7 @@ var ts = (function (exports, $) {
         return path;
     }
     function create_cookie(name, value, days) {
-        var date,
+        let date,
             expires;
         if (days) {
             date = new Date();
@@ -116,7 +116,7 @@ var ts = (function (exports, $) {
         document.cookie = name + "=" + escape(value) + expires + "; path=/;";
     }
     function read_cookie(name) {
-        var nameEQ = name + "=",
+        let nameEQ = name + "=",
             ca = document.cookie.split(';'),
             i,
             c;
@@ -126,7 +126,7 @@ var ts = (function (exports, $) {
                 c = c.substring(1, c.length);
             }
             if (c.indexOf(nameEQ) === 0) {
-                return unescape(c.substring(nameEQ.length, c.length));
+                return decodeURIComponent(c.substring(nameEQ.length, c.length));
             }
         }
         return null;
@@ -146,7 +146,7 @@ var ts = (function (exports, $) {
         return el;
     }
     function parse_svg(tmpl, container) {
-        var wrapper = create_svg_elem('svg', {});
+        let wrapper = create_svg_elem('svg', {});
         wrapper.innerHTML = tmpl.trim();
         let elems = [];
         let children = wrapper.childNodes;
@@ -493,7 +493,7 @@ var ts = (function (exports, $) {
             if (this._contains_subscriber(event, subscriber)) {
                 return this;
             }
-            subscribers.push(subscriber);
+            this._subscribers[event].push(subscriber);
             return this;
         }
         off(event, subscriber) {
@@ -580,17 +580,23 @@ var ts = (function (exports, $) {
                 if (tt) {
                     tt.dispose();
                 }
+                dd = null;
+                tt = null;
             }
             $(node).empty();
             $(node).off();
             $(node).removeData();
+            $.cleanData([node]);
             node = null;
+            instances = null;
+            attrs = null;
         }
     }
     function ajax_destroy(elem) {
         elem = elem instanceof $ ? elem.get(0) : elem;
         let handle = new AjaxDestroy();
         handle.walk(elem);
+        handle = null;
     }
 
     class Overlay extends Events {

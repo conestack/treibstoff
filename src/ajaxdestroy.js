@@ -33,11 +33,17 @@ export class AjaxDestroy extends Parser {
             if (tt) {
                 tt.dispose();
             }
+            dd = null;
+            tt = null;
         }
         $(node).empty(); // remove retained comments
         $(node).off(); // remove event listeners
         $(node).removeData(); // remove cached data
+        $.cleanData([node]); // explicitly remove from jQuery cache
+
         node = null;
+        instances = null;
+        attrs = null;
     }
 }
 
@@ -51,4 +57,5 @@ export function ajax_destroy(elem) {
     elem = elem instanceof $ ? elem.get(0) : elem;
     let handle = new AjaxDestroy();
     handle.walk(elem);
+    handle = null;
 }

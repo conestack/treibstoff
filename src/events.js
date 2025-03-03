@@ -23,7 +23,7 @@ export class Events {
         if (this._contains_subscriber(event, subscriber)) {
             return this;
         }
-        subscribers.push(subscriber);
+        this._subscribers[event].push(subscriber);
         return this;
     }
 
