@@ -74,10 +74,19 @@ export function create_listener(event, base=null) {
             if (!elem) {
                 throw 'No element found';
             }
-            // XXX: is this ever unbound? Anonymous functions cannot be garbage collected
-            elem.on(event, evt => {
-                this.trigger(`on_${event}`, evt);
-            });
+            ts.ajax.attach(this, elem);
+            this.elem = elem;
+            this.event = event;
+            this.trigger_event = this.trigger_event.bind(this);
+            this.elem.on(this.event, this.trigger_event);
+        }
+
+        trigger_event(evt) {
+            this.trigger(`on_${event}`, evt);
+        }
+
+        destroy() {
+            this.elem.off(this.event, this.trigger_event);
         }
     };
 }

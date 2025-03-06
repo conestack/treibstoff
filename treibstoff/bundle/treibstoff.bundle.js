@@ -738,7 +738,6 @@ var ts = (function (exports, $) {
     class LoadingSpinner {
         constructor() {
             this._count = 0;
-            this.compile();
         }
         compile() {
             compile_template(this, `
@@ -752,17 +751,24 @@ var ts = (function (exports, $) {
             if (this._count > 1) {
                 return;
             }
+            this.compile();
             $('body').append(this.elem);
         }
         hide(force) {
             this._count--;
             if (force) {
                 this._count = 0;
-                this.elem.remove();
+                if (this.elem) {
+                    this.elem.remove();
+                }
+                this.elem = null;
                 return;
             } else if (this._count <= 0) {
                 this._count = 0;
-                this.elem.remove();
+                if (this.elem) {
+                    this.elem.remove();
+                }
+                this.elem = null;
             }
         }
     }
@@ -1546,9 +1552,17 @@ var ts = (function (exports, $) {
                 if (!elem) {
                     throw 'No element found';
                 }
-                elem.on(event, evt => {
-                    this.trigger(`on_${event}`, evt);
-                });
+                ts.ajax.attach(this, elem);
+                this.elem = elem;
+                this.event = event;
+                this.trigger_event = this.trigger_event.bind(this);
+                this.elem.on(this.event, this.trigger_event);
+            }
+            trigger_event(evt) {
+                this.trigger(`on_${event}`, evt);
+            }
+            destroy() {
+                this.elem.off(this.event, this.trigger_event);
             }
         };
     }
@@ -1565,6 +1579,9 @@ var ts = (function (exports, $) {
             this._move_scope = null;
         }
         reset_state() {
+            $(this._down_scope).off('mousedown', this._down_handle);
+            $(this._move_scope).off('mousemove', this._move_handle);
+            $(document).off('mouseup', this._up_handle);
             this._move_handle = null;
             this._up_handle = null;
             this._prev_pos = null;

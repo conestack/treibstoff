@@ -32,7 +32,6 @@ export class LoadingSpinner {
 
     constructor() {
         this._count = 0;
-        this.compile();
     }
 
     compile() {
@@ -51,6 +50,7 @@ export class LoadingSpinner {
         if (this._count > 1) {
             return;
         }
+        this.compile();
         $('body').append(this.elem);
     }
 
@@ -64,11 +64,17 @@ export class LoadingSpinner {
         this._count--;
         if (force) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
             return;
         } else if (this._count <= 0) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
         }
     }
 }
