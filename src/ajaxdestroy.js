@@ -17,6 +17,7 @@ export class AjaxDestroy extends Parser {
                     console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
                 }
             }
+            node._ajax_attached = null; // remove class instances from memory
         }
 
         let attrs = this.node_attrs(node);

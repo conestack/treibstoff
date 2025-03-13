@@ -565,6 +565,7 @@ var ts = (function (exports, $) {
                         console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
                     }
                 }
+                node._ajax_attached = null;
             }
             let attrs = this.node_attrs(node);
             if (attrs['ajax:bind']) {
@@ -1278,6 +1279,7 @@ var ts = (function (exports, $) {
                 context.html(payload);
                 this.ajax.bind(context);
             }
+            context = null;
         }
         next(operations) {
             if (!operations || !operations.length) {
@@ -1552,11 +1554,15 @@ var ts = (function (exports, $) {
                 if (!elem) {
                     throw 'No element found';
                 }
-                ts.ajax.attach(this, elem);
                 this.elem = elem;
                 this.event = event;
                 this.trigger_event = this.trigger_event.bind(this);
                 this.elem.on(this.event, this.trigger_event);
+                let native_elem = elem[0];
+                if (native_elem._ajax_attached === undefined) {
+                    native_elem._ajax_attached = [];
+                }
+                native_elem._ajax_attached.push(this);
             }
             trigger_event(evt) {
                 this.trigger(`on_${event}`, evt);

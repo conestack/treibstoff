@@ -587,6 +587,7 @@ export class AjaxHandle extends AjaxUtil {
             context.html(payload);
             this.ajax.bind(context);
         }
+        context = null;
     }
 
     next(operations) {
