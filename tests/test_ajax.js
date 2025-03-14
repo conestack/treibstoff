@@ -2,7 +2,6 @@ import $ from 'jquery';
 import {
     Ajax,
     AjaxAction,
-    AjaxDestroy,
     AjaxDispatcher,
     AjaxEvent,
     AjaxForm,
@@ -1335,30 +1334,6 @@ QUnit.module('treibstoff.ajax', hooks => {
         })
         assert.deepEqual(path_opts.elem, elem);
         assert.deepEqual(path_opts.event.type, 'click');
-    });
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Test AjaxDestroy
-    ///////////////////////////////////////////////////////////////////////////
-
-    QUnit.test('Test AjaxDestroy', assert => {
-        class Inst {
-            constructor() {
-                this.destroyed = false;
-            }
-            destroy() {
-                this.destroyed = true;
-            }
-        }
-
-        let inst = new Inst();
-        let elem = $('<span />').appendTo(container);
-        elem[0]._ajax_attached = [inst];
-
-        assert.deepEqual(inst.destroyed, false);
-        let parser = new AjaxDestroy();
-        parser.walk(container[0]);
-        assert.deepEqual(inst.destroyed, true);
     });
 
     ///////////////////////////////////////////////////////////////////////////

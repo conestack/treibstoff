@@ -554,7 +554,35 @@ var ts = (function (exports, $) {
         }
     }
 
+    function destroy_bootstrap(node) {
+        let dd = window.bootstrap.Dropdown.getInstance(node);
+        let tt = window.bootstrap.Tooltip.getInstance(node);
+        if (dd) {
+            dd.dispose();
+        }
+        if (tt) {
+            tt.dispose();
+        }
+        dd = null;
+        tt = null;
+    }
     class AjaxDestroy extends Parser {
+        constructor() {
+            super();
+            this.callbacks = [];
+            if (window.bootstrap !== undefined) {
+                this.register_cb(destroy_bootstrap);
+            }
+        }
+        register_cb(cb) {
+            this.callbacks.push(cb);
+        }
+        unregister_cb(cb) {
+            const index = this.callbacks.indexOf(cb);
+            if (index > -1) {
+                this.callbacks.splice(index, 1);
+            }
+        }
         parse(node) {
             let instances = node._ajax_attached;
             if (instances !== undefined) {
@@ -572,17 +600,8 @@ var ts = (function (exports, $) {
                 let evts = attrs['ajax:bind'];
                 $(node).off(evts);
             }
-            if (window.bootstrap !== undefined) {
-                let dd = window.bootstrap.Dropdown.getInstance(node);
-                let tt = window.bootstrap.Tooltip.getInstance(node);
-                if (dd) {
-                    dd.dispose();
-                }
-                if (tt) {
-                    tt.dispose();
-                }
-                dd = null;
-                tt = null;
+            for (let cb of this.callbacks) {
+                cb(node);
             }
             $(node).empty();
             $(node).off();
@@ -593,9 +612,12 @@ var ts = (function (exports, $) {
             attrs = null;
         }
     }
-    function ajax_destroy(elem) {
+    function ajax_destroy(elem, callbacks=[]) {
         elem = elem instanceof $ ? elem.get(0) : elem;
         let handle = new AjaxDestroy();
+        for (let cb of callbacks) {
+            handle.register_cb(cb);
+        }
         handle.walk(elem);
         handle = null;
     }
