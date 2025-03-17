@@ -5,7 +5,7 @@ import {
     set_default,
     uuid4
 } from './utils.js';
-import {ajax_destroy} from './ajaxdestroy.js';
+import {ajax_destroy} from './ssr/destroy.js';
 
 export class Overlay extends Events {
 

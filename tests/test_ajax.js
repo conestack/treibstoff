@@ -1,17 +1,15 @@
 import $ from 'jquery';
-import {
-    Ajax,
-    AjaxAction,
-    AjaxDispatcher,
-    AjaxEvent,
-    AjaxForm,
-    AjaxHandle,
-    AjaxOperation,
-    AjaxOverlay,
-    AjaxParser,
-    AjaxPath,
-    AjaxUtil
-} from '../src/ajax.js';
+import {Ajax} from '../src/ssr/ajax.js';
+import {AjaxAction} from '../src/ssr/action.js';
+import {AjaxDispatcher} from '../src/ssr/dispatcher.js';
+import {AjaxEvent} from '../src/ssr/event.js';
+import {AjaxForm} from '../src/ssr/form.js';
+import {AjaxHandle} from '../src/ssr/handle.js';
+import {AjaxOperation} from '../src/ssr/util.js';
+import {AjaxOverlay} from '../src/ssr/overlay.js';
+import {AjaxParser} from '../src/ssr/parser.js';
+import {AjaxPath} from '../src/ssr/path.js';
+import {AjaxUtil} from '../src/ssr/util.js';
 import {HTTPRequest} from '../src/request.js';
 import {spinner} from '../src/spinner.js';
 import {uuid4} from '../src/utils.js';

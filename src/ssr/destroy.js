@@ -1,4 +1,4 @@
-import {Parser} from "./parser";
+import {Parser} from "../parser";
 import $ from 'jquery';
 
 function destroy_bootstrap(node) {

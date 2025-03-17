@@ -901,6 +901,220 @@ var ts = (function (exports, $) {
             throw 'Abstract AjaxOperation does not implement handle';
         }
     }
+
+    class AjaxDispatcher extends AjaxUtil {
+        bind(node, evts) {
+            $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
+        }
+        dispatch_handle(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            let elem = $(evt.currentTarget),
+                opts = {
+                    elem: elem,
+                    event: evt
+                };
+            if (elem.attr('ajax:confirm')) {
+                show_dialog({
+                    message: elem.attr('ajax:confirm'),
+                    on_confirm: function(inst) {
+                        this.dispatch(opts);
+                    }.bind(this)
+                });
+            } else {
+                this.dispatch(opts);
+            }
+        }
+        dispatch(opts) {
+            let elem = opts.elem,
+                event = opts.event;
+            if (elem.attr('ajax:action')) {
+                this.trigger('on_action', {
+                    target: this.action_target(elem, event),
+                    action: elem.attr('ajax:action')
+                });
+            }
+            if (elem.attr('ajax:event')) {
+                this.trigger('on_event', {
+                    target: elem.attr('ajax:target'),
+                    event: elem.attr('ajax:event')
+                });
+            }
+            if (elem.attr('ajax:overlay')) {
+                this.trigger('on_overlay', {
+                    target: this.action_target(elem, event),
+                    overlay: elem.attr('ajax:overlay'),
+                    css: elem.attr('ajax:overlay-css'),
+                    uid: elem.attr('ajax:overlay-uid'),
+                    title: elem.attr('ajax:overlay-title')
+                });
+            }
+            if (elem.attr('ajax:path')) {
+                this.trigger('on_path', {
+                    elem: elem,
+                    event: event
+                });
+            }
+        }
+    }
+
+    class AjaxAction extends AjaxOperation {
+        constructor(opts) {
+            set_default(opts, 'event', 'on_action');
+            super(opts);
+            this.spinner = opts.spinner;
+            this._handle = opts.handle;
+            this._request = opts.request;
+        }
+        execute(opts) {
+            opts.success = this.complete.bind(this);
+            this.request(opts);
+        }
+        request(opts) {
+            opts.params['ajax.action'] = opts.name;
+            opts.params['ajax.mode'] = opts.mode;
+            opts.params['ajax.selector'] = opts.selector;
+            this._request.execute({
+                url: parse_url(opts.url) + '/ajaxaction',
+                type: 'json',
+                params: opts.params,
+                success: opts.success
+            });
+        }
+        complete(data) {
+            if (!data) {
+                show_error('Empty Response');
+                this.spinner.hide();
+            } else {
+                this._handle.update(data);
+                this._handle.next(data.continuation);
+            }
+        }
+        handle(inst, opts) {
+            let target = opts.target,
+                action = opts.action;
+            for (let action_ of this.parse_definition(action)) {
+                let defs = action_.split(':');
+                this.execute({
+                    name: defs[0],
+                    selector: defs[1],
+                    mode: defs[2],
+                    url: target.url,
+                    params: target.params
+                });
+            }
+        }
+    }
+
+    class AjaxOverlay extends AjaxAction {
+        constructor(opts) {
+            opts.event = 'on_overlay';
+            super(opts);
+            this.overlay_content_sel = '.modal-body';
+        }
+        execute(opts) {
+            let ol;
+            if (opts.close) {
+                ol = get_overlay(opts.uid);
+                if (ol) {
+                    ol.close();
+                }
+                return ol;
+            }
+            let url, params;
+            if (opts.target) {
+                let target = opts.target;
+                if (!target.url) {
+                    target = this.parse_target(target);
+                }
+                url = target.url;
+                params = target.params;
+            } else {
+                url = opts.url;
+                params = opts.params;
+            }
+            let uid = opts.uid ? opts.uid : uuid4();
+            params['ajax.overlay-uid'] = uid;
+            ol = new Overlay({
+                uid: uid,
+                css: opts.css,
+                title: opts.title,
+                on_close: opts.on_close
+            });
+            this.request({
+                name: opts.action,
+                selector: `#${uid} ${this.overlay_content_sel}`,
+                mode: 'inner',
+                url: url,
+                params: params,
+                success: function(data) {
+                    if (!data.payload) {
+                        this.complete(data);
+                        return;
+                    }
+                    ol.open();
+                    this.complete(data);
+                }.bind(this)
+            });
+            return ol;
+        }
+        handle(inst, opts) {
+            let target = opts.target,
+                overlay = opts.overlay;
+            if (overlay.indexOf('CLOSE') > -1) {
+                this.execute({
+                    close: true,
+                    uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
+                });
+                return;
+            }
+            this.execute({
+                action: overlay,
+                url: target.url,
+                params: target.params,
+                css: opts.css,
+                uid: opts.uid,
+                title: opts.title
+            });
+        }
+    }
+
+    class AjaxForm {
+        constructor(opts) {
+            this.handle = opts.handle;
+            this.spinner = opts.spinner;
+            this.afr = null;
+        }
+        bind(form) {
+            if (!this.afr) {
+                compile_template(this, `
+              <iframe t-elem="afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `, $('body'));
+            }
+            $(form)
+                .append('<input type="hidden" name="ajax" value="1" />')
+                .attr('target', 'ajaxformresponse')
+                .off()
+                .on('submit', function(event) {
+                    this.spinner.show();
+                }.bind(this));
+        }
+        render(opts) {
+            this.spinner.hide();
+            if (!opts.error) {
+                this.afr.remove();
+                this.afr = null;
+            }
+            if (opts.payload) {
+                this.handle.update(opts);
+            }
+            this.handle.next(opts.next);
+        }
+    }
+
     class AjaxPath extends AjaxOperation {
         constructor(opts) {
             opts.event = 'on_path';
@@ -1025,53 +1239,7 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxAction extends AjaxOperation {
-        constructor(opts) {
-            set_default(opts, 'event', 'on_action');
-            super(opts);
-            this.spinner = opts.spinner;
-            this._handle = opts.handle;
-            this._request = opts.request;
-        }
-        execute(opts) {
-            opts.success = this.complete.bind(this);
-            this.request(opts);
-        }
-        request(opts) {
-            opts.params['ajax.action'] = opts.name;
-            opts.params['ajax.mode'] = opts.mode;
-            opts.params['ajax.selector'] = opts.selector;
-            this._request.execute({
-                url: parse_url(opts.url) + '/ajaxaction',
-                type: 'json',
-                params: opts.params,
-                success: opts.success
-            });
-        }
-        complete(data) {
-            if (!data) {
-                show_error('Empty Response');
-                this.spinner.hide();
-            } else {
-                this._handle.update(data);
-                this._handle.next(data.continuation);
-            }
-        }
-        handle(inst, opts) {
-            let target = opts.target,
-                action = opts.action;
-            for (let action_ of this.parse_definition(action)) {
-                let defs = action_.split(':');
-                this.execute({
-                    name: defs[0],
-                    selector: defs[1],
-                    mode: defs[2],
-                    url: target.url,
-                    params: target.params
-                });
-            }
-        }
-    }
+
     class AjaxEvent extends AjaxOperation {
         constructor(opts) {
             opts.event = 'on_event';
@@ -1106,168 +1274,7 @@ var ts = (function (exports, $) {
             }
         }
     }
-    class AjaxOverlay extends AjaxAction {
-        constructor(opts) {
-            opts.event = 'on_overlay';
-            super(opts);
-            this.overlay_content_sel = '.modal-body';
-        }
-        execute(opts) {
-            let ol;
-            if (opts.close) {
-                ol = get_overlay(opts.uid);
-                if (ol) {
-                    ol.close();
-                }
-                return ol;
-            }
-            let url, params;
-            if (opts.target) {
-                let target = opts.target;
-                if (!target.url) {
-                    target = this.parse_target(target);
-                }
-                url = target.url;
-                params = target.params;
-            } else {
-                url = opts.url;
-                params = opts.params;
-            }
-            let uid = opts.uid ? opts.uid : uuid4();
-            params['ajax.overlay-uid'] = uid;
-            ol = new Overlay({
-                uid: uid,
-                css: opts.css,
-                title: opts.title,
-                on_close: opts.on_close
-            });
-            this.request({
-                name: opts.action,
-                selector: `#${uid} ${this.overlay_content_sel}`,
-                mode: 'inner',
-                url: url,
-                params: params,
-                success: function(data) {
-                    if (!data.payload) {
-                        this.complete(data);
-                        return;
-                    }
-                    ol.open();
-                    this.complete(data);
-                }.bind(this)
-            });
-            return ol;
-        }
-        handle(inst, opts) {
-            let target = opts.target,
-                overlay = opts.overlay;
-            if (overlay.indexOf('CLOSE') > -1) {
-                this.execute({
-                    close: true,
-                    uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
-                });
-                return;
-            }
-            this.execute({
-                action: overlay,
-                url: target.url,
-                params: target.params,
-                css: opts.css,
-                uid: opts.uid,
-                title: opts.title
-            });
-        }
-    }
-    class AjaxForm {
-        constructor(opts) {
-            this.handle = opts.handle;
-            this.spinner = opts.spinner;
-            this.afr = null;
-        }
-        bind(form) {
-            if (!this.afr) {
-                compile_template(this, `
-              <iframe t-elem="afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `, $('body'));
-            }
-            $(form)
-                .append('<input type="hidden" name="ajax" value="1" />')
-                .attr('target', 'ajaxformresponse')
-                .off()
-                .on('submit', function(event) {
-                    this.spinner.show();
-                }.bind(this));
-        }
-        render(opts) {
-            this.spinner.hide();
-            if (!opts.error) {
-                this.afr.remove();
-                this.afr = null;
-            }
-            if (opts.payload) {
-                this.handle.update(opts);
-            }
-            this.handle.next(opts.next);
-        }
-    }
-    class AjaxDispatcher extends AjaxUtil {
-        bind(node, evts) {
-            $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
-        }
-        dispatch_handle(evt) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            let elem = $(evt.currentTarget),
-                opts = {
-                    elem: elem,
-                    event: evt
-                };
-            if (elem.attr('ajax:confirm')) {
-                show_dialog({
-                    message: elem.attr('ajax:confirm'),
-                    on_confirm: function(inst) {
-                        this.dispatch(opts);
-                    }.bind(this)
-                });
-            } else {
-                this.dispatch(opts);
-            }
-        }
-        dispatch(opts) {
-            let elem = opts.elem,
-                event = opts.event;
-            if (elem.attr('ajax:action')) {
-                this.trigger('on_action', {
-                    target: this.action_target(elem, event),
-                    action: elem.attr('ajax:action')
-                });
-            }
-            if (elem.attr('ajax:event')) {
-                this.trigger('on_event', {
-                    target: elem.attr('ajax:target'),
-                    event: elem.attr('ajax:event')
-                });
-            }
-            if (elem.attr('ajax:overlay')) {
-                this.trigger('on_overlay', {
-                    target: this.action_target(elem, event),
-                    overlay: elem.attr('ajax:overlay'),
-                    css: elem.attr('ajax:overlay-css'),
-                    uid: elem.attr('ajax:overlay-uid'),
-                    title: elem.attr('ajax:overlay-title')
-                });
-            }
-            if (elem.attr('ajax:path')) {
-                this.trigger('on_path', {
-                    elem: elem,
-                    event: event
-                });
-            }
-        }
-    }
+
     class AjaxHandle extends AjaxUtil {
         constructor(ajax) {
             super();
@@ -1338,6 +1345,7 @@ var ts = (function (exports, $) {
             }
         }
     }
+
     class AjaxParser extends Parser {
         constructor(opts) {
             super();
@@ -1363,6 +1371,7 @@ var ts = (function (exports, $) {
             }
         }
     }
+
     class Ajax extends AjaxUtil {
         constructor(win=window) {
             super();
@@ -2132,6 +2141,7 @@ var ts = (function (exports, $) {
     exports.Websocket = Websocket;
     exports.Widget = Widget;
     exports.ajax = ajax;
+    exports.ajax_destroy = ajax_destroy;
     exports.changeListener = changeListener;
     exports.clickListener = clickListener;
     exports.clock = clock;

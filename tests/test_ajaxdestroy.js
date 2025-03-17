@@ -1,7 +1,7 @@
 import $ from 'jquery';
-import {AjaxDestroy} from '../src/ajax.js';
+import {AjaxDestroy} from '../src/ssr/destroy.js';
+import {ajax_destroy} from '../src/ssr/destroy.js';
 import {spinner} from '../src/spinner.js';
-import {ajax_destroy} from '../src/ajaxdestroy.js';
 
 QUnit.module('treibstoff.ajaxdestroy', hooks => {
     let container;
