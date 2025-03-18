@@ -2,8 +2,9 @@ import $ from 'jquery';
 import {AjaxDestroy} from '../src/ssr/destroy.js';
 import {ajax_destroy} from '../src/ssr/destroy.js';
 import {register_ajax_destroy_handle} from '../src/ssr/destroy.js';
-import {deregister_ajax_destroy_handle} from '../src/ssr/destroy.js';
+import {unregister_ajax_destroy_handle} from '../src/ssr/destroy.js';
 import {spinner} from '../src/spinner.js';
+import {ajax, AjaxDispatcher} from '../src/bundle.js';
 
 QUnit.module('treibstoff.ajaxdestroy', hooks => {
     let container;
@@ -111,10 +112,10 @@ QUnit.module('treibstoff.ajaxdestroy', hooks => {
         register_ajax_destroy_handle(custom_callback2);
         parser.walk(elem[0]);
         assert.verifySteps(['destroy', 'custom1', 'custom2']);
-        // deregister callbacks
+        // unregister callbacks
         elem[0]._ajax_attached = [inst]; // reattach instance
-        deregister_ajax_destroy_handle(custom_callback1);
-        deregister_ajax_destroy_handle(custom_callback2);
+        unregister_ajax_destroy_handle(custom_callback1);
+        unregister_ajax_destroy_handle(custom_callback2);
         parser.walk(elem[0]);
         assert.verifySteps(['destroy']);
     });
@@ -151,10 +152,10 @@ QUnit.module('treibstoff.ajaxdestroy', hooks => {
         register_ajax_destroy_handle(custom_callback2);
         ajax_destroy(elem);
         assert.verifySteps(['destroy', 'custom1', 'custom2']);
-        // deregister callbacks
+        // unregister callbacks
         elem[0]._ajax_attached = [inst]; // reattach instance
-        deregister_ajax_destroy_handle(custom_callback1);
-        deregister_ajax_destroy_handle(custom_callback2);
+        unregister_ajax_destroy_handle(custom_callback1);
+        unregister_ajax_destroy_handle(custom_callback2);
         ajax_destroy(elem);
         assert.verifySteps(['destroy']);
     });

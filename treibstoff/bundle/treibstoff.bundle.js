@@ -590,13 +590,13 @@ var ts = (function (exports, $) {
             );
         }
     }
-    function deregister_ajax_destroy_handle(callback) {
+    function unregister_ajax_destroy_handle(callback) {
         const index = destroy_handles.indexOf(callback);
         if (index > -1) {
             destroy_handles.splice(index, 1);
         } else {
             console.warn(
-                'Warning: Ajax destroy handle is not registered and cannot be deregistered: '
+                'Warning: Ajax destroy handle is not registered and cannot be unregistered: '
                 + callback
             );
         }
@@ -1288,7 +1288,6 @@ var ts = (function (exports, $) {
                 context.html(payload);
                 this.ajax.bind(context);
             }
-            context = null;
         }
         next(operations) {
             if (!operations || !operations.length) {
@@ -2141,7 +2140,6 @@ var ts = (function (exports, $) {
     exports.create_listener = create_listener;
     exports.create_svg_elem = create_svg_elem;
     exports.deprecate = deprecate;
-    exports.deregister_ajax_destroy_handle = deregister_ajax_destroy_handle;
     exports.extract_number = extract_number;
     exports.get_elem = get_elem;
     exports.get_overlay = get_overlay;
@@ -2167,6 +2165,7 @@ var ts = (function (exports, $) {
     exports.show_warning = show_warning;
     exports.spinner = spinner;
     exports.svg_ns = svg_ns;
+    exports.unregister_ajax_destroy_handle = unregister_ajax_destroy_handle;
     exports.uuid4 = uuid4;
 
     Object.defineProperty(exports, '__esModule', { value: true });
