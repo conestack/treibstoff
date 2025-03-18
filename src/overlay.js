@@ -26,24 +26,24 @@ export class Overlay extends Events {
         let z_index = 1055; // default bootstrap modal z-index
         z_index += $('.modal:visible').length; // increase zindex based on currently open modals
         compile_template(this, `
-            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
-              <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
-              <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">${this.title}</h5>
-                      <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
-                        <span class="visually-hidden">Close</span>
-                      </button>
-                    </div>
-                    <div class="modal-body" t-elem="body">${this.content}</div>
-                    <div class="modal-footer" t-elem="footer"></div>
+          <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
+            <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
+            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">${this.title}</h5>
+                    <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                      <span class="visually-hidden">Close</span>
+                    </button>
                   </div>
+                  <div class="modal-body" t-elem="body">${this.content}</div>
+                  <div class="modal-footer" t-elem="footer"></div>
                 </div>
               </div>
             </div>
-          `);
+          </div>
+        `);
     }
 
     open() {

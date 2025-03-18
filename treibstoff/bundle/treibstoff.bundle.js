@@ -493,7 +493,7 @@ var ts = (function (exports, $) {
             if (this._contains_subscriber(event, subscriber)) {
                 return this;
             }
-            this._subscribers[event].push(subscriber);
+            subscribers.push(subscriber);
             return this;
         }
         off(event, subscriber) {
@@ -639,24 +639,24 @@ var ts = (function (exports, $) {
             let z_index = 1055;
             z_index += $('.modal:visible').length;
             compile_template(this, `
-            <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
-              <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
-              <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title">${this.title}</h5>
-                      <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
-                        <span class="visually-hidden">Close</span>
-                      </button>
-                    </div>
-                    <div class="modal-body" t-elem="body">${this.content}</div>
-                    <div class="modal-footer" t-elem="footer"></div>
+          <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
+            <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
+            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">${this.title}</h5>
+                    <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                      <span class="visually-hidden">Close</span>
+                    </button>
                   </div>
+                  <div class="modal-body" t-elem="body">${this.content}</div>
+                  <div class="modal-footer" t-elem="footer"></div>
                 </div>
               </div>
             </div>
-          `);
+          </div>
+        `);
         }
         open() {
             $('body').addClass('modal-open');
@@ -1585,15 +1585,10 @@ var ts = (function (exports, $) {
                 if (!elem) {
                     throw 'No element found';
                 }
-                this.elem = elem;
                 this.event = event;
                 this.trigger_event = this.trigger_event.bind(this);
                 this.elem.on(this.event, this.trigger_event);
-                let native_elem = elem[0];
-                if (native_elem._ajax_attached === undefined) {
-                    native_elem._ajax_attached = [];
-                }
-                native_elem._ajax_attached.push(this);
+                ajax.attach(this, this.elem);
             }
             trigger_event(evt) {
                 this.trigger(`on_${event}`, evt);
