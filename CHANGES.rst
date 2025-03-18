@@ -5,10 +5,13 @@ Changes
 ------------------
 
 - Rework ``Spinner`` class to prevent persisting detached elements.
+  [lenadax]
 
 - Unbind events on Motion ``reset_state`` method.
+  [lenadax]
 
 - Unbind events on ``destroy`` method in ``create_listener`` subclass factory.
+  [lenadax]
 
 - Move ``AjaxDestroy`` to ``ajaxdestroy`` module to prevent circular import dependency.
   [lenadax]
