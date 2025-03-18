@@ -4,6 +4,9 @@ Changes
 0.5.0 (unreleased)
 ------------------
 
+- Split ``ajax.js`` into ``ssr`` js module.
+  [lenadax]
+
 - Rework ``Spinner`` class to prevent persisting detached elements.
   [lenadax]
 
