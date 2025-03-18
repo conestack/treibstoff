@@ -5,6 +5,7 @@ import {
     set_default,
     uuid4
 } from './utils.js';
+import {ajax_destroy} from './ssr/destroy.js';
 
 export class Overlay extends Events {
 
@@ -22,18 +23,23 @@ export class Overlay extends Events {
     }
 
     compile() {
+        let z_index = 1055; // default bootstrap modal z-index
+        z_index += $('.modal:visible').length; // increase zindex based on currently open modals
         compile_template(this, `
-          <div class="modal fade ${this.css}" id="${this.uid}" t-elem="elem" data-bs-backdrop="static">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h5 class="modal-title">${this.title}</h5>
-                  <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
-                    <span class="visually-hidden">Close</span>
-                  </button>
+          <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
+            <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
+            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">${this.title}</h5>
+                    <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                      <span class="visually-hidden">Close</span>
+                    </button>
+                  </div>
+                  <div class="modal-body" t-elem="body">${this.content}</div>
+                  <div class="modal-footer" t-elem="footer"></div>
                 </div>
-                <div class="modal-body" t-elem="body">${this.content}</div>
-                <div class="modal-footer" t-elem="footer"></div>
               </div>
             </div>
           </div>
@@ -42,9 +48,8 @@ export class Overlay extends Events {
 
     open() {
         $('body').addClass('modal-open');
-        this.container.append(this.elem);
+        this.container.append(this.wrapper);
         this.elem.show();
-        this.elem.modal('show');
         this.is_open = true;
         this.trigger('on_open');
     }
@@ -53,8 +58,8 @@ export class Overlay extends Events {
         if ($('.modal:visible').length === 1) {
             $('body').removeClass('modal-open');
         }
-        this.elem.modal('hide');
-        this.elem.remove();
+        ajax_destroy(this.wrapper);
+        this.wrapper.remove();
         this.is_open = false;
         this.trigger('on_close');
     }
@@ -84,7 +89,7 @@ export class Message extends Overlay {
         opts.content = opts.message ? opts.message : opts.content;
         opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
-        this.compile_actions()
+        this.compile_actions();
     }
 
     compile_actions() {
