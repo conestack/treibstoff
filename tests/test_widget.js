@@ -189,7 +189,7 @@ QUnit.module('treibstoff.widget', hooks => {
             assert.step('External on_click');
         });
 
-        assert.deepEqual(button.unselected_class, 'btn-default');
+        assert.deepEqual(button.unselected_class, 'btn-primary');
         assert.deepEqual(button.selected_class, 'btn-success');
 
         button.selected = true;

@@ -5,6 +5,7 @@ import {
     set_default,
     uuid4
 } from './utils.js';
+import {ajax_destroy} from './ssr/destroy.js';
 
 export class Overlay extends Events {
 
@@ -22,19 +23,23 @@ export class Overlay extends Events {
     }
 
     compile() {
+        let z_index = 1055; // default bootstrap modal z-index
+        z_index += $('.modal:visible').length; // increase zindex based on currently open modals
         compile_template(this, `
-          <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-header">
-                  <button class="close" t-prop="close_btn" t-bind-click="close">
-                    <span aria-hidden="true">&times;</span>
-                    <span class="sr-only">Close</span>
-                  </button>
-                  <h5 class="modal-title">${this.title}</h5>
+          <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
+            <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
+            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">${this.title}</h5>
+                    <button class="btn-close close" t-prop="close_btn" t-bind-click="close">
+                      <span class="visually-hidden">Close</span>
+                    </button>
+                  </div>
+                  <div class="modal-body" t-elem="body">${this.content}</div>
+                  <div class="modal-footer" t-elem="footer"></div>
                 </div>
-                <div class="modal-body" t-elem="body">${this.content}</div>
-                <div class="modal-footer" t-elem="footer"></div>
               </div>
             </div>
           </div>
@@ -42,11 +47,8 @@ export class Overlay extends Events {
     }
 
     open() {
-        $('body')
-            .css('padding-right', '13px')
-            .css('overflow-x', 'hidden')
-            .addClass('modal-open');
-        this.container.append(this.elem);
+        $('body').addClass('modal-open');
+        this.container.append(this.wrapper);
         this.elem.show();
         this.is_open = true;
         this.trigger('on_open');
@@ -54,12 +56,10 @@ export class Overlay extends Events {
 
     close() {
         if ($('.modal:visible').length === 1) {
-            $('body')
-                .css('padding-right', '')
-                .css('overflow-x', 'auto')
-                .removeClass('modal-open');
+            $('body').removeClass('modal-open');
         }
-        this.elem.remove();
+        ajax_destroy(this.wrapper);
+        this.wrapper.remove();
         this.is_open = false;
         this.trigger('on_close');
     }
@@ -89,12 +89,12 @@ export class Message extends Overlay {
         opts.content = opts.message ? opts.message : opts.content;
         opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
-        this.compile_actions()
+        this.compile_actions();
     }
 
     compile_actions() {
         compile_template(this, `
-          <button class="close btn btn-default allowMultiSubmit"
+          <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
         `, this.footer);
     }
@@ -182,9 +182,9 @@ export class Dialog extends Message {
 
     compile_actions() {
         compile_template(this, `
-          <button class="ok btn btn-default allowMultiSubmit"
+          <button class="ok btn btn-primary allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
-          <button class="cancel btn btn-default allowMultiSubmit"
+          <button class="cancel btn btn-outline-primary allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
         `, this.footer);
     }

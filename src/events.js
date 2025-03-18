@@ -45,7 +45,7 @@ export class Events {
         }
         let idx = subscribers.indexOf(subscriber);
         if (idx > -1) {
-            subscribers = subscribers.splice(idx, 1);
+            subscribers.splice(idx, 1);
         }
         this._subscribers[event] = subscribers;
         return this;
