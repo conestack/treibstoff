@@ -26,8 +26,8 @@ export class AjaxDestroy extends Parser {
         for (let cb of destroy_handles) {
             cb(node);
         }
-        // remove retained comments, event listeners and cached data
-        $(node).empty().off().removeData();
+        // remove event listeners, cached data and retained comments
+        $(node).off().removeData().empty();
     }
 }
 

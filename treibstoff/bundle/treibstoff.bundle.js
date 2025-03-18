@@ -571,7 +571,7 @@ var ts = (function (exports, $) {
             for (let cb of destroy_handles) {
                 cb(node);
             }
-            $(node).empty().off().removeData();
+            $(node).off().removeData().empty();
         }
     }
     function ajax_destroy(elem) {
