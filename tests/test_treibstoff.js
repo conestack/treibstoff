@@ -13,6 +13,8 @@ QUnit.module('Test treibstoff', hooks => {
             'AjaxAction',
             'AjaxDestroy',
             'ajax_destroy',
+            'deregister_ajax_destroy_handle',
+            'register_ajax_destroy_handle',
             'AjaxDispatcher',
             'AjaxEvent',
             'AjaxForm',

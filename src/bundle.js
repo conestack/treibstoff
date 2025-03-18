@@ -13,6 +13,7 @@ export * from './ssr/parser.js';
 export * from './ssr/path.js';
 export * from './ssr/util.js';
 
+export * from './bootstrap.js';
 export * from './clock.js';
 export * from './events.js';
 export * from './form.js';

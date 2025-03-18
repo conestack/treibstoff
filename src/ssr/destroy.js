@@ -1,51 +1,13 @@
 import {Parser} from "../parser";
 import $ from 'jquery';
 
-function destroy_bootstrap(node) {
-    let dd = window.bootstrap.Dropdown.getInstance(node);
-    let tt = window.bootstrap.Tooltip.getInstance(node);
-    if (dd) {
-        dd.dispose();
-    }
-    if (tt) {
-        tt.dispose();
-    }
-    dd = null;
-    tt = null;
-}
+var destroy_handles = [];
 
 /**
  * DOM parser for destroying JavaScript instances attached to DOM elements
  * going to be removed.
  */
 export class AjaxDestroy extends Parser {
-
-    constructor() {
-        super();
-        this.callbacks = [];
-        if (window.bootstrap !== undefined) {
-            this.register_cb(destroy_bootstrap);
-        }
-    }
-
-    /**
-     * Registers a callback to be executed during destruction.
-     * @param {Function} cb - The destroy callback function.
-     */
-    register_cb(cb) {
-        this.callbacks.push(cb);
-    }
-
-    /**
-     * Unregisters a callback.
-     * @param {Function} cb - The callback to deregister.
-     */
-    unregister_cb(cb) {
-        const index = this.callbacks.indexOf(cb);
-        if (index > -1) {
-            this.callbacks.splice(index, 1);
-        }
-    }
 
     parse(node) {
         let instances = node._ajax_attached;
@@ -67,7 +29,7 @@ export class AjaxDestroy extends Parser {
         }
 
         // Run all registered callbacks
-        for (let cb of this.callbacks) {
+        for (let cb of destroy_handles) {
             cb(node);
         }
 
@@ -88,12 +50,44 @@ export class AjaxDestroy extends Parser {
  * @param {HTMLElement|jQuery} elem - The element to destroy. Can be a jQuery object or a DOM element.
  * @returns {void}
  */
-export function ajax_destroy(elem, callbacks=[]) {
+export function ajax_destroy(elem) {
     elem = elem instanceof $ ? elem.get(0) : elem;
     let handle = new AjaxDestroy();
-    for (let cb of callbacks) {
-        handle.register_cb(cb);
-    }
     handle.walk(elem);
     handle = null;
+}
+
+/**
+ * Registers a callback to be executed on ajax destroy.
+ *
+ * @param {Function} callback - The callback to execute on each node.
+ * @returns {void}
+ */
+export function register_ajax_destroy_handle(callback) {
+    if (!destroy_handles.includes(callback)) {
+        destroy_handles.push(callback);
+    } else {
+        console.warn(
+            'Warning: Ajax destroy handle already registered, skipping registration: '
+            + callback
+        );
+    }
+}
+
+/**
+ * Deregisters a previously registered callback from ajax destroy.
+ *
+ * @param {Function} callback - The callback to deregister.
+ * @returns {void}
+ */
+export function deregister_ajax_destroy_handle(callback) {
+    const index = destroy_handles.indexOf(callback);
+    if (index > -1) {
+        destroy_handles.splice(index, 1);
+    } else {
+        console.warn(
+            'Warning: Ajax destroy handle is not registered and cannot be deregistered: '
+            + callback
+        );
+    }
 }

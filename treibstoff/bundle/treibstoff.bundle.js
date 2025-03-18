@@ -554,35 +554,8 @@ var ts = (function (exports, $) {
         }
     }
 
-    function destroy_bootstrap(node) {
-        let dd = window.bootstrap.Dropdown.getInstance(node);
-        let tt = window.bootstrap.Tooltip.getInstance(node);
-        if (dd) {
-            dd.dispose();
-        }
-        if (tt) {
-            tt.dispose();
-        }
-        dd = null;
-        tt = null;
-    }
+    var destroy_handles = [];
     class AjaxDestroy extends Parser {
-        constructor() {
-            super();
-            this.callbacks = [];
-            if (window.bootstrap !== undefined) {
-                this.register_cb(destroy_bootstrap);
-            }
-        }
-        register_cb(cb) {
-            this.callbacks.push(cb);
-        }
-        unregister_cb(cb) {
-            const index = this.callbacks.indexOf(cb);
-            if (index > -1) {
-                this.callbacks.splice(index, 1);
-            }
-        }
         parse(node) {
             let instances = node._ajax_attached;
             if (instances !== undefined) {
@@ -600,7 +573,7 @@ var ts = (function (exports, $) {
                 let evts = attrs['ajax:bind'];
                 $(node).off(evts);
             }
-            for (let cb of this.callbacks) {
+            for (let cb of destroy_handles) {
                 cb(node);
             }
             $(node).empty();
@@ -612,14 +585,32 @@ var ts = (function (exports, $) {
             attrs = null;
         }
     }
-    function ajax_destroy(elem, callbacks=[]) {
+    function ajax_destroy(elem) {
         elem = elem instanceof $ ? elem.get(0) : elem;
         let handle = new AjaxDestroy();
-        for (let cb of callbacks) {
-            handle.register_cb(cb);
-        }
         handle.walk(elem);
         handle = null;
+    }
+    function register_ajax_destroy_handle(callback) {
+        if (!destroy_handles.includes(callback)) {
+            destroy_handles.push(callback);
+        } else {
+            console.warn(
+                'Warning: Ajax destroy handle already registered, skipping registration: '
+                + callback
+            );
+        }
+    }
+    function deregister_ajax_destroy_handle(callback) {
+        const index = destroy_handles.indexOf(callback);
+        if (index > -1) {
+            destroy_handles.splice(index, 1);
+        } else {
+            console.warn(
+                'Warning: Ajax destroy handle is not registered and cannot be deregistered: '
+                + callback
+            );
+        }
     }
 
     class Overlay extends Events {
@@ -1514,6 +1505,24 @@ var ts = (function (exports, $) {
         return this;
     };
 
+    function destroy_bootstrap(node) {
+        let dd = window.bootstrap.Dropdown.getInstance(node);
+        let tt = window.bootstrap.Tooltip.getInstance(node);
+        if (dd) {
+            dd.dispose();
+        }
+        if (tt) {
+            tt.dispose();
+        }
+        dd = null;
+        tt = null;
+    }
+    $(function() {
+        if (window.bootstrap !== undefined) {
+            register_ajax_destroy_handle(destroy_bootstrap);
+        }
+    });
+
     class ClockFrameEvent {
         constructor(callback, ...opts) {
             this._request_id = window.requestAnimationFrame((timestamp) => {
@@ -2146,6 +2155,7 @@ var ts = (function (exports, $) {
     exports.create_listener = create_listener;
     exports.create_svg_elem = create_svg_elem;
     exports.deprecate = deprecate;
+    exports.deregister_ajax_destroy_handle = deregister_ajax_destroy_handle;
     exports.extract_number = extract_number;
     exports.get_elem = get_elem;
     exports.get_overlay = get_overlay;
@@ -2160,6 +2170,7 @@ var ts = (function (exports, $) {
     exports.parse_url = parse_url;
     exports.query_elem = query_elem;
     exports.read_cookie = read_cookie;
+    exports.register_ajax_destroy_handle = register_ajax_destroy_handle;
     exports.set_default = set_default;
     exports.set_svg_attrs = set_svg_attrs;
     exports.set_visible = set_visible;

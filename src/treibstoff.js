@@ -10,6 +10,7 @@ import * as ajax_path from './ssr/path.js';
 import * as ajax_util from './ssr/util.js';
 import * as ajax from './ssr/ajax.js';
 
+import * as bootstrap from './bootstrap.js';
 import * as clock from './clock.js';
 import * as events from './events.js';
 import * as form from './form.js';
@@ -39,6 +40,7 @@ Object.assign(api, ajax_parser);
 Object.assign(api, ajax_path);
 Object.assign(api, ajax_util);
 
+Object.assign(api, bootstrap);
 Object.assign(api, clock);
 Object.assign(api, events);
 Object.assign(api, form);
