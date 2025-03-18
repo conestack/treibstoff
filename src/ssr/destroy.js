@@ -62,18 +62,18 @@ export function register_ajax_destroy_handle(callback) {
 }
 
 /**
- * Deregisters a previously registered callback from ajax destroy.
+ * Unregisters a previously registered callback from ajax destroy.
  *
- * @param {Function} callback - The callback to deregister.
+ * @param {Function} callback - The callback to unregister.
  * @returns {void}
  */
-export function deregister_ajax_destroy_handle(callback) {
+export function unregister_ajax_destroy_handle(callback) {
     const index = destroy_handles.indexOf(callback);
     if (index > -1) {
         destroy_handles.splice(index, 1);
     } else {
         console.warn(
-            'Warning: Ajax destroy handle is not registered and cannot be deregistered: '
+            'Warning: Ajax destroy handle is not registered and cannot be unregistered: '
             + callback
         );
     }
