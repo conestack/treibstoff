@@ -22,25 +22,12 @@ export class AjaxDestroy extends Parser {
             node._ajax_attached = null; // remove class instances from memory
         }
 
-        let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind']) { // unbind events bound from AjaxDispatcher
-            let evts = attrs['ajax:bind'];
-            $(node).off(evts);
-        }
-
         // Run all registered callbacks
         for (let cb of destroy_handles) {
             cb(node);
         }
-
-        $(node).empty(); // remove retained comments
-        $(node).off(); // remove event listeners
-        $(node).removeData(); // remove cached data
-        $.cleanData([node]); // explicitly remove from jQuery cache
-
-        node = null;
-        instances = null;
-        attrs = null;
+        // remove retained comments, event listeners and cached data
+        $(node).empty().off().removeData();
     }
 }
 

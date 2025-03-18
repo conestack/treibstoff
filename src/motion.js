@@ -11,9 +11,6 @@ export class Motion extends Events {
     }
 
     reset_state() {
-        $(this._down_scope).off('mousedown', this._down_handle);
-        $(this._move_scope).off('mousemove', this._move_handle);
-        $(document).off('mouseup', this._up_handle);
         this._move_handle = null;
         this._up_handle = null;
         this._prev_pos = null;

@@ -568,21 +568,10 @@ var ts = (function (exports, $) {
                 }
                 node._ajax_attached = null;
             }
-            let attrs = this.node_attrs(node);
-            if (attrs['ajax:bind']) {
-                let evts = attrs['ajax:bind'];
-                $(node).off(evts);
-            }
             for (let cb of destroy_handles) {
                 cb(node);
             }
-            $(node).empty();
-            $(node).off();
-            $(node).removeData();
-            $.cleanData([node]);
-            node = null;
-            instances = null;
-            attrs = null;
+            $(node).empty().off().removeData();
         }
     }
     function ajax_destroy(elem) {
@@ -1620,9 +1609,6 @@ var ts = (function (exports, $) {
             this._move_scope = null;
         }
         reset_state() {
-            $(this._down_scope).off('mousedown', this._down_handle);
-            $(this._move_scope).off('mousemove', this._move_handle);
-            $(document).off('mouseup', this._up_handle);
             this._move_handle = null;
             this._up_handle = null;
             this._prev_pos = null;
