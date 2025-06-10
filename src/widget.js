@@ -249,12 +249,14 @@ export class Button extends ClickListener {
      * Create button instance.
      *
      * @param {Object} opts - Button options.
-     * @param {$} opts.elem - jQuery wrapped button element.
+     * @param {$} opts.elem - jQuery wrapped button element.+
+     * @param {$} opts.unselected_class - css class for unselected button.
+     * @param {$} opts.selected_class - css class for selected button.
      */
     constructor(opts) {
         super(opts);
-        this.unselected_class = 'btn-primary';
-        this.selected_class = 'btn-success';
+        this.unselected_class = opts.unselected_class ?? 'btn-primary';
+        this.selected_class = opts.selected_class ?? 'btn-success';
     }
 
     /**

@@ -1768,8 +1768,8 @@ var ts = (function (exports, $) {
     class Button extends ClickListener {
         constructor(opts) {
             super(opts);
-            this.unselected_class = 'btn-primary';
-            this.selected_class = 'btn-success';
+            this.unselected_class = opts.unselected_class ?? 'btn-primary';
+            this.selected_class = opts.selected_class ?? 'btn-success';
         }
         get selected() {
             return this.elem.hasClass(this.selected_class);
