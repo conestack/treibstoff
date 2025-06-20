@@ -249,7 +249,20 @@ export const svg_ns = 'http://www.w3.org/2000/svg';
 
 export function set_svg_attrs(el, opts) {
     for (let n in opts) {
-        el.setAttributeNS(null, n, opts[n]);
+        if (n === 'width' || n === 'height') {
+            const val = parseFloat(opts[n]);
+            if (val >= 0) {
+                el.setAttributeNS(null, n, opts[n]);
+            } else {
+                console.error(
+                    `Invalid value for ${n}:`,
+                    opts[n],
+                    el
+                );
+            }
+        } else {
+            el.setAttributeNS(null, n, opts[n]);
+        }
     }
 }
 
