@@ -619,6 +619,7 @@ var ts = (function (exports, $) {
         constructor(opts) {
             super();
             this.uid = opts.uid ? opts.uid : uuid4();
+            this.flavor = opts.flavor ? opts.flavor : '';
             this.css = opts.css ? opts.css : '';
             this.title = opts.title ? opts.title : '&nbsp;';
             this.content = opts.content ? opts.content : '';
@@ -634,7 +635,7 @@ var ts = (function (exports, $) {
             compile_template(this, `
           <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
             <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
-            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+            <div class="modal ${this.flavor} ${this.css}" id="${this.uid}" t-elem="elem">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -682,7 +683,6 @@ var ts = (function (exports, $) {
     class Message extends Overlay {
         constructor(opts) {
             opts.content = opts.message ? opts.message : opts.content;
-            opts.css = opts.flavor ? opts.flavor : opts.css;
             super(opts);
             this.compile_actions();
         }
@@ -698,30 +698,34 @@ var ts = (function (exports, $) {
             title: opts.title,
             message: opts.message,
             flavor: opts.flavor,
+            css: opts.css,
             on_open: function(inst) {
                 $('button', inst.elem).first().focus();
             }
         }).open();
     }
-    function show_info(message) {
+    function show_info(message, css) {
         show_message({
             title: 'Info',
             message: message,
-            flavor: 'info'
+            flavor: 'info',
+            css: css
         });
     }
-    function show_warning(message) {
+    function show_warning(message, css) {
         show_message({
             title: 'Warning',
             message: message,
-            flavor: 'warning'
+            flavor: 'warning',
+            css: css
         });
     }
-    function show_error(message) {
+    function show_error(message, css) {
         show_message({
             title: 'Error',
             message: message,
-            flavor: 'error'
+            flavor: 'error',
+            css: css
         });
     }
     class Dialog extends Message {

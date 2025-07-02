@@ -12,6 +12,7 @@ export class Overlay extends Events {
     constructor(opts) {
         super();
         this.uid = opts.uid ? opts.uid : uuid4();
+        this.flavor = opts.flavor ? opts.flavor : '';
         this.css = opts.css ? opts.css : '';
         this.title = opts.title ? opts.title : '&nbsp;';
         this.content = opts.content ? opts.content : '';
@@ -28,7 +29,7 @@ export class Overlay extends Events {
         compile_template(this, `
           <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
             <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
-            <div class="modal ${this.css}" id="${this.uid}" t-elem="elem">
+            <div class="modal ${this.flavor} ${this.css}" id="${this.uid}" t-elem="elem">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
@@ -87,7 +88,6 @@ export class Message extends Overlay {
 
     constructor(opts) {
         opts.content = opts.message ? opts.message : opts.content;
-        opts.css = opts.flavor ? opts.flavor : opts.css;
         super(opts);
         this.compile_actions();
     }
@@ -106,7 +106,8 @@ export class Message extends Overlay {
  *     ts.show_message({
  *         title: 'Message title',
  *         message: 'Message text',
- *         flavor: 'info'
+ *         flavor: 'info',
+ *         css: 'modal-xl
  *     });
  *
  * @param {Object} opts - Message options.
@@ -121,6 +122,7 @@ export function show_message(opts) {
         title: opts.title,
         message: opts.message,
         flavor: opts.flavor,
+        css: opts.css,
         on_open: function(inst) {
             $('button', inst.elem).first().focus();
         }
@@ -134,11 +136,12 @@ export function show_message(opts) {
  *
  * @param {string} message - Info message to display in overlay content.
  */
-export function show_info(message) {
+export function show_info(message, css) {
     show_message({
         title: 'Info',
         message: message,
-        flavor: 'info'
+        flavor: 'info',
+        css: css
     });
 }
 
@@ -149,11 +152,12 @@ export function show_info(message) {
  *
  * @param {string} message - Warning message to display in overlay content.
  */
-export function show_warning(message) {
+export function show_warning(message, css) {
     show_message({
         title: 'Warning',
         message: message,
-        flavor: 'warning'
+        flavor: 'warning',
+        css: css
     });
 }
 
@@ -164,11 +168,12 @@ export function show_warning(message) {
  *
  * @param {string} message - Error message to display in overlay content.
  */
-export function show_error(message) {
+export function show_error(message, css) {
     show_message({
         title: 'Error',
         message: message,
-        flavor: 'error'
+        flavor: 'error',
+        css: css
     });
 }
 
