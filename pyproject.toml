@@ -32,9 +32,6 @@ docs = [
 packages = ["treibstoff"]
 include-package-data = true
 
-[tool.setuptools]
-zip-safe = false
-
 [tool.setuptools.package-dir]
 "" = "src"
 
