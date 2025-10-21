@@ -28,9 +28,9 @@ docs = [
     "sphinx_js",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
+[tool.setuptools]
+packages = ["treibstoff"]
+include-package-data = true
 
 [tool.setuptools]
 zip-safe = false
