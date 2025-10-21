@@ -28,5 +28,8 @@ docs = [
     "sphinx_js",
 ]
 
+
+[tool.hatch.build.targets.wheel]
+packages = ["treibstoff"]
 [tool.zest-releaser]
 create-wheel = true
