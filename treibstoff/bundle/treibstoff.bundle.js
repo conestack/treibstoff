@@ -1772,7 +1772,7 @@ var ts = (function (exports, $) {
             this.elem = opts.elem;
         }
         get collapsed() {
-            return !this.elem.hasClass('in');
+            return !this.elem.hasClass('show');
         }
         set collapsed(value) {
             if (value) {

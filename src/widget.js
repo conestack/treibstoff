@@ -226,7 +226,7 @@ export class Collapsible {
      * @type {boolean}
      */
     get collapsed() {
-        return !this.elem.hasClass('in');
+        return !this.elem.hasClass('show');
     }
 
     set collapsed(value) {
