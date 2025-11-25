@@ -47,6 +47,23 @@ path = "CHANGES.rst"
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
 path = "LICENSE.rst"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+    ".npmignore",
+    ".readthedocs.yaml",
+    "/.github/",
+    "/docs",
+    "/Makefile",
+    "/mx.ini",
+    "/package.json",
+    "/pnpm-lock.yaml",
+    "/scripts/",
+    "/src/",
+    "/tests/",
+    "rollup.conf.js",
+    "wtr.config.mjs",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["treibstoff"]
 
