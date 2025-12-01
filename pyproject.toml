@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[project]
+name = "treibstoff"
+version = "1.0.0.dev0"
+description = ""
+dynamic = ["readme"]
+requires-python = ">=3.10"
+license = {text = "Simplified BSD"}
+authors = [{name = "Conestack Contributors", email = "dev@conestack.org"}]
+classifiers = [
+    "Environment :: Web Environment",
+    "Operating System :: OS Independent",
+    "Programming Language :: JavaScript",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "webresource>1.2.99",
+]
+
+[project.optional-dependencies]
+docs = [
+    "Jinja2<3.0",
+    "markupsafe<2.1.0",
+    "Sphinx",
+    "sphinx-conestack-theme",
+    "sphinx_js",
+]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/x-rst"
+fragments = [
+    {path = "README.rst"},
+    {text = "\n\n"},
+    {path = "CHANGES.rst"},
+    {text = "\n\n"},
+    {path = "LICENSE.rst"},
+]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    ".npmignore",
+    ".readthedocs.yaml",
+    "/.github/",
+    "/docs",
+    "/Makefile",
+    "/mx.ini",
+    "/package.json",
+    "/pnpm-lock.yaml",
+    "/scripts/",
+    "/src/",
+    "/tests/",
+    "rollup.conf.js",
+    "wtr.config.mjs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["treibstoff"]
+
+[tool.zest-releaser]
+create-wheel = true
