@@ -4,7 +4,8 @@ Changes
 1.0.0 (unreleased)
 ------------------
 
-- No changes yet.
+- Refactor package layout to use ``pyproject.toml``.
+  [rnix]
 
 
 0.4.0 (2024-02-12)
