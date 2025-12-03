@@ -5,6 +5,10 @@ Treibstoff
     :target: https://pypi.python.org/pypi/treibstoff
     :alt: Latest PyPI version
 
+.. image:: https://img.shields.io/pypi/dm/treibstoff.svg
+    :target: https://pypi.python.org/pypi/treibstoff
+    :alt: Number of PyPI downloads
+
 .. image:: https://github.com/conestack/treibstoff/actions/workflows/test.yml/badge.svg
     :target: https://github.com/conestack/treibstoff/actions/workflows/test.yml
     :alt: Test treibstoff
