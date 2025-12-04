@@ -7,6 +7,30 @@ Changes
 - Refactor package layout to use ``pyproject.toml``.
   [rnix]
 
+- Split ``ajax.js`` into ``ssr`` js module.
+  [lenadax]
+
+- Rework ``Spinner`` class to prevent persisting detached elements.
+  [lenadax]
+
+- Unbind events on Motion ``reset_state`` method.
+  [lenadax]
+
+- Unbind events on ``destroy`` method in ``create_listener`` subclass factory.
+  [lenadax]
+
+- Move ``AjaxDestroy`` to ``ajaxdestroy`` module to prevent circular import dependency.
+  [lenadax]
+
+- Fix widgets not being fully destroyed if rendered within an ``Overlay`` inside body.
+  [lenadax]
+
+- Modify ``AjaxDestroy`` parse method to prevent DOM memory leaks.
+  [lenadax]
+
+- Replace svg spinner with Bootstrap5 spinner.
+  [lenadax]
+
 
 0.4.0 (2024-02-12)
 ------------------
