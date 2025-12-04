@@ -5,6 +5,10 @@ Treibstoff
     :target: https://pypi.python.org/pypi/treibstoff
     :alt: Latest PyPI version
 
+.. image:: https://img.shields.io/pypi/dm/treibstoff.svg
+    :target: https://pypi.python.org/pypi/treibstoff
+    :alt: Number of PyPI downloads
+
 .. image:: https://github.com/conestack/treibstoff/actions/workflows/test.yml/badge.svg
     :target: https://github.com/conestack/treibstoff/actions/workflows/test.yml
     :alt: Test treibstoff
@@ -30,7 +34,7 @@ The sources are in a GIT DVCS with its main branches at
 Copyright
 ---------
 
-- Copyright (c) 2021-2024 Cone Contributors
+- Copyright (c) 2021-2025 Cone Contributors
 
 
 Contributors

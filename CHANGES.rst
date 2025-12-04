@@ -4,6 +4,9 @@ Changes
 1.0.0 (unreleased)
 ------------------
 
+- Refactor package layout to use ``pyproject.toml``.
+  [rnix]
+
 - Split ``ajax.js`` into ``ssr`` js module.
   [lenadax]
 
