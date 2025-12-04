@@ -1,11 +1,8 @@
 Changes
 =======
 
-1.0.0 (unreleased)
+2.0.0 (unreleased)
 ------------------
-
-- Refactor package layout to use ``pyproject.toml``.
-  [rnix]
 
 - Split ``ajax.js`` into ``ssr`` js module.
   [lenadax]
@@ -30,6 +27,13 @@ Changes
 
 - Replace svg spinner with Bootstrap5 spinner.
   [lenadax]
+
+
+1.0.0 (unreleased)
+------------------
+
+- Refactor package layout to use ``pyproject.toml``.
+  [rnix]
 
 
 0.4.0 (2024-02-12)
