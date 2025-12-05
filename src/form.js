@@ -1,6 +1,6 @@
 import $ from 'jquery';
-import {http_request} from '../src/request.js';
-import {Events} from '../src/events.js';
+import {http_request} from './request.js';
+import {Events} from './events.js';
 import {changeListener} from './listener.js';
 import {
     get_elem,

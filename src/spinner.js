@@ -1,8 +1,6 @@
 import $ from 'jquery';
 import {compile_template} from './parser.js';
 
-const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
-
 /**
  * Loading spinner.
  *
@@ -34,13 +32,12 @@ export class LoadingSpinner {
 
     constructor() {
         this._count = 0;
-        this.compile();
     }
 
     compile() {
         compile_template(this, `
-          <div id="t-loading-spinner" t-elem="elem">
-            <img src="${default_spinner_image}" width="64" height="64" alt="" />
+          <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
         `);
     }
@@ -53,6 +50,7 @@ export class LoadingSpinner {
         if (this._count > 1) {
             return;
         }
+        this.compile();
         $('body').append(this.elem);
     }
 
@@ -66,11 +64,17 @@ export class LoadingSpinner {
         this._count--;
         if (force) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
             return;
         } else if (this._count <= 0) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
         }
     }
 }

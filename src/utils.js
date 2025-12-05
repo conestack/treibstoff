@@ -216,7 +216,7 @@ export function parse_path(url, include_query) {
 }
 
 export function create_cookie(name, value, days) {
-    var date,
+    let date,
         expires;
     if (days) {
         date = new Date();
@@ -229,7 +229,7 @@ export function create_cookie(name, value, days) {
 }
 
 export function read_cookie(name) {
-    var nameEQ = name + "=",
+    let nameEQ = name + "=",
         ca = document.cookie.split(';'),
         i,
         c;
@@ -239,7 +239,7 @@ export function read_cookie(name) {
             c = c.substring(1, c.length);
         }
         if (c.indexOf(nameEQ) === 0) {
-            return unescape(c.substring(nameEQ.length, c.length));
+            return decodeURIComponent(c.substring(nameEQ.length, c.length));
         }
     }
     return null;
@@ -249,7 +249,20 @@ export const svg_ns = 'http://www.w3.org/2000/svg';
 
 export function set_svg_attrs(el, opts) {
     for (let n in opts) {
-        el.setAttributeNS(null, n, opts[n]);
+        if (n === 'width' || n === 'height') {
+            const val = parseFloat(opts[n]);
+            if (val >= 0) {
+                el.setAttributeNS(null, n, opts[n]);
+            } else {
+                console.error(
+                    `Invalid value for ${n}:`,
+                    opts[n],
+                    el
+                );
+            }
+        } else {
+            el.setAttributeNS(null, n, opts[n]);
+        }
     }
 }
 
@@ -263,7 +276,7 @@ export function create_svg_elem(name, opts, container) {
 }
 
 export function parse_svg(tmpl, container) {
-    var wrapper = create_svg_elem('svg', {});
+    let wrapper = create_svg_elem('svg', {});
     wrapper.innerHTML = tmpl.trim();
     let elems = [];
     let children = wrapper.childNodes;

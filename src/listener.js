@@ -1,4 +1,5 @@
-import {Events} from '../src/events.js';
+import {ajax} from './ssr/ajax.js';
+import {Events} from './events.js';
 
 /**
  * Create listener base or mixin class handling given DOM event.
@@ -67,16 +68,26 @@ export function create_listener(event, base=null) {
             } else {
                 super(opts);
             }
-            let elem = this.elem
+            let elem = this.elem;
             if (!elem && opts !== undefined) {
                 elem = this.elem = opts.elem;
             }
             if (!elem) {
                 throw 'No element found';
             }
-            elem.on(event, evt => {
-                this.trigger(`on_${event}`, evt);
-            });
+            this.event = event;
+            this.trigger_event = this.trigger_event.bind(this);
+            this.elem.on(this.event, this.trigger_event);
+
+            ajax.attach(this, this.elem);
+        }
+
+        trigger_event(evt) {
+            this.trigger(`on_${event}`, evt);
+        }
+
+        destroy() {
+            this.elem.off(this.event, this.trigger_event);
         }
     };
 }

@@ -1,18 +1,15 @@
 import $ from 'jquery';
-import {
-    Ajax,
-    AjaxAction,
-    AjaxDestroy,
-    AjaxDispatcher,
-    AjaxEvent,
-    AjaxForm,
-    AjaxHandle,
-    AjaxOperation,
-    AjaxOverlay,
-    AjaxParser,
-    AjaxPath,
-    AjaxUtil
-} from '../src/ajax.js';
+import {Ajax} from '../src/ssr/ajax.js';
+import {AjaxAction} from '../src/ssr/action.js';
+import {AjaxDispatcher} from '../src/ssr/dispatcher.js';
+import {AjaxEvent} from '../src/ssr/event.js';
+import {AjaxForm} from '../src/ssr/form.js';
+import {AjaxHandle} from '../src/ssr/handle.js';
+import {AjaxOperation} from '../src/ssr/util.js';
+import {AjaxOverlay} from '../src/ssr/overlay.js';
+import {AjaxParser} from '../src/ssr/parser.js';
+import {AjaxPath} from '../src/ssr/path.js';
+import {AjaxUtil} from '../src/ssr/util.js';
 import {HTTPRequest} from '../src/request.js';
 import {spinner} from '../src/spinner.js';
 import {uuid4} from '../src/utils.js';
@@ -1220,7 +1217,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         dispatcher.bind(elem.get(0), 'click');
 
         elem.trigger('click');
-        let dialog = $('body > .modal.dialog').data('overlay');
+        let dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.deepEqual(dialog.content, 'Really?');
         assert.ok(dialog.is_open);
 
@@ -1229,7 +1226,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(dispatch_opts, null);
 
         elem.trigger('click');
-        dialog = $('body > .modal.dialog').data('overlay');
+        dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.ok(dialog.is_open);
 
         $('button.ok', dialog.elem).trigger('click');
@@ -1335,30 +1332,6 @@ QUnit.module('treibstoff.ajax', hooks => {
         })
         assert.deepEqual(path_opts.elem, elem);
         assert.deepEqual(path_opts.event.type, 'click');
-    });
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Test AjaxDestroy
-    ///////////////////////////////////////////////////////////////////////////
-
-    QUnit.test('Test AjaxDestroy', assert => {
-        class Inst {
-            constructor() {
-                this.destroyed = false;
-            }
-            destroy() {
-                this.destroyed = true;
-            }
-        }
-
-        let inst = new Inst();
-        let elem = $('<span />').appendTo(container);
-        elem[0]._ajax_attached = [inst];
-
-        assert.deepEqual(inst.destroyed, false);
-        let parser = new AjaxDestroy();
-        parser.walk(container[0]);
-        assert.deepEqual(inst.destroyed, true);
     });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1561,7 +1534,7 @@ QUnit.module('treibstoff.ajax', hooks => {
             flavor: 'info',
             selector: null,
         }]);
-        let ol = $('body > .modal.info').data('overlay');
+        let ol = $('body > .modal-wrapper > .modal.info').data('overlay');
         assert.ok(ol.is_open);
         assert.deepEqual(ol.content, 'Message Content');
         ol.close();
