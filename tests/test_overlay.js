@@ -32,7 +32,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         assert.deepEqual(ol.content, 'Overlay Content');
 
         let elem = ol.elem;
-        assert.deepEqual(elem.attr('class'), 'modal some-class');
+        assert.deepEqual(elem.attr('class'), 'modal  some-class');
         assert.deepEqual(elem.attr('id'), '1234');
         assert.deepEqual($('.modal-title', elem).text(), 'Overlay Title');
         assert.deepEqual($('.modal-body', elem).text(), 'Overlay Content');
@@ -99,7 +99,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         });
 
         assert.true(msg instanceof Overlay);
-        assert.deepEqual(msg.css, 'info');
+        assert.deepEqual(msg.flavor, 'info');
         assert.deepEqual(msg.content, 'Message Content');
         assert.true(msg.f_close_btn !== undefined);
 
