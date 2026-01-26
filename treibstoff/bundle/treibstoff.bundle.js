@@ -1332,7 +1332,8 @@ var ts = (function (exports, $) {
                     if (op.flavor) {
                         show_message({
                             message: op.payload,
-                            flavor: op.flavor
+                            flavor: op.flavor,
+                            css: op.css ? op.css : '',
                         });
                     } else {
                         $(op.selector).html(op.payload);
