@@ -73,6 +73,7 @@ export class AjaxHandle extends AjaxUtil {
                         message: op.payload,
                         flavor: op.flavor,
                         css: op.css ? op.css : '',
+                        title: op.title ? op.title : ''
                     });
                 // no overlay message, set message payload at selector
                 } else {

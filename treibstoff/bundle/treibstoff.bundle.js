@@ -1334,6 +1334,7 @@ var ts = (function (exports, $) {
                             message: op.payload,
                             flavor: op.flavor,
                             css: op.css ? op.css : '',
+                            title: op.title ? op.title : ''
                         });
                     } else {
                         $(op.selector).html(op.payload);
