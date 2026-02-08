@@ -120,6 +120,57 @@ QUnit.module('treibstoff.ajaxdestroy', hooks => {
         assert.verifySteps(['destroy']);
     });
 
+    QUnit.test('Test AjaxDestroy no destroy method warning', assert => {
+        let warn_origin = console.warn;
+        let warn_msg;
+        console.warn = function(msg) { warn_msg = msg; };
+
+        let inst = { constructor: { name: 'NoDestroyInst' } };
+        let elem = $('<span />').appendTo(container);
+        elem[0]._ajax_attached = [inst];
+
+        let parser = new AjaxDestroy();
+        parser.walk(elem[0]);
+        assert.ok(
+            warn_msg.indexOf('NoDestroyInst') > -1,
+            'Warning mentions class name'
+        );
+        console.warn = warn_origin;
+    });
+
+    QUnit.test('Test register duplicate handle warning', assert => {
+        let warn_origin = console.warn;
+        let warn_msg;
+        console.warn = function(msg) { warn_msg = msg; };
+
+        function my_callback(node) {}
+        register_ajax_destroy_handle(my_callback);
+        register_ajax_destroy_handle(my_callback); // duplicate
+        assert.ok(
+            warn_msg.indexOf('already registered') > -1,
+            'Warning about duplicate registration'
+        );
+
+        // Clean up
+        unregister_ajax_destroy_handle(my_callback);
+        console.warn = warn_origin;
+    });
+
+    QUnit.test('Test unregister non-registered handle warning', assert => {
+        let warn_origin = console.warn;
+        let warn_msg;
+        console.warn = function(msg) { warn_msg = msg; };
+
+        function unknown_callback(node) {}
+        unregister_ajax_destroy_handle(unknown_callback);
+        assert.ok(
+            warn_msg.indexOf('not registered') > -1,
+            'Warning about non-registered callback'
+        );
+
+        console.warn = warn_origin;
+    });
+
     QUnit.test('Test AjaxDestroy utility', assert => {
         class Inst {
             constructor() {

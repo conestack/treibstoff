@@ -2,7 +2,8 @@ import $ from 'jquery';
 import {
     Overlay,
     Message,
-    Dialog
+    Dialog,
+    get_overlay
 } from '../src/overlay.js';
 
 QUnit.module('treibstoff.overlay', hooks => {
@@ -90,6 +91,35 @@ QUnit.module('treibstoff.overlay', hooks => {
             "Bound Overlay: on_close from opts",
             "Bound Overlay: on_close after Overlay creation"
         ]);
+    });
+
+    QUnit.test('Test get_overlay', assert => {
+        // Non-existent element returns null
+        assert.strictEqual(
+            get_overlay('nonexistent-uid'),
+            null,
+            'Returns null for non-existent element'
+        );
+
+        // Element exists but has no overlay data
+        let elem = $('<div id="no-overlay-data"></div>');
+        container.append(elem);
+        assert.strictEqual(
+            get_overlay('no-overlay-data'),
+            null,
+            'Returns null when element has no overlay data'
+        );
+        elem.remove();
+
+        // Element exists with overlay data
+        let ol = new Overlay({
+            uid: 'test-get-overlay',
+            container: container
+        });
+        ol.open();
+        let found = get_overlay('test-get-overlay');
+        assert.ok(found === ol, 'Returns the overlay instance');
+        ol.close();
     });
 
     QUnit.test('Test Message', assert => {

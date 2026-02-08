@@ -3,12 +3,15 @@ import {
     create_cookie,
     create_svg_elem,
     deprecate,
+    get_elem,
     json_merge,
+    load_svg,
     object_by_path,
     parse_path,
     parse_query,
     parse_svg,
     parse_url,
+    query_elem,
     read_cookie,
     set_default,
     set_svg_attrs,
@@ -155,5 +158,125 @@ QUnit.module('treibstoff.utils', hooks => {
         );
         assert.strictEqual(elems[1].tagName, 'rect', 'correct element created');
         assert.strictEqual(elems[1].getAttribute("x"), "10", 'correct attribute set');
+    });
+
+    QUnit.test('Test json_merge', assert => {
+        let result = json_merge({a: 1, b: 2}, {b: 3, c: 4});
+        assert.deepEqual(result, {a: 1, b: 3, c: 4});
+
+        result = json_merge({}, {x: 'y'});
+        assert.deepEqual(result, {x: 'y'});
+
+        result = json_merge({x: 'y'}, {});
+        assert.deepEqual(result, {x: 'y'});
+    });
+
+    QUnit.test('Test query_elem not unique', assert => {
+        let container = $('<div><span></span><span></span></div>');
+        $('body').append(container);
+
+        assert.throws(function() {
+            query_elem('span', container, true);
+        });
+
+        // With unique=false, returns all elements
+        let elems = query_elem('span', container, false);
+        assert.strictEqual(elems.length, 2);
+
+        // Returns null when not found
+        let result = query_elem('.nonexistent', container);
+        assert.strictEqual(result, null);
+
+        container.remove();
+    });
+
+    QUnit.test('Test get_elem throws when not found', assert => {
+        let container = $('<div></div>');
+        assert.throws(function() {
+            get_elem('.nonexistent', container);
+        });
+    });
+
+    QUnit.test('Test read_cookie with leading spaces', assert => {
+        // Set two cookies so the second one has a leading space when
+        // document.cookie returns "cookie1=val1; spaced=value"
+        document.cookie = 'rcfirst=val1';
+        document.cookie = 'rcsecond=val2';
+        // The browser returns "rcfirst=val1; rcsecond=val2" — the second
+        // entry has a leading space that read_cookie must strip
+        let result = read_cookie('rcsecond');
+        assert.strictEqual(result, 'val2');
+        // Clean up
+        create_cookie('rcfirst', '', -1);
+        create_cookie('rcsecond', '', -1);
+    });
+
+    QUnit.test('Test set_svg_attrs with width and height', assert => {
+        let elem = document.createElementNS(svg_ns, 'rect');
+
+        // Valid width and height
+        set_svg_attrs(elem, {width: 100, height: 50});
+        assert.strictEqual(elem.getAttribute('width'), '100');
+        assert.strictEqual(elem.getAttribute('height'), '50');
+
+        // Zero is valid
+        set_svg_attrs(elem, {width: 0, height: 0});
+        assert.strictEqual(elem.getAttribute('width'), '0');
+        assert.strictEqual(elem.getAttribute('height'), '0');
+
+        // Negative width/height triggers error, does not set attribute
+        let error_origin = console.error;
+        let error_args;
+        console.error = function() {
+            error_args = Array.from(arguments);
+        };
+
+        set_svg_attrs(elem, {width: -5});
+        assert.ok(error_args, 'console.error was called for negative width');
+        assert.ok(error_args[0].indexOf('width') > -1);
+
+        error_args = null;
+        set_svg_attrs(elem, {height: -10});
+        assert.ok(error_args, 'console.error was called for negative height');
+        assert.ok(error_args[0].indexOf('height') > -1);
+
+        // NaN triggers error
+        error_args = null;
+        set_svg_attrs(elem, {width: 'invalid'});
+        assert.ok(error_args, 'console.error was called for NaN width');
+
+        console.error = error_origin;
+    });
+
+    QUnit.test('Test load_svg', assert => {
+        let get_origin = $.get;
+        let get_url, get_type;
+
+        // Mock $.get
+        $.get = function(url, callback, type) {
+            get_url = url;
+            get_type = type;
+            // Simulate XML response with SVG
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(
+                '<root><svg xmlns="http://www.w3.org/2000/svg" xmlns:a="x">' +
+                '<rect width="10" height="10"/>' +
+                '</svg></root>',
+                'text/xml'
+            );
+            callback(doc);
+        };
+
+        let result_svg;
+        load_svg('/test.svg', function(svg) {
+            result_svg = svg;
+        });
+
+        assert.strictEqual(get_url, '/test.svg');
+        assert.strictEqual(get_type, 'xml');
+        assert.ok(result_svg, 'callback received SVG element');
+        assert.strictEqual(result_svg.length, 1, 'SVG element found');
+
+        $.get = get_origin;
     });
 });

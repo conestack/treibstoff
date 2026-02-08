@@ -183,6 +183,43 @@ QUnit.module('treibstoff.parser', hooks => {
         assert.strictEqual(ob.on_button_down_called, true, 'Button event handler called');
     });
 
+    QUnit.test('Test Parser base class parse stub', assert => {
+        // Base Parser.parse() is a no-op — should not throw
+        let parser = new Parser();
+        let elem = $('<div></div>').get(0);
+        parser.walk(elem);
+        assert.ok(true, 'Base Parser.parse() does not throw');
+    });
+
+    QUnit.test('Test HTMLParser handle_input without t-prop', assert => {
+        // Input without t-prop should be skipped (early return)
+        let elem = $('<div><input type="text" /></div>');
+        let ob = {};
+        new HTMLParser(ob).walk(elem.get(0));
+        assert.deepEqual(Object.keys(ob), [], 'No properties set for input without t-prop');
+    });
+
+    QUnit.test('Test HTMLParser handle_button without t-prop', assert => {
+        // Button without t-prop should be skipped (early return)
+        let elem = $('<div><button>Click</button></div>');
+        let ob = {};
+        new HTMLParser(ob).walk(elem.get(0));
+        assert.deepEqual(Object.keys(ob), [], 'No properties set for button without t-prop');
+    });
+
+    QUnit.test('Test compile_svg', assert => {
+        let container = create_svg_elem('svg', {});
+        let ob = {};
+        let elems = compile_svg(ob, `
+          <g t-elem="group">
+            <rect t-elem="rect" />
+          </g>
+        `, container);
+        assert.strictEqual(ob.group.tagName, 'g', 'SVG group element set on object');
+        assert.strictEqual(ob.rect.tagName, 'rect', 'SVG rect element set on object');
+        assert.strictEqual(elems.length, 1, 'One top-level element returned');
+    });
+
     QUnit.test('Test SVGParser', assert => {
         let container = create_svg_elem('svg', {});
         let elems = parse_svg(`

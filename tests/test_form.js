@@ -299,6 +299,13 @@ QUnit.module('treibstoff.form', hooks => {
         assert.false(field.hidden);
     });
 
+    QUnit.test('Test Form.initialize with missing element', assert => {
+        // No form element in container — should return without error
+        Form.initialize(container, Form, 'nonexistent');
+        let form = Form.instance('nonexistent');
+        assert.strictEqual(form, undefined, 'No form instance created');
+    });
+
     QUnit.test('Test Form', assert => {
         container.append(`
             <form id="form-formname">

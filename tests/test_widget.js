@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import {
     Button,
+    Collapsible,
     HTMLWidget,
     SVGContext,
     Visibility,
@@ -177,6 +178,44 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.verifySteps([]);
     });
 
+    QUnit.test('Test Collapsible', assert => {
+        // Error when no elem given
+        assert.throws(function() {
+            new Collapsible({});
+        });
+
+        let elem = $('<div class="show"></div>');
+
+        // Mock Bootstrap collapse jQuery plugin
+        let collapse_calls = [];
+        $.fn.collapse = function(action) {
+            collapse_calls.push(action);
+            if (action === 'hide') {
+                this.removeClass('show');
+            } else if (action === 'show') {
+                this.addClass('show');
+            }
+        };
+
+        let collapsible = new Collapsible({elem: elem});
+
+        // Initially has 'show' class, so collapsed is false
+        assert.false(collapsible.collapsed);
+
+        // Collapse (set collapsed = true)
+        collapsible.collapsed = true;
+        assert.deepEqual(collapse_calls, ['hide']);
+        assert.true(collapsible.collapsed);
+
+        // Expand (set collapsed = false)
+        collapsible.collapsed = false;
+        assert.deepEqual(collapse_calls, ['hide', 'show']);
+        assert.false(collapsible.collapsed);
+
+        // Clean up mock
+        delete $.fn.collapse;
+    });
+
     QUnit.test('Test Button', assert => {
         let elem = $('<button />');
         class TestButton extends Button {
@@ -192,13 +231,18 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.deepEqual(button.unselected_class, 'btn-primary');
         assert.deepEqual(button.selected_class, 'btn-success');
 
+        // getter returns false initially
+        assert.false(button.selected);
+
         button.selected = true;
         assert.ok(elem.hasClass(button.selected_class));
         assert.false(elem.hasClass(button.unselected_class));
+        assert.true(button.selected);
 
         button.selected = false;
         assert.false(elem.hasClass(button.selected_class));
         assert.ok(elem.hasClass(button.unselected_class));
+        assert.false(button.selected);
 
         elem.trigger('click');
         assert.verifySteps([
