@@ -51,6 +51,7 @@ export class KeyState extends Events {
             .on('keyup', this._on_dom_keyup);
     }
 
+    /** @private */
     _add_key(name, key_code) {
         this._keys.push(name);
         this[`_${name}`] = false;
@@ -73,16 +74,19 @@ export class KeyState extends Events {
         });
     }
 
+    /** @private */
     _set_keys(evt) {
         for (let name of this._keys) {
             this[name] = evt;
         }
     }
 
+    /** @private */
     _filter_event(evt) {
         return this.filter_keyevent && this.filter_keyevent(evt);
     }
 
+    /** @private */
     _on_dom_keydown(evt) {
         this._set_keys(evt);
         if (!this._filter_event(evt)) {
@@ -90,6 +94,7 @@ export class KeyState extends Events {
         }
     }
 
+    /** @private */
     _on_dom_keyup(evt) {
         this._set_keys(evt);
         if (!this._filter_event(evt)) {

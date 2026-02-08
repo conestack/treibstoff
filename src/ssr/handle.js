@@ -8,12 +8,20 @@ import {AjaxUtil} from './util.js';
  */
 export class AjaxHandle extends AjaxUtil {
 
+    /**
+     * @param {Ajax} ajax - The Ajax singleton instance.
+     */
     constructor(ajax) {
         super();
         this.ajax = ajax;
         this.spinner = ajax.spinner;
     }
 
+    /**
+     * Walk DOM elements and destroy attached instances.
+     *
+     * @param {jQuery} context - jQuery wrapped elements to destroy.
+     */
     destroy(context) {
         let parser = new AjaxDestroy();
         context.each(function() {
@@ -21,6 +29,14 @@ export class AjaxHandle extends AjaxUtil {
         });
     }
 
+    /**
+     * Update DOM with server response payload.
+     *
+     * @param {Object} opts - Update options.
+     * @param {string} opts.payload - HTML payload.
+     * @param {string} opts.selector - CSS selector of target element.
+     * @param {string} opts.mode - ``'replace'`` or ``'inner'``.
+     */
     update(opts) {
         let payload = opts.payload,
             selector = opts.selector,
@@ -44,6 +60,12 @@ export class AjaxHandle extends AjaxUtil {
         }
     }
 
+    /**
+     * Execute continuation operations from the server response.
+     *
+     * @param {Array} operations - Array of operation definitions. Each
+     * has a ``type`` property (path, action, event, overlay, message).
+     */
     next(operations) {
         if (!operations || !operations.length) {
             return;

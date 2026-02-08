@@ -7,8 +7,33 @@ import {
 } from './utils.js';
 import {ajax_destroy} from './ssr/destroy.js';
 
+/**
+ * Modal overlay class.
+ *
+ * Renders a Bootstrap-style modal dialog with header, body and footer
+ * sections. Supports stacking (z-index management) for multiple
+ * simultaneous overlays.
+ *
+ * @fires on_open - Fired after the overlay is opened.
+ * @fires on_close - Fired after the overlay is closed.
+ */
 export class Overlay extends Events {
 
+    /**
+     * Create overlay instance.
+     *
+     * @param {Object} opts - Overlay options.
+     * @param {string} opts.uid - Unique identifier. Auto-generated if omitted.
+     * @param {string} opts.flavor - CSS flavor class (e.g. ``'info'``,
+     * ``'warning'``, ``'error'``).
+     * @param {string} opts.css - Additional CSS classes for the modal element.
+     * @param {string} opts.title - Title displayed in the modal header.
+     * @param {string} opts.content - HTML content for the modal body.
+     * @param {jQuery} opts.container - Container to append the overlay to.
+     * Defaults to ``$('body')``.
+     * @param {function} opts.on_open - Callback for the ``on_open`` event.
+     * @param {function} opts.on_close - Callback for the ``on_close`` event.
+     */
     constructor(opts) {
         super();
         this.uid = opts.uid ? opts.uid : uuid4();
@@ -23,6 +48,9 @@ export class Overlay extends Events {
         this.is_open = false;
     }
 
+    /**
+     * Compile the overlay DOM structure from template.
+     */
     compile() {
         let z_index = 1055; // default bootstrap modal z-index
         z_index += $('.modal:visible').length; // increase zindex based on currently open modals
@@ -47,6 +75,9 @@ export class Overlay extends Events {
         `);
     }
 
+    /**
+     * Open the overlay. Appends it to the container and makes it visible.
+     */
     open() {
         $('body').addClass('modal-open');
         this.container.append(this.wrapper);
@@ -55,6 +86,9 @@ export class Overlay extends Events {
         this.trigger('on_open');
     }
 
+    /**
+     * Close and remove the overlay from the DOM.
+     */
     close() {
         if ($('.modal:visible').length === 1) {
             $('body').removeClass('modal-open');
@@ -84,14 +118,27 @@ export function get_overlay(uid) {
     return ol;
 }
 
+/**
+ * Message overlay with a close button in the footer.
+ *
+ * @extends Overlay
+ */
 export class Message extends Overlay {
 
+    /**
+     * @param {Object} opts - Message options. Accepts all ``Overlay`` options
+     * plus ``message``.
+     * @param {string} opts.message - Message text. Used as overlay content.
+     */
     constructor(opts) {
         opts.content = opts.message ? opts.message : opts.content;
         super(opts);
         this.compile_actions();
     }
 
+    /**
+     * Compile the footer actions (close button).
+     */
     compile_actions() {
         compile_template(this, `
           <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close allowMultiSubmit"
@@ -177,14 +224,28 @@ export function show_error(message, css) {
     });
 }
 
+/**
+ * Confirmation dialog with OK and Cancel buttons.
+ *
+ * @extends Message
+ * @fires on_confirm - Fired when the OK button is clicked.
+ */
 export class Dialog extends Message {
 
+    /**
+     * @param {Object} opts - Dialog options. Accepts all ``Message`` options
+     * plus ``on_confirm``.
+     * @param {function} opts.on_confirm - Callback when dialog is confirmed.
+     */
     constructor(opts) {
         set_default(opts, 'css', 'dialog');
         super(opts);
         this.bind_from_options(['on_confirm'], opts);
     }
 
+    /**
+     * Compile the footer actions (OK and Cancel buttons).
+     */
     compile_actions() {
         compile_template(this, `
           <button class="ok btn btn-primary allowMultiSubmit"
@@ -194,6 +255,7 @@ export class Dialog extends Message {
         `, this.footer);
     }
 
+    /** @private */
     on_ok_btn_click() {
         this.close();
         this.trigger('on_confirm');

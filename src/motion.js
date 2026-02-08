@@ -1,6 +1,17 @@
 import $ from 'jquery';
 import {Events} from './events.js';
 
+/**
+ * Mouse motion tracking class.
+ *
+ * Provides mousedown, mousemove and mouseup tracking on configurable
+ * DOM scopes. Used for drag, resize and selection interactions.
+ *
+ * @fires down - Fired on mousedown. Receives the DOM event.
+ * @fires move - Fired on mousemove. The event has ``motion`` and
+ * ``prev_pos`` properties.
+ * @fires up - Fired on mouseup. The event has a ``motion`` flag.
+ */
 export class Motion extends Events {
 
     constructor() {
@@ -10,6 +21,10 @@ export class Motion extends Events {
         this._move_scope = null;
     }
 
+    /**
+     * Reset internal motion state. Called after mouseup and when
+     * setting a new scope.
+     */
     reset_state() {
         this._move_handle = null;
         this._up_handle = null;
@@ -17,6 +32,18 @@ export class Motion extends Events {
         this._motion = null;
     }
 
+    /**
+     * Set the DOM scopes for motion tracking.
+     *
+     * Binds a ``mousedown`` listener on the down scope. When
+     * mousedown fires, ``mousemove`` is bound on the move scope
+     * and ``mouseup`` on the document.
+     *
+     * @param {jQuery|HTMLElement} down - Element to listen for mousedown.
+     * @param {jQuery|HTMLElement} move - Element to listen for mousemove.
+     * If omitted, mousemove is not tracked.
+     * @throws {string} If called while a motion sequence is in progress.
+     */
     set_scope(down, move) {
         if (this._up_handle) {
             throw 'Attempt to set motion scope while handling';
@@ -31,6 +58,7 @@ export class Motion extends Events {
         this._move_scope = move ? move : null;
     }
 
+    /** @private */
     _mousedown(evt) {
         evt.stopPropagation();
         this._motion = false;
@@ -47,6 +75,7 @@ export class Motion extends Events {
         this.trigger('down', evt);
     }
 
+    /** @private */
     _mousemove(evt) {
         evt.stopPropagation();
         this._motion = true;
@@ -57,6 +86,7 @@ export class Motion extends Events {
         this._prev_pos.y = evt.pageY;
     }
 
+    /** @private */
     _mouseup(evt) {
         evt.stopPropagation();
         if (this._move_scope) {

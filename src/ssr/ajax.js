@@ -34,6 +34,11 @@ import {AjaxParser} from './parser.js';
  */
 export class Ajax extends AjaxUtil {
 
+    /**
+     * Create Ajax singleton.
+     *
+     * @param {Window} win - Window object. Defaults to ``window``.
+     */
     constructor(win=window) {
         super();
         this.win = win;

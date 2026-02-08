@@ -7,10 +7,22 @@ import {AjaxUtil} from './util.js';
  */
 export class AjaxDispatcher extends AjaxUtil {
 
+    /**
+     * Bind DOM events on a node to the dispatch handler.
+     *
+     * @param {Node} node - DOM node to bind events on.
+     * @param {string} evts - Space-separated event names.
+     */
     bind(node, evts) {
         $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
     }
 
+    /**
+     * Event handler that intercepts DOM events and dispatches Ajax
+     * operations. Shows a confirmation dialog if ``ajax:confirm`` is set.
+     *
+     * @param {Event} evt - jQuery event object.
+     */
     dispatch_handle(evt) {
         evt.preventDefault();
         evt.stopPropagation();
@@ -31,6 +43,13 @@ export class AjaxDispatcher extends AjaxUtil {
         }
     }
 
+    /**
+     * Dispatch Ajax operations based on element attributes.
+     *
+     * @param {Object} opts - Dispatch options.
+     * @param {jQuery} opts.elem - The triggering element.
+     * @param {Event} opts.event - The original DOM event.
+     */
     dispatch(opts) {
         let elem = opts.elem,
             event = opts.event;

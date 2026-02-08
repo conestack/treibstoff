@@ -34,6 +34,9 @@ export class LoadingSpinner {
         this._count = 0;
     }
 
+    /**
+     * Compile the spinner DOM element from template.
+     */
     compile() {
         compile_template(this, `
           <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">

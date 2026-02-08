@@ -7,12 +7,22 @@ import {compile_template} from '../parser.js';
  */
 export class AjaxForm {
 
+    /**
+     * @param {Object} opts - Options.
+     * @param {AjaxHandle} opts.handle - DOM manipulation handle.
+     * @param {LoadingSpinner} opts.spinner - Loading spinner instance.
+     */
     constructor(opts) {
         this.handle = opts.handle;
         this.spinner = opts.spinner;
         this.afr = null;
     }
 
+    /**
+     * Bind a form element for Ajax submission via hidden iframe.
+     *
+     * @param {HTMLFormElement} form - The form DOM element.
+     */
     bind(form) {
         if (!this.afr) {
             compile_template(this, `
@@ -31,6 +41,16 @@ export class AjaxForm {
             }.bind(this));
     }
 
+    /**
+     * Render the form response after server-side processing.
+     *
+     * @param {Object} opts - Render options.
+     * @param {string} opts.payload - The rendered form HTML.
+     * @param {string} opts.selector - CSS selector of the form.
+     * @param {string} opts.mode - DOM manipulation mode.
+     * @param {Array} opts.next - Continuation operations.
+     * @param {boolean} opts.error - Whether an error occurred.
+     */
     render(opts) {
         this.spinner.hide();
         if (!opts.error) {

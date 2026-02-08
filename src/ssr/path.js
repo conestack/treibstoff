@@ -11,6 +11,11 @@ import {AjaxOperation} from './util.js';
  */
 export class AjaxPath extends AjaxOperation {
 
+    /**
+     * @param {Object} opts - Options.
+     * @param {AjaxDispatcher} opts.dispatcher - The Ajax dispatcher.
+     * @param {Window} opts.win - Window object for history API.
+     */
     constructor(opts) {
         opts.event = 'on_path';
         super(opts);
@@ -18,6 +23,14 @@ export class AjaxPath extends AjaxOperation {
         $(this.win).on('popstate', this.state_handle.bind(this));
     }
 
+    /**
+     * Push or replace a browser history entry.
+     *
+     * @param {Object} opts - Path options.
+     * @param {string} opts.path - URL path to write to address bar.
+     * @param {string} opts.target - Target URL.
+     * @param {boolean} opts.replace - If true, replace current entry.
+     */
     execute(opts) {
         let history = this.win.history;
         if (history.pushState === undefined) {
@@ -38,6 +51,12 @@ export class AjaxPath extends AjaxOperation {
         }
     }
 
+    /**
+     * Handle browser popstate events. Dispatches Ajax operations
+     * from the saved history state.
+     *
+     * @param {Event} evt - jQuery popstate event.
+     */
     state_handle(evt) {
         let state = evt.originalEvent.state;
         if (!state) {
@@ -80,6 +99,7 @@ export class AjaxPath extends AjaxOperation {
         }
     }
 
+    /** @override */
     handle(inst, opts) {
         let elem = opts.elem,
             evt = opts.event,
@@ -127,12 +147,27 @@ export class AjaxPath extends AjaxOperation {
         this.execute(p_opts);
     }
 
+    /**
+     * Check if an element has a given attribute.
+     *
+     * @param {jQuery} elem - jQuery element.
+     * @param {string} name - Attribute name.
+     * @returns {boolean} True if attribute exists.
+     */
     has_attr(elem, name) {
         let val = elem.attr(name);
         // In some browsers val is undefined, in others it's false.
         return val !== undefined && val !== false;
     }
 
+    /**
+     * Get attribute value with fallback to another attribute.
+     *
+     * @param {jQuery} elem - jQuery element.
+     * @param {string} name - Primary attribute name.
+     * @param {string} fallback - Fallback attribute name.
+     * @returns {string} Attribute value.
+     */
     attr_val(elem, name, fallback) {
         if (this.has_attr(elem, name)) {
             return elem.attr(name);

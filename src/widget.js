@@ -95,6 +95,11 @@ export class HTMLWidget extends Widget {
         new CSSProperty(this, 'height');
     }
 
+    /**
+     * Current offset position of the element.
+     *
+     * @type {{left: number, top: number}}
+     */
     get offset() {
         return $(this.elem).offset();
     }

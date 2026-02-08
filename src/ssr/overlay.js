@@ -13,12 +13,22 @@ import {AjaxAction} from './action.js';
  */
 export class AjaxOverlay extends AjaxAction {
 
+    /**
+     * @param {Object} opts - Options (see ``AjaxAction``).
+     */
     constructor(opts) {
         opts.event = 'on_overlay';
         super(opts);
         this.overlay_content_sel = '.modal-body';
     }
 
+    /**
+     * Execute an overlay operation. Opens, closes or loads content
+     * into an overlay.
+     *
+     * @param {Object} opts - Overlay options.
+     * @returns {Overlay} The overlay instance.
+     */
     execute(opts) {
         let ol;
         if (opts.close) {
@@ -68,6 +78,7 @@ export class AjaxOverlay extends AjaxAction {
         return ol;
     }
 
+    /** @override */
     handle(inst, opts) {
         let target = opts.target,
             overlay = opts.overlay;

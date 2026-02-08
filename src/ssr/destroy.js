@@ -9,6 +9,13 @@ var destroy_handles = [];
  */
 export class AjaxDestroy extends Parser {
 
+    /**
+     * Parse a DOM node and destroy all attached JavaScript instances.
+     * Runs registered destroy callbacks and cleans up jQuery data.
+     *
+     * @param {Node} node - DOM element node.
+     * @override
+     */
     parse(node) {
         let instances = node._ajax_attached;
         if (instances !== undefined) {
