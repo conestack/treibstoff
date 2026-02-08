@@ -2,7 +2,8 @@ import $ from 'jquery';
 import {
     Overlay,
     Message,
-    Dialog
+    Dialog,
+    get_overlay
 } from '../src/overlay.js';
 
 QUnit.module('treibstoff.overlay', hooks => {
@@ -32,7 +33,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         assert.deepEqual(ol.content, 'Overlay Content');
 
         let elem = ol.elem;
-        assert.deepEqual(elem.attr('class'), 'modal some-class');
+        assert.deepEqual(elem.attr('class'), 'modal  some-class');
         assert.deepEqual(elem.attr('id'), '1234');
         assert.deepEqual($('.modal-title', elem).text(), 'Overlay Title');
         assert.deepEqual($('.modal-body', elem).text(), 'Overlay Content');
@@ -52,16 +53,12 @@ QUnit.module('treibstoff.overlay', hooks => {
 
         let body = $('body');
         assert.true(body.hasClass('modal-open'));
-        assert.deepEqual(body.css('padding-right'), '13px');
-        assert.deepEqual(body.css('overflow-x'), 'hidden');
 
         ol.close();
         assert.deepEqual(container.children().length, 0);
         assert.false(ol.elem.is(':visible'));
 
         assert.false(body.hasClass('modal-open'));
-        assert.deepEqual(body.css('padding-right'), '0px');
-        assert.deepEqual(body.css('overflow-x'), 'auto');
     });
 
     QUnit.test('Test Overlay events', assert => {
@@ -96,6 +93,35 @@ QUnit.module('treibstoff.overlay', hooks => {
         ]);
     });
 
+    QUnit.test('Test get_overlay', assert => {
+        // Non-existent element returns null
+        assert.strictEqual(
+            get_overlay('nonexistent-uid'),
+            null,
+            'Returns null for non-existent element'
+        );
+
+        // Element exists but has no overlay data
+        let elem = $('<div id="no-overlay-data"></div>');
+        container.append(elem);
+        assert.strictEqual(
+            get_overlay('no-overlay-data'),
+            null,
+            'Returns null when element has no overlay data'
+        );
+        elem.remove();
+
+        // Element exists with overlay data
+        let ol = new Overlay({
+            uid: 'test-get-overlay',
+            container: container
+        });
+        ol.open();
+        let found = get_overlay('test-get-overlay');
+        assert.ok(found === ol, 'Returns the overlay instance');
+        ol.close();
+    });
+
     QUnit.test('Test Message', assert => {
         let msg = new Message({
             message: 'Message Content',
@@ -103,7 +129,7 @@ QUnit.module('treibstoff.overlay', hooks => {
         });
 
         assert.true(msg instanceof Overlay);
-        assert.deepEqual(msg.css, 'info');
+        assert.deepEqual(msg.flavor, 'info');
         assert.deepEqual(msg.content, 'Message Content');
         assert.true(msg.f_close_btn !== undefined);
 

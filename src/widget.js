@@ -95,6 +95,11 @@ export class HTMLWidget extends Widget {
         new CSSProperty(this, 'height');
     }
 
+    /**
+     * Current offset position of the element.
+     *
+     * @type {{left: number, top: number}}
+     */
     get offset() {
         return $(this.elem).offset();
     }
@@ -226,7 +231,7 @@ export class Collapsible {
      * @type {boolean}
      */
     get collapsed() {
-        return !this.elem.hasClass('in');
+        return !this.elem.hasClass('show');
     }
 
     set collapsed(value) {
@@ -249,12 +254,14 @@ export class Button extends ClickListener {
      * Create button instance.
      *
      * @param {Object} opts - Button options.
-     * @param {$} opts.elem - jQuery wrapped button element.
+     * @param {$} opts.elem - jQuery wrapped button element.+
+     * @param {$} opts.unselected_class - css class for unselected button.
+     * @param {$} opts.selected_class - css class for selected button.
      */
     constructor(opts) {
         super(opts);
-        this.unselected_class = 'btn-default';
-        this.selected_class = 'btn-success';
+        this.unselected_class = opts.unselected_class ?? 'btn-primary';
+        this.selected_class = opts.selected_class ?? 'btn-success';
     }
 
     /**

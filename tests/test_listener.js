@@ -1,6 +1,11 @@
 import $ from 'jquery';
 import {Events} from '../src/events.js';
-import {create_listener} from '../src/listener.js';
+import {
+    ChangeListener,
+    changeListener,
+    clickListener,
+    create_listener
+} from '../src/listener.js';
 
 QUnit.module('treibstoff.listener', hooks => {
 
@@ -70,9 +75,78 @@ QUnit.module('treibstoff.listener', hooks => {
         ]);
     });
 
-    QUnit.test('Test listener as mixin class', assert => {
-        let clickListener = Base => create_listener('click', Base);
+    QUnit.test('Test listener destroy', assert => {
+        let ClickListener = create_listener('click');
+        class TestClickListener extends ClickListener {
+            on_click(evt) {
+                assert.step('on_click');
+            }
+        }
+
+        let elem = $('<div />');
+        let listener = new TestClickListener({elem: elem});
+
+        // Event fires before destroy
+        elem.trigger('click');
+        assert.verifySteps(['on_click']);
+
+        // After destroy, event no longer fires
+        listener.destroy();
+        elem.trigger('click');
+        assert.verifySteps([]);
+
+        // Multiple destroy calls are safe (idempotent)
+        listener.destroy();
+        assert.ok(true, 'double destroy did not throw');
+    });
+
+    QUnit.test('Test ChangeListener', assert => {
+        class TestChangeListener extends ChangeListener {
+            on_change(evt) {
+                assert.step('on_change');
+            }
+        }
+
+        let elem = $('<input type="text" />');
+        let listener = new TestChangeListener({elem: elem});
+
+        elem.trigger('change');
+        assert.verifySteps(['on_change']);
+
+        listener.destroy();
+        elem.trigger('change');
+        assert.verifySteps([]);
+    });
+
+    QUnit.test('Test exported clickListener mixin', assert => {
         class TestMixinClickListener extends clickListener(Events) {
+            on_click(evt) {
+                assert.step('on_click');
+            }
+        }
+
+        let elem = $('<div />');
+        let listener = new TestMixinClickListener({elem: elem});
+        elem.trigger('click');
+        assert.verifySteps(['on_click']);
+    });
+
+    QUnit.test('Test changeListener mixin', assert => {
+        class TestMixinChangeListener extends changeListener(Events) {
+            on_change(evt) {
+                assert.step('on_change');
+            }
+        }
+
+        let elem = $('<input type="text" />');
+        let listener = new TestMixinChangeListener({elem: elem});
+        elem.trigger('change');
+        assert.verifySteps(['on_change']);
+    });
+
+    QUnit.test('Test listener as mixin class', assert => {
+        let localClickListener = Base => create_listener('click', Base);
+        class TestMixinClickListener extends localClickListener(Events) {
             on_click(evt) {
                 assert.step('on_click triggered');
             }

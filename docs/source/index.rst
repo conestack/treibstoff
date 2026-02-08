@@ -6,7 +6,7 @@ browser based applications (or parts of it).
 
 It contains an event dispatcher, properties which supports event bindings to
 property value changes, browser event handling helpers, a set of widgets,
-a simple template parser, a machanism for building Server-Side rendered
+a simple template parser, a mechanism for building Server-Side rendered
 Single-Page Applications, helpers for working with SVG and several other useful
 utilities.
 
@@ -15,18 +15,23 @@ utilities.
    :maxdepth: 2
    :caption: Contents:
 
+   Getting Started <getting_started>
+   Architecture <architecture>
    Ajax <ajax>
    Clock <clock>
    Events <events>
    Form <form>
    Keystate <keystate>
    Listener <listener>
+   Motion <motion>
    Overlay <overlay>
+   Parser <parser>
    Properties <properties>
    Request <request>
    Spinner <spinner>
-   Widget <widget>
    Utils <utils>
+   Websocket <websocket>
+   Widget <widget>
    Development <development>
 
 

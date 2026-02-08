@@ -3,6 +3,52 @@ import {Motion} from '../src/motion.js';
 
 QUnit.module('treibstoff.motion', hooks => {
 
+    QUnit.test('Test Motion set_scope while handling throws', assert => {
+        let m = new Motion();
+        let down_scope = $('<span />');
+        m.set_scope(down_scope);
+
+        // Simulate mousedown to set _up_handle
+        let evt = $.Event('mousedown', {pageX: 0, pageY: 0});
+        $(down_scope).trigger(evt);
+        assert.ok(m._up_handle !== null, 'Up handle is set');
+
+        // Attempt to set_scope while handling should throw
+        assert.throws(function() {
+            m.set_scope($('<span />'));
+        }, 'Attempt to set motion scope while handling');
+
+        // Clean up — trigger mouseup to release the handler
+        $(document).trigger($.Event('mouseup', {pageX: 0, pageY: 0}));
+    });
+
+    QUnit.test('Test Motion set_scope rebind previous', assert => {
+        let m = new Motion();
+        let scope1 = $('<span />');
+        let scope2 = $('<span />');
+
+        m.set_scope(scope1);
+        let first_handle = m._down_handle;
+        assert.ok(first_handle, 'First down handle set');
+
+        // Set scope again — should unbind from scope1 and bind to scope2
+        m.set_scope(scope2);
+        assert.notStrictEqual(m._down_handle, first_handle, 'New down handle created');
+
+        // Verify scope1 no longer triggers
+        let triggered = false;
+        m.on('down', function() { triggered = true; });
+        $(scope1).trigger($.Event('mousedown', {pageX: 0, pageY: 0}));
+        assert.false(triggered, 'Old scope no longer triggers events');
+
+        // Verify scope2 triggers
+        $(scope2).trigger($.Event('mousedown', {pageX: 0, pageY: 0}));
+        assert.true(triggered, 'New scope triggers events');
+
+        // Clean up
+        $(document).trigger($.Event('mouseup', {pageX: 0, pageY: 0}));
+    });
+
     QUnit.test('Test Motion', assert => {
         let m = new Motion();
 

@@ -5,8 +5,19 @@ import {
 } from './properties.js';
 import {parse_svg} from './utils.js';
 
+/**
+ * Base DOM tree walker and parser.
+ *
+ * Walks a DOM tree depth-first and calls ``parse`` for each element node.
+ * Subclasses override ``parse`` to implement custom behavior.
+ */
 export class Parser {
 
+    /**
+     * Recursively walk the DOM tree starting at the given node.
+     *
+     * @param {Node} node - DOM node to start walking from.
+     */
     walk(node) {
        let children = node.childNodes;
        for (let child of children) {
@@ -17,9 +28,20 @@ export class Parser {
        }
     }
 
+    /**
+     * Parse a single element node. Override in subclasses.
+     *
+     * @param {Node} node - DOM element node.
+     */
     parse(node) {
     }
 
+    /**
+     * Extract all attributes from a DOM element node as a plain object.
+     *
+     * @param {Node} node - DOM element node.
+     * @returns {Object} Map of attribute names to values.
+     */
     node_attrs(node) {
         let attrs = {};
         for (let attr of node.attributes) {
@@ -31,14 +53,25 @@ export class Parser {
     }
 }
 
+/**
+ * Template parser that processes ``t-elem`` attributes.
+ *
+ * When a node has a ``t-elem="name"`` attribute, the node is assigned
+ * to ``widget[name]``. Subclasses can register tag-specific handlers.
+ */
 export class TemplateParser extends Parser {
 
+    /**
+     * @param {Object} widget - The widget instance to attach parsed
+     * elements and properties to.
+     */
     constructor(widget) {
         super();
         this.widget = widget;
         this.handlers = {};
     }
 
+    /** @override */
     parse(node) {
         let attrs = this.node_attrs(node),
             wrapped = this.wrap_node(node);
@@ -50,10 +83,23 @@ export class TemplateParser extends Parser {
         }
     }
 
+    /**
+     * Wrap a raw DOM node for use in handlers. Override in subclasses
+     * to return e.g. a jQuery-wrapped node.
+     *
+     * @param {Node} node - Raw DOM node.
+     * @returns {Node} The wrapped node.
+     */
     wrap_node(node) {
         return node;
     }
 
+    /**
+     * Process the ``t-elem`` attribute on a node.
+     *
+     * @param {Node} node - The (possibly wrapped) DOM node.
+     * @param {Object} attrs - Parsed attributes map.
+     */
     handle_elem_attr(node, attrs) {
         let elem_attr = attrs['t-elem'];
         if (elem_attr) {
@@ -62,6 +108,14 @@ export class TemplateParser extends Parser {
     }
 }
 
+/**
+ * Extract a numeric value from a string. Throws if the value is not a
+ * valid number.
+ *
+ * @param {string} val - String value to extract.
+ * @returns {number} The extracted number.
+ * @throws {string} If the value is not a number.
+ */
 export function extract_number(val) {
     if (isNaN(val)) {
         throw 'Input is not a number';
@@ -69,8 +123,27 @@ export function extract_number(val) {
     return Number(val);
 }
 
+/**
+ * HTML template parser.
+ *
+ * Extends ``TemplateParser`` with handlers for ``input``, ``select``
+ * and ``button`` elements. Processes these template attributes:
+ *
+ * - ``t-elem`` — assign element to widget property
+ * - ``t-prop`` — create a bound property on the widget
+ * - ``t-val`` — initial property value
+ * - ``t-type`` — value extractor type (e.g. ``"number"``)
+ * - ``t-extract`` — custom extractor method name on widget
+ * - ``t-state-evt`` — custom state event name for InputProperty
+ * - ``t-options`` — JSON array of ``[value, label]`` pairs for selects
+ * - ``t-bind-click``, ``t-bind-down``, ``t-bind-up`` — bind widget
+ *   methods to button events
+ */
 export class HTMLParser extends TemplateParser {
 
+    /**
+     * @param {Object} widget - The widget instance.
+     */
     constructor(widget) {
         super(widget);
         this.handlers = {
@@ -83,10 +156,17 @@ export class HTMLParser extends TemplateParser {
         }
     }
 
+    /** @override */
     wrap_node(node) {
         return $(node);
     }
 
+    /**
+     * Handle an ``<input>`` element with ``t-prop`` attribute.
+     *
+     * @param {jQuery} node - jQuery wrapped input element.
+     * @param {Object} attrs - Parsed attributes map.
+     */
     handle_input(node, attrs) {
         let prop = attrs['t-prop'];
         if (!prop) {
@@ -110,6 +190,13 @@ export class HTMLParser extends TemplateParser {
         });
     }
 
+    /**
+     * Handle a ``<select>`` element. Populates options from ``t-options``
+     * attribute if present, then delegates to ``handle_input``.
+     *
+     * @param {jQuery} node - jQuery wrapped select element.
+     * @param {Object} attrs - Parsed attributes map.
+     */
     handle_select(node, attrs) {
         let opts = attrs['t-options'];
         if (opts) {
@@ -120,6 +207,13 @@ export class HTMLParser extends TemplateParser {
         this.handle_input(node, attrs);
     }
 
+    /**
+     * Handle a ``<button>`` element with ``t-prop`` attribute.
+     * Creates a ``ButtonProperty`` and binds ``t-bind-*`` event handlers.
+     *
+     * @param {jQuery} node - jQuery wrapped button element.
+     * @param {Object} attrs - Parsed attributes map.
+     */
     handle_button(node, attrs) {
         let prop = attrs['t-prop'];
         if (!prop) {
@@ -140,6 +234,16 @@ export class HTMLParser extends TemplateParser {
     }
 }
 
+/**
+ * Compile an HTML template string and attach parsed elements and
+ * properties to the given instance.
+ *
+ * @param {Object} inst - Instance to attach elements/properties to.
+ * @param {string} tmpl - HTML template string.
+ * @param {jQuery} container - Optional container to append the compiled
+ * element to.
+ * @returns {jQuery} The compiled jQuery element.
+ */
 export function compile_template(inst, tmpl, container) {
     let elem = $(tmpl.trim());
     if (container) {
@@ -152,9 +256,22 @@ export function compile_template(inst, tmpl, container) {
     return elem;
 }
 
+/**
+ * SVG template parser. Extends ``TemplateParser`` for SVG namespace
+ * elements. Processes ``t-elem`` attributes on SVG nodes.
+ */
 export class SVGParser extends TemplateParser {
 }
 
+/**
+ * Compile an SVG template string and attach parsed elements to the
+ * given instance.
+ *
+ * @param {Object} inst - Instance to attach elements to.
+ * @param {string} tmpl - SVG template string.
+ * @param {SVGElement} container - SVG container element to append to.
+ * @returns {Array} Array of parsed SVG elements.
+ */
 export function compile_svg(inst, tmpl, container) {
     let elems = parse_svg(tmpl, container),
         parser = new SVGParser(inst);

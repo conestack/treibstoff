@@ -3,6 +3,34 @@ import {Property} from '../src/properties.js';
 
 QUnit.module('treibstoff.events', hooks => {
 
+    QUnit.test('Test Events duplicate subscriber', assert => {
+        let ob = new Events();
+        let count = 0;
+        let subscriber = function() { count++; };
+        ob.on('evt', subscriber);
+        ob.on('evt', subscriber); // duplicate — should be ignored
+        ob.trigger('evt');
+        assert.strictEqual(count, 1, 'Subscriber called only once despite double registration');
+    });
+
+    QUnit.test('Test Events off unknown event', assert => {
+        let ob = new Events();
+        // off on event that was never registered should not throw
+        let result = ob.off('unknown_event');
+        assert.ok(result === ob, 'off returns this for chaining');
+    });
+
+    QUnit.test('Test Events _contains_subscriber no subscribers', assert => {
+        let ob = new Events();
+        let subscriber = function() {};
+        // No subscribers array exists for this event
+        assert.strictEqual(
+            ob._contains_subscriber('nonexistent', subscriber),
+            false,
+            'Returns false when no subscribers array exists'
+        );
+    });
+
     QUnit.test('Test Events', assert => {
         let res;
         let ob = new Events();

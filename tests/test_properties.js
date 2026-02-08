@@ -37,6 +37,13 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(res, 2, 'Property bound event handler called');
     });
 
+    QUnit.test('Test BoundProperty val getter', assert => {
+        let ob = new Object();
+        let prop = new BoundProperty(ob, 'foo', {val: 42});
+        assert.strictEqual(prop.val, 42, 'BoundProperty.val getter returns value');
+        assert.strictEqual(prop.name, 'foo', 'BoundProperty.name getter returns name');
+    });
+
     QUnit.test('Test BoundProperty', assert => {
         let ob = new Object();
         let prop = new BoundProperty(ob, 'foo');

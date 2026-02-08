@@ -118,6 +118,13 @@ export function set_default(ob, name, val) {
     return ob[name];
 }
 
+/**
+ * Merge two plain objects. Properties from ``other`` override ``base``.
+ *
+ * @param {Object} base - Base object.
+ * @param {Object} other - Object to merge into base.
+ * @returns {Object} New merged object.
+ */
 export function json_merge(base, other) {
     let ret = {};
     for (let ob of [base, other]) {
@@ -215,8 +222,16 @@ export function parse_path(url, include_query) {
     return path;
 }
 
+/**
+ * Create a browser cookie.
+ *
+ * @param {string} name - Cookie name.
+ * @param {string} value - Cookie value.
+ * @param {number} days - Number of days until expiry. If falsy, creates
+ * a session cookie.
+ */
 export function create_cookie(name, value, days) {
-    var date,
+    let date,
         expires;
     if (days) {
         date = new Date();
@@ -228,8 +243,14 @@ export function create_cookie(name, value, days) {
     document.cookie = name + "=" + escape(value) + expires + "; path=/;";
 }
 
+/**
+ * Read a browser cookie by name.
+ *
+ * @param {string} name - Cookie name.
+ * @returns {string|null} Cookie value or null if not found.
+ */
 export function read_cookie(name) {
-    var nameEQ = name + "=",
+    let nameEQ = name + "=",
         ca = document.cookie.split(';'),
         i,
         c;
@@ -239,20 +260,53 @@ export function read_cookie(name) {
             c = c.substring(1, c.length);
         }
         if (c.indexOf(nameEQ) === 0) {
-            return unescape(c.substring(nameEQ.length, c.length));
+            return decodeURIComponent(c.substring(nameEQ.length, c.length));
         }
     }
     return null;
 }
 
+/**
+ * SVG namespace URI.
+ * @type {string}
+ */
 export const svg_ns = 'http://www.w3.org/2000/svg';
 
+/**
+ * Set attributes on an SVG element. Validates ``width`` and ``height``
+ * to be non-negative numbers.
+ *
+ * @param {SVGElement} el - SVG element.
+ * @param {Object} opts - Map of attribute names to values.
+ */
 export function set_svg_attrs(el, opts) {
     for (let n in opts) {
-        el.setAttributeNS(null, n, opts[n]);
+        if (n === 'width' || n === 'height') {
+            const val = parseFloat(opts[n]);
+            if (val >= 0) {
+                el.setAttributeNS(null, n, opts[n]);
+            } else {
+                console.error(
+                    `Invalid value for ${n}:`,
+                    opts[n],
+                    el
+                );
+            }
+        } else {
+            el.setAttributeNS(null, n, opts[n]);
+        }
     }
 }
 
+/**
+ * Create an SVG element with attributes and optionally append it to a
+ * container.
+ *
+ * @param {string} name - SVG element tag name (e.g. ``'g'``, ``'rect'``).
+ * @param {Object} opts - Map of attribute names to values.
+ * @param {SVGElement} container - Optional parent element to append to.
+ * @returns {SVGElement} The created SVG element.
+ */
 export function create_svg_elem(name, opts, container) {
     let el = document.createElementNS(svg_ns, name);
     set_svg_attrs(el, opts);
@@ -262,8 +316,16 @@ export function create_svg_elem(name, opts, container) {
     return el;
 }
 
+/**
+ * Parse an SVG template string into SVG elements and optionally append
+ * them to a container.
+ *
+ * @param {string} tmpl - SVG markup string.
+ * @param {SVGElement} container - Optional parent element to append to.
+ * @returns {Array<SVGElement>} Array of parsed SVG elements.
+ */
 export function parse_svg(tmpl, container) {
-    var wrapper = create_svg_elem('svg', {});
+    let wrapper = create_svg_elem('svg', {});
     wrapper.innerHTML = tmpl.trim();
     let elems = [];
     let children = wrapper.childNodes;
@@ -278,6 +340,14 @@ export function parse_svg(tmpl, container) {
     return elems;
 }
 
+/**
+ * Load an SVG file from a URL and pass the parsed SVG element to a
+ * callback.
+ *
+ * @param {string} url - URL of the SVG file.
+ * @param {function} callback - Callback receiving the jQuery wrapped
+ * SVG element.
+ */
 export function load_svg(url, callback) {
     $.get(url, function(data) {
         let svg = $(data).find('svg');

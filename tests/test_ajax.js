@@ -1,18 +1,15 @@
 import $ from 'jquery';
-import {
-    Ajax,
-    AjaxAction,
-    AjaxDestroy,
-    AjaxDispatcher,
-    AjaxEvent,
-    AjaxForm,
-    AjaxHandle,
-    AjaxOperation,
-    AjaxOverlay,
-    AjaxParser,
-    AjaxPath,
-    AjaxUtil
-} from '../src/ajax.js';
+import {Ajax} from '../src/ssr/ajax.js';
+import {AjaxAction} from '../src/ssr/action.js';
+import {AjaxDispatcher} from '../src/ssr/dispatcher.js';
+import {AjaxEvent} from '../src/ssr/event.js';
+import {AjaxForm} from '../src/ssr/form.js';
+import {AjaxHandle} from '../src/ssr/handle.js';
+import {AjaxOperation} from '../src/ssr/util.js';
+import {AjaxOverlay} from '../src/ssr/overlay.js';
+import {AjaxParser} from '../src/ssr/parser.js';
+import {AjaxPath} from '../src/ssr/path.js';
+import {AjaxUtil} from '../src/ssr/util.js';
 import {HTTPRequest} from '../src/request.js';
 import {spinner} from '../src/spinner.js';
 import {uuid4} from '../src/utils.js';
@@ -1220,7 +1217,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         dispatcher.bind(elem.get(0), 'click');
 
         elem.trigger('click');
-        let dialog = $('body > .modal.dialog').data('overlay');
+        let dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.deepEqual(dialog.content, 'Really?');
         assert.ok(dialog.is_open);
 
@@ -1229,7 +1226,7 @@ QUnit.module('treibstoff.ajax', hooks => {
         assert.deepEqual(dispatch_opts, null);
 
         elem.trigger('click');
-        dialog = $('body > .modal.dialog').data('overlay');
+        dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
         assert.ok(dialog.is_open);
 
         $('button.ok', dialog.elem).trigger('click');
@@ -1335,30 +1332,6 @@ QUnit.module('treibstoff.ajax', hooks => {
         })
         assert.deepEqual(path_opts.elem, elem);
         assert.deepEqual(path_opts.event.type, 'click');
-    });
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Test AjaxDestroy
-    ///////////////////////////////////////////////////////////////////////////
-
-    QUnit.test('Test AjaxDestroy', assert => {
-        class Inst {
-            constructor() {
-                this.destroyed = false;
-            }
-            destroy() {
-                this.destroyed = true;
-            }
-        }
-
-        let inst = new Inst();
-        let elem = $('<span />').appendTo(container);
-        elem[0]._ajax_attached = [inst];
-
-        assert.deepEqual(inst.destroyed, false);
-        let parser = new AjaxDestroy();
-        parser.walk(container[0]);
-        assert.deepEqual(inst.destroyed, true);
     });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1561,7 +1534,7 @@ QUnit.module('treibstoff.ajax', hooks => {
             flavor: 'info',
             selector: null,
         }]);
-        let ol = $('body > .modal.info').data('overlay');
+        let ol = $('body > .modal-wrapper > .modal.info').data('overlay');
         assert.ok(ol.is_open);
         assert.deepEqual(ol.content, 'Message Content');
         ol.close();
@@ -1744,5 +1717,204 @@ QUnit.module('treibstoff.ajax', hooks => {
             path: '/sub',
             query: '?foo=bar'
         });
+    });
+
+    QUnit.test('Test Ajax.bind calls binders', assert => {
+        let ajax = new Ajax();
+
+        let binder_context;
+        ajax.register(function(context) {
+            binder_context = context;
+        });
+
+        // bind has not been called yet, _is_bound is false, so instant
+        // registration does not call the binder
+        assert.notOk(ajax._is_bound);
+
+        // First call to bind sets _is_bound and calls registered binders
+        let context = $(container);
+        ajax.bind(context);
+        assert.ok(ajax._is_bound);
+        assert.deepEqual(binder_context, context);
+    });
+
+    QUnit.test('Test Ajax.bind binder error handling', assert => {
+        let ajax = new Ajax();
+
+        ajax.register(function(context) {
+            throw new Error('binder error');
+        });
+
+        // bind should not throw even if a binder throws
+        let context = $(container);
+        ajax.bind(context);
+        assert.ok(true, 'bind completed despite binder error');
+    });
+
+    QUnit.test('Test Ajax.path', assert => {
+        let execute_opts;
+
+        let ajax = new Ajax();
+        ajax._path.execute = function(opts) {
+            execute_opts = opts;
+        };
+
+        let opts = {path: '/test', target: 'http://tld.com/test'};
+        ajax.path(opts);
+        assert.deepEqual(execute_opts, opts);
+    });
+
+    QUnit.test('Test Ajax.action', assert => {
+        let execute_opts;
+
+        let ajax = new Ajax();
+        ajax._action.execute = function(opts) {
+            execute_opts = opts;
+        };
+
+        let opts = {
+            name: 'content',
+            selector: '#content',
+            mode: 'inner',
+            url: 'https://tld.com',
+            params: {}
+        };
+        ajax.action(opts);
+        assert.deepEqual(execute_opts, opts);
+    });
+
+    QUnit.test('Test Ajax.trigger', assert => {
+        let execute_opts;
+
+        let ajax = new Ajax();
+        ajax._event.execute = function(opts) {
+            execute_opts = opts;
+        };
+
+        // opts-style call
+        let opts = {
+            name: 'contextchanged',
+            selector: '.sel',
+            target: 'http://tld.com'
+        };
+        ajax.trigger(opts);
+        assert.deepEqual(execute_opts, opts);
+
+        // positional arguments (deprecated B/C path)
+        ajax.trigger('evtname', '.selector', 'http://tld.com', {key: 'val'});
+        assert.deepEqual(execute_opts, {
+            name: 'evtname',
+            selector: '.selector',
+            target: 'http://tld.com',
+            data: {key: 'val'}
+        });
+    });
+
+    QUnit.test('Test Ajax.overlay', assert => {
+        let execute_opts;
+
+        let ajax = new Ajax();
+        ajax._overlay.execute = function(opts) {
+            execute_opts = opts;
+            return 'overlay_result';
+        };
+
+        let opts = {
+            action: 'actionname',
+            target: 'https://tld.com'
+        };
+        let result = ajax.overlay(opts);
+        assert.deepEqual(execute_opts, opts);
+        assert.deepEqual(result, 'overlay_result');
+    });
+
+    QUnit.test('Test Ajax.form', assert => {
+        let render_opts;
+
+        let ajax = new Ajax();
+        ajax._form.render = function(opts) {
+            render_opts = opts;
+        };
+
+        let opts = {
+            payload: '<form />',
+            selector: '#form',
+            mode: 'replace',
+            next: [],
+            error: false
+        };
+        ajax.form(opts);
+        assert.deepEqual(render_opts, opts);
+    });
+
+    QUnit.test('Test Ajax.message', assert => {
+        let ajax = new Ajax();
+        ajax.message('Test Message', 'info');
+        let ol = $('body > .modal-wrapper > .modal.info').data('overlay');
+        assert.ok(ol.is_open);
+        assert.deepEqual(ol.content, 'Test Message');
+        ol.close();
+    });
+
+    QUnit.test('Test Ajax.info', assert => {
+        let ajax = new Ajax();
+        ajax.info('Info Message');
+        let ol = $('body > .modal-wrapper > .modal.info').data('overlay');
+        assert.ok(ol.is_open);
+        assert.deepEqual(ol.content, 'Info Message');
+        ol.close();
+    });
+
+    QUnit.test('Test Ajax.warning', assert => {
+        let ajax = new Ajax();
+        ajax.warning('Warning Message');
+        let ol = $('body > .modal-wrapper > .modal.warning').data('overlay');
+        assert.ok(ol.is_open);
+        assert.deepEqual(ol.content, 'Warning Message');
+        ol.close();
+    });
+
+    QUnit.test('Test Ajax.error', assert => {
+        let ajax = new Ajax();
+        ajax.error('Error Message');
+        let ol = $('body > .modal-wrapper > .modal.error').data('overlay');
+        assert.ok(ol.is_open);
+        assert.deepEqual(ol.content, 'Error Message');
+        ol.close();
+    });
+
+    QUnit.test('Test Ajax.dialog', assert => {
+        let callback_opts;
+
+        let ajax = new Ajax();
+        let opts = {message: 'Confirm?'};
+        ajax.dialog(opts, function(o) {
+            callback_opts = o;
+        });
+
+        let dialog = $('body > .modal-wrapper > .modal.dialog').data('overlay');
+        assert.ok(dialog.is_open);
+        assert.deepEqual(dialog.content, 'Confirm?');
+
+        // Confirm triggers the callback
+        $('button.ok', dialog.elem).trigger('click');
+        assert.deepEqual(callback_opts, opts);
+    });
+
+    QUnit.test('Test Ajax.request', assert => {
+        let ajax = new Ajax();
+
+        // Patch $.ajax to capture the call
+        let ajax_opts;
+        $.ajax = function(opts) {
+            ajax_opts = opts;
+        };
+
+        ajax.request({
+            url: 'https://tld.com',
+            type: 'json',
+            params: {key: 'val'}
+        });
+        assert.ok(ajax_opts, 'http_request was called');
     });
 });

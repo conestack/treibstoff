@@ -4,40 +4,85 @@ Properties
 Overview
 --------
 
-Properties can be used for some aspects of two-way-binding, like setting
-values of HTML inputs and setting attributes or styles to DOM elements, or
-bind them to data objects. They also integrate into the event dispatching
-mechanism by triggering events on the widget classes if property value changes,
-of course only if used on ``Events`` deriving objects.
+Properties provide two-way binding between JavaScript objects and DOM elements.
+They integrate with the event system by triggering ``on_{name}`` events when
+values change.
 
 .. code-block:: js
 
-    import {Events} from 'events'
-    import {Property} from 'properties'
+    import {Events} from 'events';
+    import {Property} from 'properties';
 
-    /**
-     * Object defining a {Property} where we can listen on changes.
-     */
     class MyObject extends Events {
 
         constructor() {
-            // Create property named 'some_prop'.
+            super();
             new Property(this, 'some_prop');
         }
 
-        /**
-         * Default event handler if 'prop' gets changed on an
-         * instance of ``MyObject``
-         *
-         * @param {Object} val - Value the property was set to.
-         */
         on_some_prop(val) {
+            console.log('Property changed to', val);
         }
     }
 
-    // Create instance
     let ob = new MyObject();
+    ob.some_prop = 'New Value';  // triggers on_some_prop
 
-    // When setting the value of 'some_prop', 'on_some_prop'
-    // default handler gets called
-    ob.some_prop = 'New Value';
+Property Types
+~~~~~~~~~~~~~~
+
++-------------------+-------------------------------------------+
+| Type              | Binds to                                  |
++===================+===========================================+
+| ``Property``      | Plain value with change events            |
++-------------------+-------------------------------------------+
+| ``BoundProperty`` | Base for context-bound properties          |
++-------------------+-------------------------------------------+
+| ``CSSProperty``   | CSS style on context element              |
++-------------------+-------------------------------------------+
+| ``AttrProperty``  | HTML attribute on context element          |
++-------------------+-------------------------------------------+
+| ``TextProperty``  | Text content of context element            |
++-------------------+-------------------------------------------+
+| ``DataProperty``  | Key on a plain data object                 |
++-------------------+-------------------------------------------+
+| ``InputProperty`` | ``<input>`` element value with validation  |
++-------------------+-------------------------------------------+
+| ``ButtonProperty``| ``<button>`` element with click events     |
++-------------------+-------------------------------------------+
+| ``SVGProperty``   | SVG element attribute                      |
++-------------------+-------------------------------------------+
+
+Handler Convention
+~~~~~~~~~~~~~~~~~~
+
+When a property named ``foo`` changes, treibstoff calls:
+
+1. ``instance.on_foo(val)`` — the default handler (if defined)
+2. All subscribers bound via ``instance.on('on_foo', handler)``
+
+API
+---
+
+.. js:autoclass:: Property
+    :members:
+        get,
+        set,
+        trigger
+
+.. js:autoclass:: BoundProperty
+    :members: name, val, ctx, tgt
+
+.. js:autoclass:: CSSProperty
+
+.. js:autoclass:: AttrProperty
+
+.. js:autoclass:: TextProperty
+
+.. js:autoclass:: DataProperty
+
+.. js:autoclass:: InputProperty
+
+.. js:autoclass:: ButtonProperty
+
+.. js:autoclass:: SVGProperty

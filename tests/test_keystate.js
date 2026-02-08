@@ -3,6 +3,20 @@ import {KeyState} from '../src/keystate.js';
 
 QUnit.module('treibstoff.keystate', hooks => {
 
+    QUnit.test('Test KeyState unload', assert => {
+        let ks = new KeyState();
+        let count = 0;
+        ks.on('keydown', function() { count++; });
+
+        $(window).trigger($.Event('keydown', {keyCode: 17}));
+        assert.strictEqual(count, 1, 'Keydown fires before unload');
+
+        ks.unload();
+
+        $(window).trigger($.Event('keydown', {keyCode: 17}));
+        assert.strictEqual(count, 1, 'Keydown no longer fires after unload');
+    });
+
     QUnit.test('Test KeyState', assert => {
         let ks = new KeyState();
         assert.strictEqual(ks.ctrl, false, 'Control key released');
