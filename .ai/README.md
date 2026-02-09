@@ -20,6 +20,7 @@ pick the topic file that matches your need.
 | [create-widget.md](create-widget.md) | How to create custom widgets — Widget, HTMLWidget, SVGContext, lifecycle |
 | [property-binding.md](property-binding.md) | Reactive property system — all 9 property types, auto-handlers, cascading |
 | [event-handling.md](event-handling.md) | Events, listeners, keyboard state — on/off/trigger, create_listener, KeyState |
+| [drag-and-drop.md](drag-and-drop.md) | Native HTML5 DnD — DnD class, cross-instance coordination, evt.source |
 | [motion-tracking.md](motion-tracking.md) | Drag, resize, selection — Motion class, scope variants, down/move/up |
 | [template-parsing.md](template-parsing.md) | Template compilation — compile_template, t-elem, t-prop, t-val, t-type |
 | [ssr-integration.md](ssr-integration.md) | SSR via HTML attributes — all ajax:* attributes, 7 patterns |

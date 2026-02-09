@@ -12,6 +12,7 @@ import * as ajax from './ssr/ajax.js';
 
 import * as bootstrap from './bootstrap.js';
 import * as clock from './clock.js';
+import * as dnd from './dnd.js';
 import * as events from './events.js';
 import * as form from './form.js';
 import * as keystate from './keystate.js';
@@ -42,6 +43,7 @@ Object.assign(api, ajax_util);
 
 Object.assign(api, bootstrap);
 Object.assign(api, clock);
+Object.assign(api, dnd);
 Object.assign(api, events);
 Object.assign(api, form);
 Object.assign(api, keystate);

@@ -19,6 +19,7 @@ utilities.
    Architecture <architecture>
    Ajax <ajax>
    Clock <clock>
+   DnD <dnd>
    Events <events>
    Form <form>
    Keystate <keystate>

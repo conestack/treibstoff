@@ -29,6 +29,7 @@ QUnit.module('Test treibstoff', hooks => {
             'ClockIntervalEvent',
             'ClockTimeoutEvent',
             'clock',
+            'DnD',
             'Events',
             'Form',
             'FormCheckbox',
