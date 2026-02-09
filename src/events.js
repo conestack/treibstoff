@@ -2,7 +2,6 @@
  * Event dispatcher class.
  */
 export class Events {
-
     constructor() {
         this._subscribers = {};
         this._suppress_events = false;
@@ -18,7 +17,7 @@ export class Events {
     on(event, subscriber) {
         let subscribers = this._subscribers[event];
         if (subscribers === undefined) {
-            this._subscribers[event] = subscribers = new Array();
+            this._subscribers[event] = subscribers = [];
         }
         if (this._contains_subscriber(event, subscriber)) {
             return this;
@@ -35,7 +34,7 @@ export class Events {
      * omitted, all subscribers for event get removed.
      */
     off(event, subscriber) {
-        let subscribers = this._subscribers[event];
+        const subscribers = this._subscribers[event];
         if (subscribers === undefined) {
             return this;
         }
@@ -43,9 +42,9 @@ export class Events {
             delete this._subscribers[event];
             return this;
         }
-        let idx = subscribers.indexOf(subscriber);
+        const idx = subscribers.indexOf(subscriber);
         if (idx > -1) {
-            subscribers = subscribers.splice(idx, 1);
+            subscribers.splice(idx, 1);
         }
         this._subscribers[event] = subscribers;
         return this;
@@ -55,7 +54,7 @@ export class Events {
      * Trigger event.
      *
      * @param {string} event - The event to trigger.
-     * @param {...*} opts - Arbitrary arguments which gets passed to subscriber.
+     * @param {...any} opts - Arbitrary arguments which gets passed to subscriber.
      */
     trigger(event, ...opts) {
         if (this._suppress_events) {
@@ -64,7 +63,7 @@ export class Events {
         if (this[event]) {
             this[event](...opts);
         }
-        let subscribers = this._subscribers[event];
+        const subscribers = this._subscribers[event];
         if (!subscribers) {
             return this;
         }
@@ -97,7 +96,7 @@ export class Events {
      * subscribers.
      */
     bind_from_options(events, opts) {
-        for (let event of events) {
+        for (const event of events) {
             if (opts[event]) {
                 this.on(event, opts[event]);
             }
@@ -105,7 +104,7 @@ export class Events {
     }
 
     _contains_subscriber(event, subscriber) {
-        let subscribers = this._subscribers[event];
+        const subscribers = this._subscribers[event];
         if (!subscribers) {
             return false;
         }

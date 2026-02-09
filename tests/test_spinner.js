@@ -1,10 +1,9 @@
 import $ from 'jquery';
-import {spinner} from '../src/spinner.js';
+import { spinner } from '../src/spinner.js';
 
-QUnit.module('treibstoff.spinner', hooks => {
-
-    QUnit.test('Test LoadingSpinner', assert => {
-        let body = $('body');
+QUnit.module('treibstoff.spinner', (_hooks) => {
+    QUnit.test('Test LoadingSpinner', (assert) => {
+        const body = $('body');
         assert.strictEqual($('#t-loading-spinner', body).length, 0);
         assert.strictEqual(spinner._count, 0);
 

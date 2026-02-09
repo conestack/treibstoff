@@ -1,12 +1,9 @@
 import $ from 'jquery';
-import {http_request} from '../src/request.js';
-import {Events} from '../src/events.js';
-import {changeListener} from './listener.js';
-import {
-    get_elem,
-    query_elem
-} from './utils.js';
-import {Visibility} from './widget.js';
+import { Events } from './events.js';
+import { changeListener } from './listener.js';
+import { http_request } from './request.js';
+import { get_elem, query_elem } from './utils.js';
+import { Visibility } from './widget.js';
 
 /**
  * Lookup form related element.
@@ -22,7 +19,7 @@ export function lookup_form_elem(opts, prefix) {
     if (opts.elem) {
         return opts.elem;
     }
-    let form = opts.form,
+    const form = opts.form,
         name = opts.name,
         elem = get_elem(`${prefix}-${form.name}-${name}`, form.elem, true);
     return elem;
@@ -32,7 +29,6 @@ export function lookup_form_elem(opts, prefix) {
  * Form input object.
  */
 export class FormInput extends Events {
-
     /**
      * Create form input instance.
      *
@@ -83,7 +79,6 @@ export class FormInput extends Events {
  * @mixes ClickListenerMixin
  */
 export class FormSelect extends changeListener(FormInput) {
-
     /**
      * Create form select instance.
      *
@@ -113,8 +108,8 @@ export class FormSelect extends changeListener(FormInput) {
 
     set options(value) {
         this.clear();
-        let selection = this.elem[0];
-        for (let option of value) {
+        const selection = this.elem[0];
+        for (const option of value) {
             if (!(option instanceof Option)) {
                 selection.add(new Option(option[1], option[0]));
             } else {
@@ -137,7 +132,6 @@ export class FormSelect extends changeListener(FormInput) {
  * @extends FormSelect
  */
 export class FormRemoteSelect extends FormSelect {
-
     /**
      * Create form remote select instance.
      *
@@ -163,9 +157,9 @@ export class FormRemoteSelect extends FormSelect {
             type: 'json',
             url: this.vocab,
             params: params,
-            success: function(data, status, request) {
+            success: function (data, _status, _request) {
                 this.options = data;
-            }.bind(this)
+            }.bind(this),
         });
     }
 }
@@ -177,7 +171,6 @@ export class FormRemoteSelect extends FormSelect {
  * @mixes ClickListenerMixin
  */
 export class FormCheckbox extends changeListener(FormInput) {
-
     /**
      * Create form checkbox instance.
      *
@@ -202,7 +195,7 @@ export class FormCheckbox extends changeListener(FormInput) {
     }
 
     set checked(value) {
-        return this.elem.prop('checked', value);
+        this.elem.prop('checked', value);
     }
 }
 
@@ -212,7 +205,6 @@ export class FormCheckbox extends changeListener(FormInput) {
  * @extends Visibility
  */
 export class FormField extends Visibility {
-
     /**
      * Create form field instance.
      *
@@ -234,7 +226,7 @@ export class FormField extends Visibility {
         if (input && !(input instanceof FormInput)) {
             input = new input({
                 form: this.form,
-                name: this.name
+                name: this.name,
             });
         }
         this.input = input;
@@ -250,7 +242,7 @@ export class FormField extends Visibility {
     }
 
     set has_error(value) {
-        let elem = this.elem;
+        const elem = this.elem;
         if (value) {
             elem.addClass('has-error');
         } else {
@@ -266,7 +258,7 @@ export class FormField extends Visibility {
      *
      * @param {string} value - New value. Optional and defaults to ''.
      */
-    reset(value='') {
+    reset(value = '') {
         this.input.value = value;
         this.has_error = false;
         $('.help-block', this.elem).remove();
@@ -277,7 +269,6 @@ export class FormField extends Visibility {
  * Form object.
  */
 export class Form {
-
     /**
      * Initialize form instances found in context.
      *
@@ -286,13 +277,13 @@ export class Form {
      * @param {string} name - Form name.
      */
     static initialize(context, factory, name) {
-        let elem = query_elem(`#form-${name}`, context, true);
+        const elem = query_elem(`#form-${name}`, context, true);
         if (!elem) {
             return;
         }
-        let form = new factory({
+        const form = new factory({
             name: name,
-            elem: elem
+            elem: elem,
         });
         elem.data(name, form);
     }
@@ -326,7 +317,7 @@ export class Form {
      * @param {boolean} visible - Flag whether fields are visible or not.
      */
     set_field_visibility(fields, visible) {
-        for (let field of fields) {
+        for (const field of fields) {
             field.visible = visible;
         }
     }

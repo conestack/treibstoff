@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {Events} from '../src/events.js';
+import { Events } from '../src/events.js';
 import {
     AttrProperty,
     BoundProperty,
@@ -9,13 +9,12 @@ import {
     InputProperty,
     Property,
     SVGProperty,
-    TextProperty
+    TextProperty,
 } from '../src/properties.js';
-import {svg_ns} from '../src/utils.js'
+import { svg_ns } from '../src/utils.js';
 
-QUnit.module('treibstoff.properties', hooks => {
-
-    QUnit.test('Test Property', assert => {
+QUnit.module('treibstoff.properties', (_hooks) => {
+    QUnit.test('Test Property', (assert) => {
         let res;
         class TestPropertyCls extends Events {
             constructor() {
@@ -26,10 +25,10 @@ QUnit.module('treibstoff.properties', hooks => {
                 res = val;
             }
         }
-        let inst = new TestPropertyCls();
+        const inst = new TestPropertyCls();
         assert.strictEqual(res, 1, 'Property default event handler called');
 
-        let subscriber = function(inst, val) {
+        const subscriber = (_inst, val) => {
             res = val;
         };
         inst.on('foo', subscriber);
@@ -37,18 +36,21 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(res, 2, 'Property bound event handler called');
     });
 
-    QUnit.test('Test BoundProperty', assert => {
-        let ob = new Object();
+    QUnit.test('Test BoundProperty val getter', (assert) => {
+        const ob = new Object();
+        const prop = new BoundProperty(ob, 'foo', { val: 42 });
+        assert.strictEqual(prop.val, 42, 'BoundProperty.val getter returns value');
+        assert.strictEqual(prop.name, 'foo', 'BoundProperty.name getter returns name');
+    });
+
+    QUnit.test('Test BoundProperty', (assert) => {
+        const ob = new Object();
         let prop = new BoundProperty(ob, 'foo');
-        assert.strictEqual(
-            prop._ctxa,
-            'elem',
-            'Property default context attribute name is elem'
-        );
+        assert.strictEqual(prop._ctxa, 'elem', 'Property default context attribute name is elem');
         assert.strictEqual(
             prop._ctx,
             undefined,
-            'Property internal context undefined if context attribute not found'
+            'Property internal context undefined if context attribute not found',
         );
 
         ob.elem = 'default_ctx';
@@ -60,7 +62,7 @@ QUnit.module('treibstoff.properties', hooks => {
 
         prop = new BoundProperty(ob, 'bar', {
             ctx: 'custom_ctx',
-            tgt: 'custom_tgt'
+            tgt: 'custom_tgt',
         });
         assert.strictEqual(prop.ctx, 'custom_ctx', 'Custom context set');
         assert.strictEqual(prop._ctx, 'custom_ctx', 'Custom internal context set');
@@ -69,56 +71,48 @@ QUnit.module('treibstoff.properties', hooks => {
 
         ob.data = 'default_ctx';
         prop = new BoundProperty(ob, 'baz', {
-            ctxa: 'data'
+            ctxa: 'data',
         });
         assert.strictEqual(prop._ctxa, 'data', 'Custom default context attribute name set');
         assert.strictEqual(prop.ctx, 'default_ctx', 'Custom default context set');
     });
 
-    QUnit.test('Test DataProperty', assert => {
-        let ob = {
-            data: {}
+    QUnit.test('Test DataProperty', (assert) => {
+        const ob = {
+            data: {},
         };
 
         new DataProperty(ob, 'foo');
         ob.foo = 1;
         assert.strictEqual(ob.data.foo, 1, 'Property set on data');
 
-        new DataProperty(ob, 'bar', {tgt: 'baz'});
+        new DataProperty(ob, 'bar', { tgt: 'baz' });
         ob.bar = 2;
-        assert.strictEqual(
-            ob.data.baz,
-            2,
-            'Property set on data at custom attribute'
-        );
+        assert.strictEqual(ob.data.baz, 2, 'Property set on data at custom attribute');
         assert.strictEqual(
             ob.data.bar,
             undefined,
-            'Property name is undefined on data due to custom target'
+            'Property name is undefined on data due to custom target',
         );
 
         ob.other = {};
-        new DataProperty(ob, 'fizz', {ctx: ob.other});
+        new DataProperty(ob, 'fizz', { ctx: ob.other });
         ob.fizz = 3;
         assert.strictEqual(ob.other.fizz, 3, 'Property set on custom context');
 
-        new DataProperty(ob, 'bazz', {ctx: ob.other, tgt: 'other'});
+        new DataProperty(ob, 'bazz', { ctx: ob.other, tgt: 'other' });
         ob.bazz = 4;
-        assert.strictEqual(
-            ob.other.other,
-            4,
-            'Property set on custom context at custom attribute'
-        );
+        assert.strictEqual(ob.other.other, 4, 'Property set on custom context at custom attribute');
         assert.strictEqual(
             ob.other.bazz,
             undefined,
-            'Property name is undefined on custom context due to custom target'
+            'Property name is undefined on custom context due to custom target',
         );
     });
 
-    QUnit.test('Test AttrProperty', assert => {
-        let ob = {
-            elem: $('<span />')
+    QUnit.test('Test AttrProperty', (assert) => {
+        const ob = {
+            elem: $('<span />'),
         };
 
         new AttrProperty(ob, 'title');
@@ -128,9 +122,9 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(ob.elem.attr('title'), 'Title', 'Element attribute set');
     });
 
-    QUnit.test('Test TextProperty', assert => {
-        let ob = {
-            elem: $('<span />')
+    QUnit.test('Test TextProperty', (assert) => {
+        const ob = {
+            elem: $('<span />'),
         };
 
         new TextProperty(ob, 'text');
@@ -140,9 +134,9 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(ob.elem.text(), 'Text', 'Element text set');
     });
 
-    QUnit.test('Test CSSProperty', assert => {
-        let ob = {
-            elem: $('<span />')
+    QUnit.test('Test CSSProperty', (assert) => {
+        const ob = {
+            elem: $('<span />'),
         };
 
         new CSSProperty(ob, 'width');
@@ -152,9 +146,9 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(ob.elem.css('width'), '100px', 'Element CSS attribute set');
     });
 
-    QUnit.test('Test InputProperty', assert => {
+    QUnit.test('Test InputProperty', (assert) => {
         let ob = {
-            elem: $('<input type="text" />')
+            elem: $('<input type="text" />'),
         };
         new InputProperty(ob, 'value');
 
@@ -170,13 +164,14 @@ QUnit.module('treibstoff.properties', hooks => {
             constructor() {
                 super();
                 this.elem = $('<input type="text" />');
-                new InputProperty(this, 'value', {extract: this.extract});
+                new InputProperty(this, 'value', { extract: this.extract });
             }
             extract(val) {
-                if (isNaN(val)) {
+                const num = Number(val);
+                if (Number.isNaN(num)) {
                     throw 'Input is not a number';
                 }
-                return Number(val);
+                return num;
             }
             on_prop_state(prop) {
                 this.prop = prop;
@@ -208,26 +203,26 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(ob.value, 2, 'Property value extracted as number');
     });
 
-    QUnit.test('Test ButtonProperty', assert => {
-        let ob = new Events();
+    QUnit.test('Test ButtonProperty', (assert) => {
+        const ob = new Events();
         ob.elem = $('<button></button>');
         ob.ok_val = null;
         ob.ok_down_called = false;
         ob.ok_up_called = false;
 
-        ob.on_ok = function(val) {
+        ob.on_ok = function (val) {
             this.ok_val = val;
         }.bind(ob);
 
-        ob.on_ok_down = function(prop) {
+        ob.on_ok_down = function (_prop) {
             this.ok_down_called = true;
         }.bind(ob);
 
-        ob.on_ok_up = function(prop) {
+        ob.on_ok_up = function (_prop) {
             this.ok_up_called = true;
         }.bind(ob);
 
-        new ButtonProperty(ob, 'ok', {val: 'OK'});
+        new ButtonProperty(ob, 'ok', { val: 'OK' });
 
         assert.strictEqual(ob.elem.text(), 'OK', 'Button elem text set');
         assert.strictEqual(ob.ok, 'OK', 'Button text set');
@@ -242,21 +237,17 @@ QUnit.module('treibstoff.properties', hooks => {
         assert.strictEqual(ob.ok_up_called, true, 'Up event called');
     });
 
-    QUnit.test('Test SVGProperty', assert => {
-        let ob = {
-            elem: document.createElementNS(svg_ns, 'g')
+    QUnit.test('Test SVGProperty', (assert) => {
+        const ob = {
+            elem: document.createElementNS(svg_ns, 'g'),
         };
         new SVGProperty(ob, 'id');
         assert.strictEqual(
             $(ob.elem).attr('id'),
             undefined,
-            'SVG element id attribute is undefined'
+            'SVG element id attribute is undefined',
         );
         ob.id = 'id';
-        assert.strictEqual(
-            $(ob.elem).attr('id'),
-            'id',
-            'SVG element id attribute set'
-        );
+        assert.strictEqual($(ob.elem).attr('id'), 'id', 'SVG element id attribute set');
     });
 });
