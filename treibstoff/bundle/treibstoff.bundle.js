@@ -1582,6 +1582,76 @@ var ts = (function (exports, $) {
     }
     let clock = new Clock();
 
+    class DnD extends Events {
+        static _drag_source = null;
+        constructor() {
+            super();
+            this._drag_scope = null;
+            this._drop_scope = null;
+            this._dragstart_handle = null;
+            this._dragend_handle = null;
+            this._dragover_handle = null;
+            this._dragleave_handle = null;
+            this._drop_handle = null;
+        }
+        set_scope(drag, drop) {
+            this.reset_scope();
+            this._drag_scope = drag;
+            this._drop_scope = drop;
+            if (drag) {
+                drag.attr('draggable', 'true');
+                this._dragstart_handle = this._dragstart.bind(this);
+                this._dragend_handle = this._dragend.bind(this);
+                drag.on('dragstart', this._dragstart_handle);
+                drag.on('dragend', this._dragend_handle);
+            }
+            if (drop) {
+                this._dragover_handle = this._dragover.bind(this);
+                this._dragleave_handle = this._dragleave.bind(this);
+                this._drop_handle = this._drop.bind(this);
+                drop.on('dragover', this._dragover_handle);
+                drop.on('dragleave', this._dragleave_handle);
+                drop.on('drop', this._drop_handle);
+            }
+        }
+        reset_scope() {
+            if (this._drag_scope) {
+                this._drag_scope.off('dragstart', this._dragstart_handle);
+                this._drag_scope.off('dragend', this._dragend_handle);
+                this._drag_scope.removeAttr('draggable');
+            }
+            if (this._drop_scope) {
+                this._drop_scope.off('dragover', this._dragover_handle);
+                this._drop_scope.off('dragleave', this._dragleave_handle);
+                this._drop_scope.off('drop', this._drop_handle);
+            }
+            this._drag_scope = null;
+            this._drop_scope = null;
+        }
+        _dragstart(evt) {
+            evt.originalEvent.dataTransfer.setData('text/plain', '');
+            DnD._drag_source = this;
+            this.trigger('dragstart', evt);
+        }
+        _dragover(evt) {
+            evt.originalEvent.preventDefault();
+            evt.source = DnD._drag_source;
+            this.trigger('dragover', evt);
+        }
+        _dragleave(evt) {
+            this.trigger('dragleave', evt);
+        }
+        _drop(evt) {
+            evt.originalEvent.preventDefault();
+            evt.source = DnD._drag_source;
+            this.trigger('drop', evt);
+        }
+        _dragend(evt) {
+            DnD._drag_source = null;
+            this.trigger('dragend', evt);
+        }
+    }
+
     function create_listener(event, base=null) {
         base = base || Events;
         if (!(base === Events || base.prototype instanceof Events)) {
@@ -2118,6 +2188,7 @@ var ts = (function (exports, $) {
     exports.Collapsible = Collapsible;
     exports.DataProperty = DataProperty;
     exports.Dialog = Dialog;
+    exports.DnD = DnD;
     exports.Events = Events;
     exports.Form = Form;
     exports.FormCheckbox = FormCheckbox;

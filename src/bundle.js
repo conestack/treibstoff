@@ -15,6 +15,7 @@ export * from './ssr/util.js';
 
 export * from './bootstrap.js';
 export * from './clock.js';
+export * from './dnd.js';
 export * from './events.js';
 export * from './form.js';
 export * from './keystate.js';
