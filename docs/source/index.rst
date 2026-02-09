@@ -29,6 +29,7 @@ utilities.
    Properties <properties>
    Request <request>
    Spinner <spinner>
+   SVG <svg>
    Utils <utils>
    Websocket <websocket>
    Widget <widget>

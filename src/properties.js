@@ -15,7 +15,7 @@ export class Property {
      *
      * @param {Object} inst - Instance to define the property on.
      * @param {string} name - Property name.
-     * @param {*} val - Optional initial value.
+     * @param {any} val - Optional initial value.
      */
     constructor(inst, name, val) {
         this._inst = inst;
@@ -34,7 +34,7 @@ export class Property {
     /**
      * Get the current value.
      *
-     * @returns {*} Current value.
+     * @returns {any} Current value.
      */
     get() {
         return this._val;
@@ -43,7 +43,7 @@ export class Property {
     /**
      * Set the value. Triggers ``on_{name}`` event if value changed.
      *
-     * @param {*} val - New value.
+     * @param {any} val - New value.
      */
     set(val) {
         let changed = val !== this._val;
@@ -57,7 +57,7 @@ export class Property {
      * Trigger an event on the owning instance.
      *
      * @param {string} evt - Event name.
-     * @param {*} opts - Event arguments.
+     * @param {any} opts - Event arguments.
      */
     trigger(evt, opts) {
         let inst = this._inst;
@@ -82,11 +82,11 @@ export class BoundProperty extends Property {
      * @param {Object} inst - Instance to define the property on.
      * @param {string} name - Property name.
      * @param {Object} opts - Options.
-     * @param {*} opts.ctx - Context element. Defaults to ``inst[ctxa]``.
+     * @param {any} opts.ctx - Context element. Defaults to ``inst[ctxa]``.
      * @param {string} opts.ctxa - Context attribute name on the instance.
      * Defaults to ``'elem'``.
      * @param {string} opts.tgt - Target attribute name. Defaults to ``name``.
-     * @param {*} opts.val - Optional initial value.
+     * @param {any} opts.val - Optional initial value.
      */
     constructor(inst, name, opts) {
         super(inst, name);
@@ -115,7 +115,7 @@ export class BoundProperty extends Property {
 
     /**
      * Current property value.
-     * @type {*}
+     * @type {any}
      */
     get val() {
         return this._val;
@@ -123,7 +123,7 @@ export class BoundProperty extends Property {
 
     /**
      * Context element. Lazily resolved from ``inst[ctxa]`` if not set.
-     * @type {*}
+     * @type {any}
      */
     get ctx() {
         if (!this._ctx) {

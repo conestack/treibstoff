@@ -23,7 +23,7 @@ export class AjaxEvent extends AjaxOperation {
      * @param {string} opts.name - Event name.
      * @param {string} opts.selector - CSS selector.
      * @param {string|Object} opts.target - Event target URL or parsed target.
-     * @param {*} opts.data - Optional event data.
+     * @param {any} opts.data - Optional event data.
      */
     execute(opts) {
         let create_event = this.create_event.bind(this);
@@ -37,7 +37,7 @@ export class AjaxEvent extends AjaxOperation {
      *
      * @param {string} name - Event name.
      * @param {string|Object} target - URL or parsed target object.
-     * @param {*} data - Optional data.
+     * @param {any} data - Optional data.
      * @returns {jQuery.Event} The created event.
      */
     create_event(name, target, data) {

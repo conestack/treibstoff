@@ -55,7 +55,7 @@ export class Events {
      * Trigger event.
      *
      * @param {string} event - The event to trigger.
-     * @param {...*} opts - Arbitrary arguments which gets passed to subscriber.
+     * @param {...any} opts - Arbitrary arguments which gets passed to subscriber.
      */
     trigger(event, ...opts) {
         if (this._suppress_events) {

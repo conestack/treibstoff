@@ -294,7 +294,7 @@ export class Ajax extends AjaxUtil {
      * trigger events on.
      * @param {string|Object} opts.target - Event target. Gets set as
      * ``ajaxtarget`` property on event instance.
-     * @param {*} opts.data - Optional event data. Gets set as
+     * @param {any} opts.data - Optional event data. Gets set as
      * ``ajaxdata`` property on event instance.
      */
     trigger(opts) {

@@ -66,4 +66,5 @@ html_css_files = [
 
 # -- sphinx_js configuration -------------------------------------------------
 
-js_source_path = '../../src'
+js_source_path = ['../../src', '../../src/ssr']
+root_for_relative_js_paths = '../../src'

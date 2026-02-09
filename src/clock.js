@@ -8,7 +8,7 @@ export class ClockFrameEvent {
      * argument.
      *
      * @param {function} callback - Function to be called before next repaint.
-     * @param {...*} opts - Arbitrary arguments which additionally gets passed
+     * @param {...any} opts - Arbitrary arguments which additionally gets passed
      * to callback.
      */
     constructor(callback, ...opts) {
@@ -40,7 +40,7 @@ export class ClockTimeoutEvent {
      * @param {function} callback - Function to be called after timeout.
      * @param {number} delay - Time in milliseconds to wait before callback
      * execution.
-     * @param {...*} opts - Arbitrary arguments which additionally gets passed
+     * @param {...any} opts - Arbitrary arguments which additionally gets passed
      * to callback.
      */
     constructor(callback, delay, ...opts) {
@@ -71,7 +71,7 @@ export class ClockIntervalEvent {
      *
      * @param {function} callback - Function to be called before next repaint.
      * @param {number} interval - Execution interval time in milliseconds.
-     * @param {...*} opts - Arbitrary arguments which gets additionally passed
+     * @param {...any} opts - Arbitrary arguments which gets additionally passed
      * to callback.
      */
     constructor(callback, interval, ...opts) {
