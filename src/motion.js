@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {Events} from './events.js';
+import { Events } from './events.js';
 
 /**
  * Mouse motion tracking class.
@@ -13,7 +13,6 @@ import {Events} from './events.js';
  * @fires up - Fired on mouseup. The event has a ``motion`` flag.
  */
 export class Motion extends Events {
-
     constructor() {
         super();
         this._down_handle = null;
@@ -64,7 +63,7 @@ export class Motion extends Events {
         this._motion = false;
         this._prev_pos = {
             x: evt.pageX,
-            y: evt.pageY
+            y: evt.pageY,
         };
         if (this._move_scope) {
             this._move_handle = this._mousemove.bind(this);

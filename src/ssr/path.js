@@ -1,16 +1,11 @@
 import $ from 'jquery';
-import {
-    parse_path,
-    set_default,
-} from '../utils.js';
-import {AjaxOperation} from './util.js';
-
+import { parse_path, set_default } from '../utils.js';
+import { AjaxOperation } from './util.js';
 
 /**
  * Handle for path operation.
  */
 export class AjaxPath extends AjaxOperation {
-
     /**
      * @param {Object} opts - Options.
      * @param {AjaxDispatcher} opts.dispatcher - The Ajax dispatcher.
@@ -32,14 +27,14 @@ export class AjaxPath extends AjaxOperation {
      * @param {boolean} opts.replace - If true, replace current entry.
      */
     execute(opts) {
-        let history = this.win.history;
+        const history = this.win.history;
         if (history.pushState === undefined) {
             return;
         }
-        let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
+        const path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
         set_default(opts, 'target', this.win.location.origin + path);
         set_default(opts, 'replace', false);
-        let replace = opts.replace;
+        const replace = opts.replace;
         // delete options which should not end up in state
         delete opts.path;
         delete opts.replace;
@@ -58,7 +53,7 @@ export class AjaxPath extends AjaxOperation {
      * @param {Event} evt - jQuery popstate event.
      */
     state_handle(evt) {
-        let state = evt.originalEvent.state;
+        const state = evt.originalEvent.state;
         if (!state) {
             return;
         }
@@ -76,13 +71,13 @@ export class AjaxPath extends AjaxOperation {
         if (state.action) {
             this.dispatcher.trigger('on_action', {
                 target: target,
-                action: state.action
+                action: state.action,
             });
         }
         if (state.event) {
             this.dispatcher.trigger('on_event', {
                 target: target,
-                event: state.event
+                event: state.event,
             });
         }
         if (state.overlay) {
@@ -91,7 +86,7 @@ export class AjaxPath extends AjaxOperation {
                 overlay: state.overlay,
                 css: state.overlay_css,
                 uid: state.overlay_uid,
-                title: state.overlay_title
+                title: state.overlay_title,
             });
         }
         if (!state.action && !state.event && !state.overlay) {
@@ -100,48 +95,40 @@ export class AjaxPath extends AjaxOperation {
     }
 
     /** @override */
-    handle(inst, opts) {
+    handle(_inst, opts) {
         let elem = opts.elem,
             evt = opts.event,
             path = elem.attr('ajax:path');
         if (path === 'href') {
-            let href = elem.attr('href');
+            const href = elem.attr('href');
             path = parse_path(href, true);
         } else if (path === 'target') {
-            let tgt = this.action_target(elem, evt);
+            const tgt = this.action_target(elem, evt);
             path = tgt.path + tgt.query;
         }
         let target;
         if (this.has_attr(elem, 'ajax:path-target')) {
-            let path_target = elem.attr('ajax:path-target');
+            const path_target = elem.attr('ajax:path-target');
             if (path_target) {
                 target = this.parse_target(path_target);
             }
         } else {
             target = this.action_target(elem, evt);
         }
-        let p_opts = {
+        const p_opts = {
             path: path,
-            target: target
-        }
+            target: target,
+        };
         p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
         p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
         p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
         if (p_opts.overlay) {
-            p_opts.overlay_css = this.attr_val(
-                elem,
-                'ajax:path-overlay-css',
-                'ajax:overlay-css'
-            );
-            p_opts.overlay_uid = this.attr_val(
-                elem,
-                'ajax:path-overlay-uid',
-                'ajax:overlay-uid'
-            );
+            p_opts.overlay_css = this.attr_val(elem, 'ajax:path-overlay-css', 'ajax:overlay-css');
+            p_opts.overlay_uid = this.attr_val(elem, 'ajax:path-overlay-uid', 'ajax:overlay-uid');
             p_opts.overlay_title = this.attr_val(
                 elem,
                 'ajax:path-overlay-title',
-                'ajax:overlay-title'
+                'ajax:overlay-title',
             );
         }
         this.execute(p_opts);
@@ -155,7 +142,7 @@ export class AjaxPath extends AjaxOperation {
      * @returns {boolean} True if attribute exists.
      */
     has_attr(elem, name) {
-        let val = elem.attr(name);
+        const val = elem.attr(name);
         // In some browsers val is undefined, in others it's false.
         return val !== undefined && val !== false;
     }

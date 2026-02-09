@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {compile_template} from './parser.js';
+import { compile_template } from './parser.js';
 
 /**
  * Loading spinner.
@@ -29,7 +29,6 @@ import {compile_template} from './parser.js';
  *     ts.spinner.close(true);
  */
 export class LoadingSpinner {
-
     constructor() {
         this._count = 0;
     }
@@ -38,11 +37,14 @@ export class LoadingSpinner {
      * Compile the spinner DOM element from template.
      */
     compile() {
-        compile_template(this, `
+        compile_template(
+            this,
+            `
           <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
-        `);
+        `,
+        );
     }
 
     /**
@@ -83,4 +85,4 @@ export class LoadingSpinner {
 }
 
 const spinner = new LoadingSpinner();
-export {spinner};
+export { spinner };

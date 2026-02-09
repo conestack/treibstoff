@@ -2,7 +2,6 @@
  * Class for deferring function call prior to the next repaint.
  */
 export class ClockFrameEvent {
-
     /**
      * Create frame event. The callback gets passed a timestamp as first
      * argument.
@@ -32,7 +31,6 @@ export class ClockFrameEvent {
  * Class for deferring function call after timeout.
  */
 export class ClockTimeoutEvent {
-
     /**
      * Create timeout event. The callback gets passed a timestamp as first
      * argument.
@@ -64,7 +62,6 @@ export class ClockTimeoutEvent {
  * Class for executing function call periodically.
  */
 export class ClockIntervalEvent {
-
     /**
      * Create interval event. The callback gets passed a timestamp as first
      * argument and the event instance as second argument.
@@ -95,7 +92,6 @@ export class ClockIntervalEvent {
  * Class for creating clock events.
  */
 export class Clock {
-
     /**
      * Creates and returns a frame event instance. See ``ClockFrameEvent``
      * documentation for details.
@@ -121,5 +117,5 @@ export class Clock {
     }
 }
 
-let clock = new Clock();
-export {clock};
+const clock = new Clock();
+export { clock };

@@ -1,11 +1,10 @@
 import $ from 'jquery';
-import {Events} from './events.js';
+import { Events } from './events.js';
 
 /**
  * Keystate event dispatcher.
  */
 export class KeyState extends Events {
-
     /**
      * @param {function} filter_keyevent - callback function to filter out
      * key events.
@@ -30,9 +29,7 @@ export class KeyState extends Events {
      * XXX: Rename to ``destroy``
      */
     unload() {
-        $(window)
-            .off('keydown', this._on_dom_keydown)
-            .off('keyup', this._on_dom_keyup);
+        $(window).off('keydown', this._on_dom_keydown).off('keyup', this._on_dom_keyup);
     }
 
     /**
@@ -46,9 +43,7 @@ export class KeyState extends Events {
     bind() {
         this._on_dom_keydown = this._on_dom_keydown.bind(this);
         this._on_dom_keyup = this._on_dom_keyup.bind(this);
-        $(window)
-            .on('keydown', this._on_dom_keydown)
-            .on('keyup', this._on_dom_keyup);
+        $(window).on('keydown', this._on_dom_keydown).on('keyup', this._on_dom_keyup);
     }
 
     /** @private */
@@ -56,34 +51,34 @@ export class KeyState extends Events {
         this._keys.push(name);
         this[`_${name}`] = false;
         Object.defineProperty(this, name, {
-            get: function() {
+            get: function () {
                 return this[`_${name}`];
             },
-            set: function(evt) {
-                let val = this[`_${name}`];
-                if (evt.type == 'keydown') {
-                    if (!val && evt.keyCode == key_code) {
+            set: function (evt) {
+                const val = this[`_${name}`];
+                if (evt.type === 'keydown') {
+                    if (!val && evt.keyCode === key_code) {
                         this[`_${name}`] = true;
                     }
                 } else {
-                    if (val && evt.keyCode == key_code) {
+                    if (val && evt.keyCode === key_code) {
                         this[`_${name}`] = false;
                     }
                 }
-            }
+            },
         });
     }
 
     /** @private */
     _set_keys(evt) {
-        for (let name of this._keys) {
+        for (const name of this._keys) {
             this[name] = evt;
         }
     }
 
     /** @private */
     _filter_event(evt) {
-        return this.filter_keyevent && this.filter_keyevent(evt);
+        return this.filter_keyevent?.(evt);
     }
 
     /** @private */

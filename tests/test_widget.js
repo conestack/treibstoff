@@ -1,24 +1,16 @@
 import $ from 'jquery';
-import {
-    Button,
-    Collapsible,
-    HTMLWidget,
-    SVGContext,
-    Visibility,
-    Widget
-} from '../src/widget.js';
-import {svg_ns} from '../src/utils.js';
+import { svg_ns } from '../src/utils.js';
+import { Button, Collapsible, HTMLWidget, SVGContext, Visibility, Widget } from '../src/widget.js';
 
-QUnit.module('treibstoff.widget', hooks => {
-
-    QUnit.test('Test Widget', assert => {
-        let res;
+QUnit.module('treibstoff.widget', (_hooks) => {
+    QUnit.test('Test Widget', (assert) => {
+        let _res;
         class TestWidget extends Widget {
             on_parent(val) {
-                res = val;
+                _res = val;
             }
         }
-        let w = new TestWidget({parent: 'parent'});
+        const w = new TestWidget({ parent: 'parent' });
         // Parent set and default subscriber called
         assert.strictEqual(w.parent, 'parent');
 
@@ -45,10 +37,10 @@ QUnit.module('treibstoff.widget', hooks => {
             }
         }
 
-        let root = new Root({parent: null});
+        const root = new Root({ parent: null });
 
-        let w1 = new W1({parent: root});
-        let w2 = new W2({parent: w1});
+        const w1 = new W1({ parent: root });
+        const w2 = new W2({ parent: w1 });
 
         // Root has no parent
         assert.strictEqual(root.parent, null);
@@ -67,7 +59,7 @@ QUnit.module('treibstoff.widget', hooks => {
         // Acquire w1 from base class works
         assert.deepEqual(w2.acquire(TestWidget), w1);
 
-        w2.on('on_parent', function(inst, value) {
+        w2.on('on_parent', (_inst, value) => {
             assert.step(value === null ? 'null' : 'parent');
         });
 
@@ -82,17 +74,17 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.verifySteps(['parent']);
     });
 
-    QUnit.test('Test HTMLWidget', assert => {
-        let parent = {};
-        let elem = $('<div style="position: absolute;" />');
+    QUnit.test('Test HTMLWidget', (assert) => {
+        const parent = {};
+        const elem = $('<div style="position: absolute;" />');
         $('body').append(elem);
-        let w = new HTMLWidget({parent: parent, elem: elem});
+        const w = new HTMLWidget({ parent: parent, elem: elem });
         w.x = 1;
         w.y = 2;
         w.width = 3;
         w.height = 4;
         // Offset matches
-        assert.deepEqual(w.offset, {"left": 1, "top": 2});
+        assert.deepEqual(w.offset, { left: 1, top: 2 });
         // X Position Set
         assert.strictEqual(w.elem.css('left'), '1px');
         // Y Position Set
@@ -104,13 +96,13 @@ QUnit.module('treibstoff.widget', hooks => {
         elem.remove();
     });
 
-    QUnit.test('Test SVGContext', assert => {
-        let parent = {
-            elem: $(`<div />`)
+    QUnit.test('Test SVGContext', (assert) => {
+        const parent = {
+            elem: $(`<div />`),
         };
-        let ctx = new SVGContext({
+        const ctx = new SVGContext({
             parent: parent,
-            name: 'ctx_name'
+            name: 'ctx_name',
         });
         // SVG Namespace set
         assert.strictEqual(ctx.svg_ns, svg_ns);
@@ -120,18 +112,22 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.strictEqual(ctx.elem.tagName, 'svg');
         // Context elem class matches
         assert.strictEqual(ctx.elem.getAttribute('class'), 'ctx_name');
-        let elem = ctx.svg_elem('g', {
-            id: 'daphne'
-        }, ctx.elem);
+        const elem = ctx.svg_elem(
+            'g',
+            {
+                id: 'daphne',
+            },
+            ctx.elem,
+        );
         // Create SVG elem from SVGContext
         assert.strictEqual($(elem).attr('id'), 'daphne');
-        ctx.svg_attrs(elem, {id: 'joseph'});
+        ctx.svg_attrs(elem, { id: 'joseph' });
         // Set SVG attrs from SVGContext
         assert.strictEqual($(elem).attr('id'), 'joseph');
         ctx.reset_state();
     });
 
-    QUnit.test('Test Visibility', assert => {
+    QUnit.test('Test Visibility', (assert) => {
         let visibility;
         try {
             visibility = new Visibility({});
@@ -140,8 +136,8 @@ QUnit.module('treibstoff.widget', hooks => {
         }
         assert.verifySteps(['No element given']);
 
-        let elem = $('<div />');
-        visibility = new Visibility({elem: elem});
+        const elem = $('<div />');
+        visibility = new Visibility({ elem: elem });
 
         visibility.visible = false;
         assert.ok(elem.hasClass('hidden'));
@@ -153,9 +149,9 @@ QUnit.module('treibstoff.widget', hooks => {
         visibility.hidden = false;
         assert.false(elem.hasClass('hidden'));
 
-        visibility.on('on_visible', (inst, val) => {
-            assert.step('Visibility: ' + val);
-        })
+        visibility.on('on_visible', (_inst, val) => {
+            assert.step(`Visibility: ${val}`);
+        });
 
         visibility.visible = false;
         assert.verifySteps(['Visibility: false']);
@@ -178,17 +174,17 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.verifySteps([]);
     });
 
-    QUnit.test('Test Collapsible', assert => {
+    QUnit.test('Test Collapsible', (assert) => {
         // Error when no elem given
-        assert.throws(function() {
+        assert.throws(() => {
             new Collapsible({});
         });
 
-        let elem = $('<div class="show"></div>');
+        const elem = $('<div class="show"></div>');
 
         // Mock Bootstrap collapse jQuery plugin
-        let collapse_calls = [];
-        $.fn.collapse = function(action) {
+        const collapse_calls = [];
+        $.fn.collapse = function (action) {
             collapse_calls.push(action);
             if (action === 'hide') {
                 this.removeClass('show');
@@ -197,7 +193,7 @@ QUnit.module('treibstoff.widget', hooks => {
             }
         };
 
-        let collapsible = new Collapsible({elem: elem});
+        const collapsible = new Collapsible({ elem: elem });
 
         // Initially has 'show' class, so collapsed is false
         assert.false(collapsible.collapsed);
@@ -216,15 +212,15 @@ QUnit.module('treibstoff.widget', hooks => {
         delete $.fn.collapse;
     });
 
-    QUnit.test('Test Button', assert => {
-        let elem = $('<button />');
+    QUnit.test('Test Button', (assert) => {
+        const elem = $('<button />');
         class TestButton extends Button {
             on_click() {
                 assert.step('TestButton on_click');
             }
         }
-        let button = new TestButton({elem: elem});
-        button.on('on_click', function(inst, evt) {
+        const button = new TestButton({ elem: elem });
+        button.on('on_click', (_inst, _evt) => {
             assert.step('External on_click');
         });
 
@@ -245,9 +241,6 @@ QUnit.module('treibstoff.widget', hooks => {
         assert.false(button.selected);
 
         elem.trigger('click');
-        assert.verifySteps([
-            'TestButton on_click',
-            'External on_click'
-        ]);
+        assert.verifySteps(['TestButton on_click', 'External on_click']);
     });
 });

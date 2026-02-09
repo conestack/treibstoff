@@ -1,9 +1,6 @@
 import $ from 'jquery';
-import {
-    ButtonProperty,
-    InputProperty
-} from './properties.js';
-import {parse_svg} from './utils.js';
+import { ButtonProperty, InputProperty } from './properties.js';
+import { parse_svg } from './utils.js';
 
 /**
  * Base DOM tree walker and parser.
@@ -12,20 +9,19 @@ import {parse_svg} from './utils.js';
  * Subclasses override ``parse`` to implement custom behavior.
  */
 export class Parser {
-
     /**
      * Recursively walk the DOM tree starting at the given node.
      *
      * @param {Node} node - DOM node to start walking from.
      */
     walk(node) {
-       let children = node.childNodes;
-       for (let child of children) {
-           this.walk(child);
-       }
-       if (node.nodeType === Node.ELEMENT_NODE) {
-           this.parse(node);
-       }
+        const children = node.childNodes;
+        for (const child of children) {
+            this.walk(child);
+        }
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            this.parse(node);
+        }
     }
 
     /**
@@ -33,8 +29,7 @@ export class Parser {
      *
      * @param {Node} node - DOM element node.
      */
-    parse(node) {
-    }
+    parse(_node) {}
 
     /**
      * Extract all attributes from a DOM element node as a plain object.
@@ -43,9 +38,9 @@ export class Parser {
      * @returns {Object} Map of attribute names to values.
      */
     node_attrs(node) {
-        let attrs = {};
-        for (let attr of node.attributes) {
-            if (attr && attr.nodeName) {
+        const attrs = {};
+        for (const attr of node.attributes) {
+            if (attr?.nodeName) {
                 attrs[attr.nodeName] = attr.nodeValue;
             }
         }
@@ -60,7 +55,6 @@ export class Parser {
  * to ``widget[name]``. Subclasses can register tag-specific handlers.
  */
 export class TemplateParser extends Parser {
-
     /**
      * @param {Object} widget - The widget instance to attach parsed
      * elements and properties to.
@@ -73,10 +67,10 @@ export class TemplateParser extends Parser {
 
     /** @override */
     parse(node) {
-        let attrs = this.node_attrs(node),
+        const attrs = this.node_attrs(node),
             wrapped = this.wrap_node(node);
         this.handle_elem_attr(wrapped, attrs);
-        let tag = node.tagName.toLowerCase(),
+        const tag = node.tagName.toLowerCase(),
             handler = this.handlers[tag];
         if (handler) {
             handler(wrapped, attrs);
@@ -101,7 +95,7 @@ export class TemplateParser extends Parser {
      * @param {Object} attrs - Parsed attributes map.
      */
     handle_elem_attr(node, attrs) {
-        let elem_attr = attrs['t-elem'];
+        const elem_attr = attrs['t-elem'];
         if (elem_attr) {
             this.widget[elem_attr] = node;
         }
@@ -117,10 +111,11 @@ export class TemplateParser extends Parser {
  * @throws {string} If the value is not a number.
  */
 export function extract_number(val) {
-    if (isNaN(val)) {
+    const num = Number(val);
+    if (Number.isNaN(num)) {
         throw 'Input is not a number';
     }
-    return Number(val);
+    return num;
 }
 
 /**
@@ -140,7 +135,6 @@ export function extract_number(val) {
  *   methods to button events
  */
 export class HTMLParser extends TemplateParser {
-
     /**
      * @param {Object} widget - The widget instance.
      */
@@ -149,11 +143,11 @@ export class HTMLParser extends TemplateParser {
         this.handlers = {
             input: this.handle_input.bind(this),
             select: this.handle_select.bind(this),
-            button: this.handle_button.bind(this)
-        }
+            button: this.handle_button.bind(this),
+        };
         this.extractors = {
-            number: extract_number
-        }
+            number: extract_number,
+        };
     }
 
     /** @override */
@@ -168,7 +162,7 @@ export class HTMLParser extends TemplateParser {
      * @param {Object} attrs - Parsed attributes map.
      */
     handle_input(node, attrs) {
-        let prop = attrs['t-prop'];
+        const prop = attrs['t-prop'];
         if (!prop) {
             return;
         }
@@ -186,7 +180,7 @@ export class HTMLParser extends TemplateParser {
             ctxa: attrs['t-elem'],
             val: val,
             extract: extract,
-            state_evt: attrs['t-state-evt']
+            state_evt: attrs['t-state-evt'],
         });
     }
 
@@ -198,9 +192,9 @@ export class HTMLParser extends TemplateParser {
      * @param {Object} attrs - Parsed attributes map.
      */
     handle_select(node, attrs) {
-        let opts = attrs['t-options'];
+        const opts = attrs['t-options'];
         if (opts) {
-            for (let opt of JSON.parse(opts)) {
+            for (const opt of JSON.parse(opts)) {
                 node.append(`<option value="${opt[0]}">${opt[1]}</option>`);
             }
         }
@@ -215,19 +209,19 @@ export class HTMLParser extends TemplateParser {
      * @param {Object} attrs - Parsed attributes map.
      */
     handle_button(node, attrs) {
-        let prop = attrs['t-prop'];
+        const prop = attrs['t-prop'];
         if (!prop) {
             return;
         }
-        let widget = this.widget;
+        const widget = this.widget;
         new ButtonProperty(widget, prop, {
             ctx: node,
             ctxa: attrs['t-elem'],
-            val: attrs['t-val']
+            val: attrs['t-val'],
         });
-        for (let evt of ['down', 'up', 'click']) {
+        for (const evt of ['down', 'up', 'click']) {
             if (attrs[`t-bind-${evt}`]) {
-                let handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
+                const handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
                 this.widget.on(`on_${prop}_${evt}`, handler);
             }
         }
@@ -245,12 +239,12 @@ export class HTMLParser extends TemplateParser {
  * @returns {jQuery} The compiled jQuery element.
  */
 export function compile_template(inst, tmpl, container) {
-    let elem = $(tmpl.trim());
+    const elem = $(tmpl.trim());
     if (container) {
         container.append(elem);
     }
-    let parser = new HTMLParser(inst);
-    elem.each(function() {
+    const parser = new HTMLParser(inst);
+    elem.each(function () {
         parser.walk(this);
     });
     return elem;
@@ -260,8 +254,7 @@ export function compile_template(inst, tmpl, container) {
  * SVG template parser. Extends ``TemplateParser`` for SVG namespace
  * elements. Processes ``t-elem`` attributes on SVG nodes.
  */
-export class SVGParser extends TemplateParser {
-}
+export class SVGParser extends TemplateParser {}
 
 /**
  * Compile an SVG template string and attach parsed elements to the
@@ -273,9 +266,9 @@ export class SVGParser extends TemplateParser {
  * @returns {Array} Array of parsed SVG elements.
  */
 export function compile_svg(inst, tmpl, container) {
-    let elems = parse_svg(tmpl, container),
+    const elems = parse_svg(tmpl, container),
         parser = new SVGParser(inst);
-    elems.forEach(function (elem, index) {
+    elems.forEach((elem, _index) => {
         parser.walk(elem);
     });
     return elems;

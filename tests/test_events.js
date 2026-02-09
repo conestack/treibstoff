@@ -1,52 +1,53 @@
-import {Events} from '../src/events.js';
-import {Property} from '../src/properties.js';
+import { Events } from '../src/events.js';
+import { Property } from '../src/properties.js';
 
-QUnit.module('treibstoff.events', hooks => {
-
-    QUnit.test('Test Events duplicate subscriber', assert => {
-        let ob = new Events();
+QUnit.module('treibstoff.events', (_hooks) => {
+    QUnit.test('Test Events duplicate subscriber', (assert) => {
+        const ob = new Events();
         let count = 0;
-        let subscriber = function() { count++; };
+        const subscriber = () => {
+            count++;
+        };
         ob.on('evt', subscriber);
         ob.on('evt', subscriber); // duplicate — should be ignored
         ob.trigger('evt');
         assert.strictEqual(count, 1, 'Subscriber called only once despite double registration');
     });
 
-    QUnit.test('Test Events off unknown event', assert => {
-        let ob = new Events();
+    QUnit.test('Test Events off unknown event', (assert) => {
+        const ob = new Events();
         // off on event that was never registered should not throw
-        let result = ob.off('unknown_event');
+        const result = ob.off('unknown_event');
         assert.ok(result === ob, 'off returns this for chaining');
     });
 
-    QUnit.test('Test Events _contains_subscriber no subscribers', assert => {
-        let ob = new Events();
-        let subscriber = function() {};
+    QUnit.test('Test Events _contains_subscriber no subscribers', (assert) => {
+        const ob = new Events();
+        const subscriber = () => {};
         // No subscribers array exists for this event
         assert.strictEqual(
             ob._contains_subscriber('nonexistent', subscriber),
             false,
-            'Returns false when no subscribers array exists'
+            'Returns false when no subscribers array exists',
         );
     });
 
-    QUnit.test('Test Events', assert => {
+    QUnit.test('Test Events', (assert) => {
         let res;
         let ob = new Events();
         // No subscribers yet
         assert.deepEqual(Object.keys(ob._subscribers), []);
 
-        ob.default = function(opts) {
+        ob.default = (opts) => {
             res = opts;
-        }
+        };
         ob.trigger('default', 'opts');
         // Default subscriber called
         assert.strictEqual(res, 'opts');
 
-        let subscriber = function(opts) {
+        const subscriber = (_opts) => {
             res = 'subscriber';
-        }
+        };
         ob.on('evt', subscriber);
         ob.trigger('evt');
         // Subscriber for evt called
@@ -57,12 +58,9 @@ QUnit.module('treibstoff.events', hooks => {
         // Object contains specific subscriber for evt
         assert.strictEqual(ob._contains_subscriber('evt', subscriber), true);
 
-        let other_subscriber = function(opts) {}
+        const other_subscriber = (_opts) => {};
         // Other subscriber not registered for evt on object
-        assert.strictEqual(
-            ob._contains_subscriber('evt', other_subscriber),
-            false
-        );
+        assert.strictEqual(ob._contains_subscriber('evt', other_subscriber), false);
 
         ob.on('evt', other_subscriber);
         // Object contains two subscribers for the same event
@@ -80,7 +78,7 @@ QUnit.module('treibstoff.events', hooks => {
                 new Property(this, 'flag');
                 this.on_flag_called = false;
             }
-            on_flag(val) {
+            on_flag(_val) {
                 this.on_flag_called = true;
             }
             do_suppressed() {

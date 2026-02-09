@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {set_svg_attrs} from './utils.js';
+import { set_svg_attrs } from './utils.js';
 
 /**
  * Base observable property.
@@ -9,7 +9,6 @@ import {set_svg_attrs} from './utils.js';
  * ``on_{name}`` event on the instance (if it has a ``trigger`` method).
  */
 export class Property {
-
     /**
      * Create a property on the given instance.
      *
@@ -24,7 +23,7 @@ export class Property {
         Object.defineProperty(inst, name, {
             get: this.get.bind(this),
             set: this.set.bind(this),
-            enumerable: true
+            enumerable: true,
         });
         if (val !== undefined) {
             inst[name] = val;
@@ -46,7 +45,7 @@ export class Property {
      * @param {any} val - New value.
      */
     set(val) {
-        let changed = val !== this._val;
+        const changed = val !== this._val;
         this._val = val;
         if (changed) {
             this.trigger(`on_${this._name}`, val);
@@ -60,7 +59,7 @@ export class Property {
      * @param {any} opts - Event arguments.
      */
     trigger(evt, opts) {
-        let inst = this._inst;
+        const inst = this._inst;
         if (inst.trigger) {
             inst.trigger(evt, opts);
         }
@@ -75,7 +74,6 @@ export class Property {
  * for lazy context resolution.
  */
 export class BoundProperty extends Property {
-
     /**
      * Create a bound property.
      *
@@ -99,7 +97,7 @@ export class BoundProperty extends Property {
             this._ctx = opts.ctx !== undefined ? opts.ctx : inst[this._ctxa];
             this._tgt = opts.tgt !== undefined ? opts.tgt : name;
         }
-        let val = opts ? opts.val : undefined;
+        const val = opts ? opts.val : undefined;
         if (val !== undefined) {
             inst[name] = val;
         }
@@ -150,7 +148,6 @@ export class BoundProperty extends Property {
  * @extends BoundProperty
  */
 export class DataProperty extends BoundProperty {
-
     /**
      * @param {Object} inst - Instance to define the property on.
      * @param {string} name - Property name.
@@ -159,7 +156,7 @@ export class DataProperty extends BoundProperty {
      */
     constructor(inst, name, opts) {
         if (!opts) {
-            opts = {ctx: inst.data};
+            opts = { ctx: inst.data };
         } else {
             opts.ctx = opts.ctx !== undefined ? opts.ctx : inst.data;
         }
@@ -182,7 +179,6 @@ export class DataProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class AttrProperty extends BoundProperty {
-
     /** @override */
     set(val) {
         this.ctx.attr(this.tgt, val);
@@ -198,7 +194,6 @@ export class AttrProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class TextProperty extends BoundProperty {
-
     /** @override */
     set(val) {
         this.ctx.text(val);
@@ -214,7 +209,6 @@ export class TextProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class CSSProperty extends BoundProperty {
-
     /** @override */
     set(val) {
         $(this.ctx).css(this.tgt, val);
@@ -232,7 +226,6 @@ export class CSSProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class InputProperty extends BoundProperty {
-
     /**
      * @param {Object} inst - Instance to define the property on.
      * @param {string} name - Property name.
@@ -245,7 +238,9 @@ export class InputProperty extends BoundProperty {
         super(inst, name, opts);
         this.extract = opts ? opts.extract : null;
         this.state_evt = opts
-            ? (opts.state_evt ? opts.state_evt : 'on_prop_state')
+            ? opts.state_evt
+                ? opts.state_evt
+                : 'on_prop_state'
             : 'on_prop_state';
         this.error = false;
         this.msg = '';
@@ -261,7 +256,7 @@ export class InputProperty extends BoundProperty {
 
     /** @private */
     _change(evt) {
-        let val = $(evt.currentTarget).val();
+        const val = $(evt.currentTarget).val();
         this._set(val);
     }
 
@@ -303,7 +298,6 @@ export class InputProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class ButtonProperty extends BoundProperty {
-
     /**
      * @param {Object} inst - Instance to define the property on.
      * @param {string} name - Property name.
@@ -323,17 +317,17 @@ export class ButtonProperty extends BoundProperty {
     }
 
     /** @private */
-    _down(evt) {
+    _down(_evt) {
         this.trigger(`on_${this.name}_down`, this);
     }
 
     /** @private */
-    _up(evt) {
+    _up(_evt) {
         this.trigger(`on_${this.name}_up`, this);
     }
 
     /** @private */
-    _click(evt) {
+    _click(_evt) {
         this.trigger(`on_${this.name}_click`, this);
     }
 }
@@ -346,10 +340,9 @@ export class ButtonProperty extends BoundProperty {
  * @extends BoundProperty
  */
 export class SVGProperty extends BoundProperty {
-
     /** @override */
     set(val) {
-        let attrs = {};
+        const attrs = {};
         attrs[this._name] = val;
         set_svg_attrs(this.ctx, attrs);
         super.set(val);

@@ -1,8 +1,7 @@
-import {Events} from '../src/events.js';
-import {Websocket} from '../src/websocket.js';
+import { Events } from '../src/events.js';
+import { Websocket } from '../src/websocket.js';
 
-QUnit.module('treibstoff.websocket', hooks => {
-
+QUnit.module('treibstoff.websocket', (_hooks) => {
     class DummyWebSocket {
         constructor(uri) {
             this.uri = uri;
@@ -10,7 +9,7 @@ QUnit.module('treibstoff.websocket', hooks => {
         }
         send(data) {
             this.onmessage({
-                data: data
+                data: data,
             });
         }
         close() {
@@ -18,9 +17,9 @@ QUnit.module('treibstoff.websocket', hooks => {
         }
     }
 
-    QUnit.test('Test Websocket TLS scheme', assert => {
+    QUnit.test('Test Websocket TLS scheme', (assert) => {
         // Save original protocol
-        let orig_protocol = window.location.protocol;
+        const _orig_protocol = window.location.protocol;
 
         // Override window.location.protocol by creating a ws and checking uri
         // Since window.location.protocol is 'http:' in tests, the default
@@ -29,14 +28,14 @@ QUnit.module('treibstoff.websocket', hooks => {
         // subclass that overrides the uri getter.
         class TLSWebsocket extends Websocket {
             get uri() {
-                return 'wss://' + window.location.hostname + this.path;
+                return `wss://${window.location.hostname}${this.path}`;
             }
         }
-        let ws = new TLSWebsocket('/path', DummyWebSocket);
+        const ws = new TLSWebsocket('/path', DummyWebSocket);
         assert.strictEqual(ws.uri, 'wss://localhost/path');
     });
 
-    QUnit.test('Test Websocket double open', assert => {
+    QUnit.test('Test Websocket double open', (assert) => {
         let close_count = 0;
 
         class TrackingWebSocket extends DummyWebSocket {
@@ -46,7 +45,7 @@ QUnit.module('treibstoff.websocket', hooks => {
             }
         }
 
-        let ws = new Websocket('/path', TrackingWebSocket);
+        const ws = new Websocket('/path', TrackingWebSocket);
         ws.open();
         assert.strictEqual(close_count, 0);
 
@@ -58,7 +57,7 @@ QUnit.module('treibstoff.websocket', hooks => {
         ws.close();
     });
 
-    QUnit.test('Test Websocket send', assert => {
+    QUnit.test('Test Websocket send', (assert) => {
         let sent_data;
         class TrackingWebSocket extends DummyWebSocket {
             send(data) {
@@ -66,35 +65,35 @@ QUnit.module('treibstoff.websocket', hooks => {
             }
         }
 
-        let ws = new Websocket('/path', TrackingWebSocket);
+        const ws = new Websocket('/path', TrackingWebSocket);
         ws.open();
         ws.send('raw data');
         assert.strictEqual(sent_data, 'raw data');
         ws.close();
     });
 
-    QUnit.test('Test Websocket close when already closed', assert => {
-        let ws = new Websocket('/path', DummyWebSocket);
+    QUnit.test('Test Websocket close when already closed', (assert) => {
+        const ws = new Websocket('/path', DummyWebSocket);
         // sock is null, close should not throw
         ws.close();
         assert.deepEqual(ws.sock, null, 'close on null sock is safe');
     });
 
-    QUnit.test('Test Websocket base class handlers', assert => {
+    QUnit.test('Test Websocket base class handlers', (assert) => {
         // Use base Websocket class (not subclass) to cover empty handlers
-        let ws = new Websocket('/path', DummyWebSocket);
+        const ws = new Websocket('/path', DummyWebSocket);
 
         // Register external listeners to verify events still fire
-        ws.on('on_open', function() {
+        ws.on('on_open', () => {
             assert.step('on_open');
         });
-        ws.on('on_close', function() {
+        ws.on('on_close', () => {
             assert.step('on_close');
         });
-        ws.on('on_error', function() {
+        ws.on('on_error', () => {
             assert.step('on_error');
         });
-        ws.on('on_message', function(inst, data) {
+        ws.on('on_message', (_inst, _data) => {
             assert.step('on_message');
         });
 
@@ -106,14 +105,14 @@ QUnit.module('treibstoff.websocket', hooks => {
         assert.verifySteps(['on_error']);
 
         // Send non-heartbeat message
-        ws.sock.onmessage({data: '{"key": "val"}'});
+        ws.sock.onmessage({ data: '{"key": "val"}' });
         assert.verifySteps(['on_message']);
 
         ws.close();
         assert.verifySteps(['on_close']);
     });
 
-    QUnit.test('Test Websocket', assert => {
+    QUnit.test('Test Websocket', (assert) => {
         class TestWebsocket extends Websocket {
             open() {
                 super.open();
@@ -122,30 +121,30 @@ QUnit.module('treibstoff.websocket', hooks => {
             on_open() {
                 assert.step('TestWebsocket.on_open');
             }
-            on_close(evt) {
+            on_close(_evt) {
                 assert.step('TestWebsocket.on_close');
             }
             on_error() {
                 assert.step('TestWebsocket.on_error');
             }
-            on_message(data) {
+            on_message(_data) {
                 assert.step('TestWebsocket.on_message');
             }
         }
-        let ws = new TestWebsocket('/path', DummyWebSocket);
-        ws.on('on_open', function() {
+        const ws = new TestWebsocket('/path', DummyWebSocket);
+        ws.on('on_open', () => {
             assert.step('External on_open');
         });
-        ws.on('on_close', function(evt) {
+        ws.on('on_close', (_evt) => {
             assert.step('External on_close');
         });
-        ws.on('on_error', function() {
+        ws.on('on_error', () => {
             assert.step('External on_error');
         });
-        ws.on('on_message', function(data) {
+        ws.on('on_message', (_data) => {
             assert.step('External on_message');
         });
-        ws.on('on_raw_message', function(evt) {
+        ws.on('on_raw_message', (_evt) => {
             assert.step('External on_raw_message');
         });
 
@@ -156,32 +155,23 @@ QUnit.module('treibstoff.websocket', hooks => {
         assert.ok(ws.sock instanceof DummyWebSocket);
         assert.deepEqual(ws.state, -1);
         assert.deepEqual(ws.sock.uri, 'ws://localhost/path');
-        assert.verifySteps([
-            'TestWebsocket.on_open',
-            'External on_open'
-        ]);
+        assert.verifySteps(['TestWebsocket.on_open', 'External on_open']);
 
-        ws.send_json({HEARTBEAT: 1});
+        ws.send_json({ HEARTBEAT: 1 });
         assert.verifySteps(['External on_raw_message']);
 
-        ws.send_json({param: 'value'});
+        ws.send_json({ param: 'value' });
         assert.verifySteps([
             'TestWebsocket.on_message',
             'External on_message',
-            'External on_raw_message'
+            'External on_raw_message',
         ]);
 
         ws.sock.onerror();
-        assert.verifySteps([
-            'TestWebsocket.on_error',
-	        'External on_error'
-        ]);
+        assert.verifySteps(['TestWebsocket.on_error', 'External on_error']);
 
         ws.close();
         assert.deepEqual(ws.sock, null);
-        assert.verifySteps([
-            'TestWebsocket.on_close',
-	        'External on_close'
-        ]);
+        assert.verifySteps(['TestWebsocket.on_close', 'External on_close']);
     });
 });

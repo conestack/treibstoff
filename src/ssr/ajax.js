@@ -5,60 +5,53 @@ import {
     show_error,
     show_info,
     show_message,
-    show_warning
+    show_warning,
 } from '../overlay.js';
-import {
-    deprecate,
-    parse_path,
-    parse_query,
-    parse_url,
-    uuid4
-} from '../utils.js';
-import {
-    HTTPRequest,
-    http_request
-} from '../request.js';
-import {spinner} from '../spinner.js';
-import {AjaxUtil} from './util.js';
-import {AjaxDispatcher} from './dispatcher.js';
-import {AjaxAction} from './action.js';
-import {AjaxOverlay} from './overlay.js';
-import {AjaxForm} from './form.js';
-import {AjaxPath} from './path.js';
-import {AjaxEvent} from './event.js';
-import {AjaxHandle} from './handle.js';
-import {AjaxParser} from './parser.js';
+import { HTTPRequest, http_request } from '../request.js';
+import { spinner } from '../spinner.js';
+import { deprecate, parse_path, parse_query, parse_url, uuid4 } from '../utils.js';
+import { AjaxAction } from './action.js';
+import { AjaxDispatcher } from './dispatcher.js';
+import { AjaxEvent } from './event.js';
+import { AjaxForm } from './form.js';
+import { AjaxHandle } from './handle.js';
+import { AjaxOverlay } from './overlay.js';
+import { AjaxParser } from './parser.js';
+import { AjaxPath } from './path.js';
+import { AjaxUtil } from './util.js';
 
 /**
  * Ajax singleton.
  */
 export class Ajax extends AjaxUtil {
-
     /**
      * Create Ajax singleton.
      *
      * @param {Window} win - Window object. Defaults to ``window``.
      */
-    constructor(win=window) {
+    constructor(win = window) {
         super();
         this.win = win;
         this.binders = {};
-        let spinner_ = this.spinner = spinner;
-        let dispatcher = this.dispatcher = new AjaxDispatcher();
-        let request = this._request = new HTTPRequest({win: win});
-        this._path = new AjaxPath({dispatcher: dispatcher, win: win});
-        this._event = new AjaxEvent({dispatcher: dispatcher});
-        let handle = new AjaxHandle(this);
-        let action_opts = {
+        this.spinner = spinner;
+        this.dispatcher = new AjaxDispatcher();
+        this._request = new HTTPRequest({ win: win });
+        const spinner_ = this.spinner;
+        const dispatcher = this.dispatcher;
+        const request = this._request;
+        this._path = new AjaxPath({ dispatcher: dispatcher, win: win });
+        this._event = new AjaxEvent({ dispatcher: dispatcher });
+        const handle = new AjaxHandle(this);
+        const action_opts = {
             dispatcher: dispatcher,
             win: win,
             handle: handle,
             spinner: spinner_,
-            request: request
-        }
+            request: request,
+        };
         this._action = new AjaxAction(action_opts);
         this._overlay = new AjaxOverlay(action_opts);
-        this._form = new AjaxForm({handle: handle, spinner: spinner_});
+        this._form = new AjaxForm({ handle: handle, spinner: spinner_ });
         this._is_bound = false;
     }
 
@@ -83,12 +76,12 @@ export class Ajax extends AjaxUtil {
      * immediately at registration time.
      */
     register(func, instant) {
-        let func_name = 'binder_' + uuid4();
+        let func_name = `binder_${uuid4()}`;
         while (true) {
             if (this.binders[func_name] === undefined) {
                 break;
             }
-            func_name = 'binder_' + uuid4();
+            func_name = `binder_${uuid4()}`;
         }
         this.binders[func_name] = func;
         // Only execute instant if ajax.bind() already has been initially
@@ -114,16 +107,16 @@ export class Ajax extends AjaxUtil {
      */
     bind(context) {
         this._is_bound = true;
-        let parser = new AjaxParser({
+        const parser = new AjaxParser({
             dispatcher: this.dispatcher,
-            form: this._form
+            form: this._form,
         });
-        context.each(function() {
+        context.each(function () {
             parser.walk(this);
         });
-        for (let func_name in this.binders) {
+        for (const func_name in this.binders) {
             try {
-                this.binders[func_name](context)
+                this.binders[func_name](context);
             } catch (err) {
                 console.log(err);
             }
@@ -171,7 +164,7 @@ export class Ajax extends AjaxUtil {
      */
     attach(instance, elem) {
         if (elem instanceof $) {
-            if (elem.length != 1) {
+            if (elem.length !== 1) {
                 throw `${instance.constructor.name}: Instance can be attached to exactly one DOM element`;
             }
             elem = elem[0];
@@ -297,15 +290,18 @@ export class Ajax extends AjaxUtil {
      * @param {any} opts.data - Optional event data. Gets set as
      * ``ajaxdata`` property on event instance.
      */
-    trigger(opts) {
-        if (arguments.length > 1) {
+    trigger(...args) {
+        let opts;
+        if (args.length > 1) {
             deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
             opts = {
-                name: arguments[0],
-                selector: arguments[1],
-                target: arguments[2],
-                data: arguments[3]
-            }
+                name: args[0],
+                selector: args[1],
+                target: args[2],
+                data: args[3],
+            };
+        } else {
+            opts = args[0];
         }
         this._event.execute(opts);
     }
@@ -444,9 +440,9 @@ export class Ajax extends AjaxUtil {
     /**
      * This function is deprecated. Use ``ts.show_message`` instead.
      */
-    message(message, flavor='') {
+    message(message, flavor = '') {
         deprecate('ts.ajax.message', 'ts.show_message', '1.0');
-        show_message({message: message, flavor: flavor});
+        show_message({ message: message, flavor: flavor });
     }
 
     /**
@@ -480,9 +476,9 @@ export class Ajax extends AjaxUtil {
         deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
         show_dialog({
             message: opts.message,
-            on_confirm: function() {
+            on_confirm: () => {
                 callback(opts);
-            }
+            },
         });
     }
 
@@ -495,10 +491,10 @@ export class Ajax extends AjaxUtil {
     }
 }
 
-let ajax = new Ajax();
-export {ajax};
+const ajax = new Ajax();
+export { ajax };
 
-$.fn.tsajax = function() {
+$.fn.tsajax = function () {
     ajax.bind(this);
     return this;
-}
+};

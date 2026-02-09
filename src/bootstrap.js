@@ -8,7 +8,7 @@
  * @module bootstrap
  */
 import $ from 'jquery';
-import {register_ajax_destroy_handle} from "./ssr/destroy.js";
+import { register_ajax_destroy_handle } from './ssr/destroy.js';
 
 /**
  * Dispose Bootstrap Dropdown and Tooltip instances attached to a DOM node.
@@ -29,7 +29,7 @@ function destroy_bootstrap(node) {
     tt = null;
 }
 
-$(function() {
+$(() => {
     if (window.bootstrap !== undefined) {
         register_ajax_destroy_handle(destroy_bootstrap);
     }

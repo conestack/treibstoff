@@ -1,16 +1,10 @@
-import $ from 'jquery';
-import {
-    parse_path,
-    parse_query,
-    parse_url,
-} from '../utils.js';
-import {Events} from '../events.js';
+import { Events } from '../events.js';
+import { parse_path, parse_query, parse_url } from '../utils.js';
 
 /**
  * Ajax utility mixin.
  */
 export class AjaxUtil extends Events {
-
     /**
      * Parse URL, query and path from URL string::
      *
@@ -30,7 +24,7 @@ export class AjaxUtil extends Events {
             url: target ? parse_url(target) : undefined,
             params: target ? parse_query(target) : {},
             path: target ? parse_path(target) : undefined,
-            query: target ? parse_query(target, true) : undefined
+            query: target ? parse_query(target, true) : undefined,
         };
     }
 
@@ -68,7 +62,6 @@ export class AjaxUtil extends Events {
  * Abstract Ajax operation.
  */
 export class AjaxOperation extends AjaxUtil {
-
     /**
      * Create Ajax operation.
      *
@@ -91,7 +84,7 @@ export class AjaxOperation extends AjaxUtil {
      * @abstract
      * @param {Object} opts - Options needed for operation execution.
      */
-    execute(opts) {
+    execute(_opts) {
         throw 'Abstract AjaxOperation does not implement execute';
     }
 
@@ -102,7 +95,7 @@ export class AjaxOperation extends AjaxUtil {
      * @param {AjaxDispatcher} inst - Dispatcher instance.
      * @param {Object} opts - Options needed for operation execution.
      */
-    handle(inst, opts) {
+    handle(_inst, _opts) {
         throw 'Abstract AjaxOperation does not implement handle';
     }
 }

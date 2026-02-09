@@ -10,8 +10,8 @@ import $ from 'jquery';
 export function deprecate(dep, sub, as_of) {
     console.log(
         `DEPRECATED: ${dep} is deprecated ` +
-        `and will be removed as of ${as_of}. ` +
-        `Use ${sub} instead.`
+            `and will be removed as of ${as_of}. ` +
+            `Use ${sub} instead.`,
     );
 }
 
@@ -47,8 +47,8 @@ export function object_by_path(path) {
  * @returns {($|null)} jQuery wrapped element. Return null if no element found by
  * given selector.
  */
-export function query_elem(selector, context, unique=true) {
-    let elem = $(selector, context);
+export function query_elem(selector, context, unique = true) {
+    const elem = $(selector, context);
     if (unique && elem.length > 1) {
         throw `Element by selector ${selector} not unique.`;
     } else if (!elem.length) {
@@ -68,14 +68,13 @@ export function query_elem(selector, context, unique=true) {
  * @throws If no element is found, and exception gets thrown.
  * @returns {$} jQuery wrapped element.
  */
-export function get_elem(selector, context, unique=true) {
-    let elem = query_elem(selector, context, unique);
+export function get_elem(selector, context, unique = true) {
+    const elem = query_elem(selector, context, unique);
     if (elem === null) {
         throw `Element by selector ${selector} not found.`;
     }
     return elem;
 }
-
 
 /**
  * Set visibility of element.
@@ -91,15 +90,14 @@ export function set_visible(elem, visible) {
     }
 }
 
-
 /**
  * Generate uuid 4.
  *
  * @returns {string} UUID string.
  */
 export function uuid4() {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16),
     );
 }
 
@@ -126,9 +124,9 @@ export function set_default(ob, name, val) {
  * @returns {Object} New merged object.
  */
 export function json_merge(base, other) {
-    let ret = {};
-    for (let ob of [base, other]) {
-        for (let name in ob) {
+    const ret = {};
+    for (const ob of [base, other]) {
+        for (const name in ob) {
             ret[name] = ob[name];
         }
     }
@@ -152,10 +150,10 @@ function _strip_trailing_char(str, chr) {
  * @returns {string} URL without query.
  */
 export function parse_url(url) {
-    let parser = document.createElement('a');
+    const parser = document.createElement('a');
     parser.href = url;
-    let path = parser.pathname;
-    url = parser.protocol + '//' + parser.host + path;
+    const path = parser.pathname;
+    url = `${parser.protocol}//${parser.host}${path}`;
     return _strip_trailing_char(url, '/');
 }
 
@@ -178,17 +176,17 @@ export function parse_url(url) {
  * @returns {(Object|string)} Query parameters.
  */
 export function parse_query(url, as_string) {
-    let parser = document.createElement('a');
+    const parser = document.createElement('a');
     parser.href = url;
-    let search = parser.search;
+    const search = parser.search;
     if (as_string) {
         return search ? search : '';
     }
-    let params = {};
+    const params = {};
     if (search) {
-        let parameters = search.substring(1, search.length).split('&');
+        const parameters = search.substring(1, search.length).split('&');
         for (let i = 0; i < parameters.length; i++) {
-            let param = parameters[i].split('=');
+            const param = parameters[i].split('=');
             params[param[0]] = param[1];
         }
     }
@@ -213,7 +211,7 @@ export function parse_query(url, as_string) {
  * @returns {string} Path with or without query.
  */
 export function parse_path(url, include_query) {
-    let parser = document.createElement('a');
+    const parser = document.createElement('a');
     parser.href = url;
     let path = _strip_trailing_char(parser.pathname, '/');
     if (include_query) {
@@ -231,16 +229,16 @@ export function parse_path(url, include_query) {
  * a session cookie.
  */
 export function create_cookie(name, value, days) {
-    let date,
-        expires;
+    let date, expires;
     if (days) {
         date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toGMTString();
+        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+        expires = `; expires=${date.toGMTString()}`;
     } else {
-        expires = "";
+        expires = '';
     }
-    document.cookie = name + "=" + escape(value) + expires + "; path=/;";
+    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API not widely supported
+    document.cookie = `${name}=${escape(value)}${expires}; path=/;`;
 }
 
 /**
@@ -250,11 +248,11 @@ export function create_cookie(name, value, days) {
  * @returns {string|null} Cookie value or null if not found.
  */
 export function read_cookie(name) {
-    let nameEQ = name + "=",
+    let nameEQ = `${name}=`,
         ca = document.cookie.split(';'),
         i,
         c;
-    for(i = 0; i < ca.length;i = i + 1) {
+    for (i = 0; i < ca.length; i = i + 1) {
         c = ca[i];
         while (c.charAt(0) === ' ') {
             c = c.substring(1, c.length);
@@ -280,17 +278,13 @@ export const svg_ns = 'http://www.w3.org/2000/svg';
  * @param {Object} opts - Map of attribute names to values.
  */
 export function set_svg_attrs(el, opts) {
-    for (let n in opts) {
+    for (const n in opts) {
         if (n === 'width' || n === 'height') {
             const val = parseFloat(opts[n]);
             if (val >= 0) {
                 el.setAttributeNS(null, n, opts[n]);
             } else {
-                console.error(
-                    `Invalid value for ${n}:`,
-                    opts[n],
-                    el
-                );
+                console.error(`Invalid value for ${n}:`, opts[n], el);
             }
         } else {
             el.setAttributeNS(null, n, opts[n]);
@@ -308,7 +302,7 @@ export function set_svg_attrs(el, opts) {
  * @returns {SVGElement} The created SVG element.
  */
 export function create_svg_elem(name, opts, container) {
-    let el = document.createElementNS(svg_ns, name);
+    const el = document.createElementNS(svg_ns, name);
     set_svg_attrs(el, opts);
     if (container !== undefined) {
         container.appendChild(el);
@@ -325,12 +319,12 @@ export function create_svg_elem(name, opts, container) {
  * @returns {Array<SVGElement>} Array of parsed SVG elements.
  */
 export function parse_svg(tmpl, container) {
-    let wrapper = create_svg_elem('svg', {});
+    const wrapper = create_svg_elem('svg', {});
     wrapper.innerHTML = tmpl.trim();
-    let elems = [];
-    let children = wrapper.childNodes;
+    const elems = [];
+    const children = wrapper.childNodes;
     for (let i = 0; i < children.length; i++) {
-        let elem = children[i];
+        const elem = children[i];
         elems.push(elem);
         wrapper.removeChild(elem);
         if (container !== undefined) {
@@ -349,9 +343,13 @@ export function parse_svg(tmpl, container) {
  * SVG element.
  */
 export function load_svg(url, callback) {
-    $.get(url, function(data) {
-        let svg = $(data).find('svg');
-        svg.removeAttr('xmlns:a');
-        callback(svg);
-    }.bind(this), 'xml');
+    $.get(
+        url,
+        ((data) => {
+            const svg = $(data).find('svg');
+            svg.removeAttr('xmlns:a');
+            callback(svg);
+        }).bind(this),
+        'xml',
+    );
 }

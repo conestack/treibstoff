@@ -1,5 +1,4 @@
-import $ from 'jquery';
-import {Events} from './events.js';
+import { Events } from './events.js';
 
 /**
  * Drag and Drop tracking class.
@@ -16,7 +15,6 @@ import {Events} from './events.js';
  * @fires dragend - Fired when drag ends. Receives the DOM event.
  */
 export class DnD extends Events {
-
     static _drag_source = null;
 
     constructor() {

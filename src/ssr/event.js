@@ -1,12 +1,10 @@
 import $ from 'jquery';
-import {AjaxOperation} from './util.js';
-
+import { AjaxOperation } from './util.js';
 
 /**
  * Handle for event operation.
  */
 export class AjaxEvent extends AjaxOperation {
-
     /**
      * @param {Object} opts - Options.
      * @param {AjaxDispatcher} opts.dispatcher - The Ajax dispatcher.
@@ -26,8 +24,8 @@ export class AjaxEvent extends AjaxOperation {
      * @param {any} opts.data - Optional event data.
      */
     execute(opts) {
-        let create_event = this.create_event.bind(this);
-        $(opts.selector).each(function() {
+        const create_event = this.create_event.bind(this);
+        $(opts.selector).each(function () {
             $(this).trigger(create_event(opts.name, opts.target, opts.data));
         });
     }
@@ -41,7 +39,7 @@ export class AjaxEvent extends AjaxOperation {
      * @returns {jQuery.Event} The created event.
      */
     create_event(name, target, data) {
-        let evt = $.Event(name);
+        const evt = $.Event(name);
         if (target.url) {
             evt.ajaxtarget = target;
         } else {
@@ -52,15 +50,15 @@ export class AjaxEvent extends AjaxOperation {
     }
 
     /** @override */
-    handle(inst, opts) {
-        let target = opts.target,
+    handle(_inst, opts) {
+        const target = opts.target,
             event = opts.event;
-        for (let event_ of this.parse_definition(event)) {
-            let def = event_.split(':');
+        for (const event_ of this.parse_definition(event)) {
+            const def = event_.split(':');
             this.execute({
                 name: def[0],
                 selector: def[1],
-                target: target
+                target: target,
             });
         }
     }

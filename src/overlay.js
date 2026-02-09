@@ -1,11 +1,8 @@
 import $ from 'jquery';
-import {compile_template} from './parser.js';
-import {Events} from './events.js';
-import {
-    set_default,
-    uuid4
-} from './utils.js';
-import {ajax_destroy} from './ssr/destroy.js';
+import { Events } from './events.js';
+import { compile_template } from './parser.js';
+import { ajax_destroy } from './ssr/destroy.js';
+import { set_default, uuid4 } from './utils.js';
 
 /**
  * Modal overlay class.
@@ -18,7 +15,6 @@ import {ajax_destroy} from './ssr/destroy.js';
  * @fires on_close - Fired after the overlay is closed.
  */
 export class Overlay extends Events {
-
     /**
      * Create overlay instance.
      *
@@ -54,7 +50,9 @@ export class Overlay extends Events {
     compile() {
         let z_index = 1055; // default bootstrap modal z-index
         z_index += $('.modal:visible').length; // increase zindex based on currently open modals
-        compile_template(this, `
+        compile_template(
+            this,
+            `
           <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
             <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
             <div class="modal ${this.flavor} ${this.css}" id="${this.uid}" t-elem="elem">
@@ -72,7 +70,8 @@ export class Overlay extends Events {
               </div>
             </div>
           </div>
-        `);
+        `,
+        );
     }
 
     /**
@@ -107,11 +106,11 @@ export class Overlay extends Events {
  * @returns {Overlay} Overlay instance or null if not found.
  */
 export function get_overlay(uid) {
-    let elem = $(`#${uid}`);
+    const elem = $(`#${uid}`);
     if (!elem.length) {
         return null;
     }
-    let ol = elem.data('overlay');
+    const ol = elem.data('overlay');
     if (!ol) {
         return null;
     }
@@ -124,7 +123,6 @@ export function get_overlay(uid) {
  * @extends Overlay
  */
 export class Message extends Overlay {
-
     /**
      * @param {Object} opts - Message options. Accepts all ``Overlay`` options
      * plus ``message``.
@@ -140,10 +138,14 @@ export class Message extends Overlay {
      * Compile the footer actions (close button).
      */
     compile_actions() {
-        compile_template(this, `
+        compile_template(
+            this,
+            `
           <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
-        `, this.footer);
+        `,
+            this.footer,
+        );
     }
 }
 
@@ -170,9 +172,9 @@ export function show_message(opts) {
         message: opts.message,
         flavor: opts.flavor,
         css: opts.css,
-        on_open: function(inst) {
+        on_open: (inst) => {
             $('button', inst.elem).first().focus();
-        }
+        },
     }).open();
 }
 
@@ -188,7 +190,7 @@ export function show_info(message, css) {
         title: 'Info',
         message: message,
         flavor: 'info',
-        css: css
+        css: css,
     });
 }
 
@@ -204,7 +206,7 @@ export function show_warning(message, css) {
         title: 'Warning',
         message: message,
         flavor: 'warning',
-        css: css
+        css: css,
     });
 }
 
@@ -220,7 +222,7 @@ export function show_error(message, css) {
         title: 'Error',
         message: message,
         flavor: 'error',
-        css: css
+        css: css,
     });
 }
 
@@ -231,7 +233,6 @@ export function show_error(message, css) {
  * @fires on_confirm - Fired when the OK button is clicked.
  */
 export class Dialog extends Message {
-
     /**
      * @param {Object} opts - Dialog options. Accepts all ``Message`` options
      * plus ``on_confirm``.
@@ -247,12 +248,16 @@ export class Dialog extends Message {
      * Compile the footer actions (OK and Cancel buttons).
      */
     compile_actions() {
-        compile_template(this, `
+        compile_template(
+            this,
+            `
           <button class="ok btn btn-primary allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-outline-primary allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
-        `, this.footer);
+        `,
+            this.footer,
+        );
     }
 
     /** @private */
@@ -282,6 +287,6 @@ export function show_dialog(opts) {
     new Dialog({
         title: opts.title,
         message: opts.message,
-        on_confirm: opts.on_confirm
+        on_confirm: opts.on_confirm,
     }).open();
 }

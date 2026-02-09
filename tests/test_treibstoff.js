@@ -1,10 +1,9 @@
 import ts from '../src/treibstoff.js';
 
-QUnit.module('Test treibstoff', hooks => {
-
-    QUnit.test('Test api members', assert => {
-        let members = [];
-        for (let prop in ts) {
+QUnit.module('Test treibstoff', (_hooks) => {
+    QUnit.test('Test api members', (assert) => {
+        const members = [];
+        for (const prop in ts) {
             members.push(prop);
         }
         assert.deepEqual(members, [
@@ -102,8 +101,7 @@ QUnit.module('Test treibstoff', hooks => {
             'HTMLWidget',
             'SVGContext',
             'Visibility',
-            'Widget'
+            'Widget',
         ]);
     });
-
 });

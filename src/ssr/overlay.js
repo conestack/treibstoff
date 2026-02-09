@@ -1,18 +1,11 @@
-import {
-    get_overlay,
-    Overlay,
-} from '../overlay.js';
-import {
-    uuid4
-} from '../utils.js';
-import {AjaxAction} from './action.js';
-
+import { get_overlay, Overlay } from '../overlay.js';
+import { uuid4 } from '../utils.js';
+import { AjaxAction } from './action.js';
 
 /**
  * Handle for overlay operation.
  */
 export class AjaxOverlay extends AjaxAction {
-
     /**
      * @param {Object} opts - Options (see ``AjaxAction``).
      */
@@ -50,21 +43,21 @@ export class AjaxOverlay extends AjaxAction {
             url = opts.url;
             params = opts.params;
         }
-        let uid = opts.uid ? opts.uid : uuid4();
+        const uid = opts.uid ? opts.uid : uuid4();
         params['ajax.overlay-uid'] = uid;
         ol = new Overlay({
             uid: uid,
             css: opts.css,
             title: opts.title,
-            on_close: opts.on_close
-        })
+            on_close: opts.on_close,
+        });
         this.request({
             name: opts.action,
             selector: `#${uid} ${this.overlay_content_sel}`,
             mode: 'inner',
             url: url,
             params: params,
-            success: function(data) {
+            success: function (data) {
                 // overlays are not displayed if no payload is received.
                 if (!data.payload) {
                     // ensure continuation gets performed anyway.
@@ -73,19 +66,19 @@ export class AjaxOverlay extends AjaxAction {
                 }
                 ol.open();
                 this.complete(data);
-            }.bind(this)
+            }.bind(this),
         });
         return ol;
     }
 
     /** @override */
-    handle(inst, opts) {
-        let target = opts.target,
+    handle(_inst, opts) {
+        const target = opts.target,
             overlay = opts.overlay;
         if (overlay.indexOf('CLOSE') > -1) {
             this.execute({
                 close: true,
-                uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
+                uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid,
             });
             return;
         }
@@ -95,7 +88,7 @@ export class AjaxOverlay extends AjaxAction {
             params: target.params,
             css: opts.css,
             uid: opts.uid,
-            title: opts.title
+            title: opts.title,
         });
     }
 }

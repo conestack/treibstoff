@@ -1,11 +1,85 @@
 var ts = (function (exports, $) {
     'use strict';
 
+    class Events {
+        constructor() {
+            this._subscribers = {};
+            this._suppress_events = false;
+        }
+        on(event, subscriber) {
+            let subscribers = this._subscribers[event];
+            if (subscribers === undefined) {
+                this._subscribers[event] = subscribers = [];
+            }
+            if (this._contains_subscriber(event, subscriber)) {
+                return this;
+            }
+            subscribers.push(subscriber);
+            return this;
+        }
+        off(event, subscriber) {
+            const subscribers = this._subscribers[event];
+            if (subscribers === undefined) {
+                return this;
+            }
+            if (!subscriber) {
+                delete this._subscribers[event];
+                return this;
+            }
+            const idx = subscribers.indexOf(subscriber);
+            if (idx > -1) {
+                subscribers.splice(idx, 1);
+            }
+            this._subscribers[event] = subscribers;
+            return this;
+        }
+        trigger(event, ...opts) {
+            if (this._suppress_events) {
+                return;
+            }
+            if (this[event]) {
+                this[event](...opts);
+            }
+            const subscribers = this._subscribers[event];
+            if (!subscribers) {
+                return this;
+            }
+            for (let i = 0; i < subscribers.length; i++) {
+                subscribers[i](this, ...opts);
+            }
+            return this;
+        }
+        suppress_events(fn) {
+            this._suppress_events = true;
+            fn();
+            this._suppress_events = false;
+        }
+        bind_from_options(events, opts) {
+            for (const event of events) {
+                if (opts[event]) {
+                    this.on(event, opts[event]);
+                }
+            }
+        }
+        _contains_subscriber(event, subscriber) {
+            const subscribers = this._subscribers[event];
+            if (!subscribers) {
+                return false;
+            }
+            for (let i = 0; i < subscribers.length; i++) {
+                if (subscribers[i] === subscriber) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
     function deprecate(dep, sub, as_of) {
         console.log(
             `DEPRECATED: ${dep} is deprecated ` +
-            `and will be removed as of ${as_of}. ` +
-            `Use ${sub} instead.`
+                `and will be removed as of ${as_of}. ` +
+                `Use ${sub} instead.`,
         );
     }
     function object_by_path(path) {
@@ -21,8 +95,8 @@ var ts = (function (exports, $) {
         }
         return ob;
     }
-    function query_elem(selector, context, unique=true) {
-        let elem = $(selector, context);
+    function query_elem(selector, context, unique = true) {
+        const elem = $(selector, context);
         if (unique && elem.length > 1) {
             throw `Element by selector ${selector} not unique.`;
         } else if (!elem.length) {
@@ -30,8 +104,8 @@ var ts = (function (exports, $) {
         }
         return elem;
     }
-    function get_elem(selector, context, unique=true) {
-        let elem = query_elem(selector, context, unique);
+    function get_elem(selector, context, unique = true) {
+        const elem = query_elem(selector, context, unique);
         if (elem === null) {
             throw `Element by selector ${selector} not found.`;
         }
@@ -45,8 +119,8 @@ var ts = (function (exports, $) {
         }
     }
     function uuid4() {
-        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+            (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16),
         );
     }
     function set_default(ob, name, val) {
@@ -56,9 +130,9 @@ var ts = (function (exports, $) {
         return ob[name];
     }
     function json_merge(base, other) {
-        let ret = {};
-        for (let ob of [base, other]) {
-            for (let name in ob) {
+        const ret = {};
+        for (const ob of [base, other]) {
+            for (const name in ob) {
                 ret[name] = ob[name];
             }
         }
@@ -71,31 +145,31 @@ var ts = (function (exports, $) {
         return str;
     }
     function parse_url(url) {
-        let parser = document.createElement('a');
+        const parser = document.createElement('a');
         parser.href = url;
-        let path = parser.pathname;
-        url = parser.protocol + '//' + parser.host + path;
+        const path = parser.pathname;
+        url = `${parser.protocol}//${parser.host}${path}`;
         return _strip_trailing_char(url, '/');
     }
     function parse_query(url, as_string) {
-        let parser = document.createElement('a');
+        const parser = document.createElement('a');
         parser.href = url;
-        let search = parser.search;
+        const search = parser.search;
         if (as_string) {
             return search ? search : '';
         }
-        let params = {};
+        const params = {};
         if (search) {
-            let parameters = search.substring(1, search.length).split('&');
+            const parameters = search.substring(1, search.length).split('&');
             for (let i = 0; i < parameters.length; i++) {
-                let param = parameters[i].split('=');
+                const param = parameters[i].split('=');
                 params[param[0]] = param[1];
             }
         }
         return params;
     }
     function parse_path(url, include_query) {
-        let parser = document.createElement('a');
+        const parser = document.createElement('a');
         parser.href = url;
         let path = _strip_trailing_char(parser.pathname, '/');
         if (include_query) {
@@ -104,23 +178,22 @@ var ts = (function (exports, $) {
         return path;
     }
     function create_cookie(name, value, days) {
-        let date,
-            expires;
+        let date, expires;
         if (days) {
             date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toGMTString();
+            date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+            expires = `; expires=${date.toGMTString()}`;
         } else {
-            expires = "";
+            expires = '';
         }
-        document.cookie = name + "=" + escape(value) + expires + "; path=/;";
+        document.cookie = `${name}=${escape(value)}${expires}; path=/;`;
     }
     function read_cookie(name) {
-        let nameEQ = name + "=",
+        let nameEQ = `${name}=`,
             ca = document.cookie.split(';'),
             i,
             c;
-        for(i = 0; i < ca.length;i = i + 1) {
+        for (i = 0; i < ca.length; i = i + 1) {
             c = ca[i];
             while (c.charAt(0) === ' ') {
                 c = c.substring(1, c.length);
@@ -133,17 +206,13 @@ var ts = (function (exports, $) {
     }
     const svg_ns = 'http://www.w3.org/2000/svg';
     function set_svg_attrs(el, opts) {
-        for (let n in opts) {
+        for (const n in opts) {
             if (n === 'width' || n === 'height') {
                 const val = parseFloat(opts[n]);
                 if (val >= 0) {
                     el.setAttributeNS(null, n, opts[n]);
                 } else {
-                    console.error(
-                        `Invalid value for ${n}:`,
-                        opts[n],
-                        el
-                    );
+                    console.error(`Invalid value for ${n}:`, opts[n], el);
                 }
             } else {
                 el.setAttributeNS(null, n, opts[n]);
@@ -151,7 +220,7 @@ var ts = (function (exports, $) {
         }
     }
     function create_svg_elem(name, opts, container) {
-        let el = document.createElementNS(svg_ns, name);
+        const el = document.createElementNS(svg_ns, name);
         set_svg_attrs(el, opts);
         if (container !== undefined) {
             container.appendChild(el);
@@ -159,12 +228,12 @@ var ts = (function (exports, $) {
         return el;
     }
     function parse_svg(tmpl, container) {
-        let wrapper = create_svg_elem('svg', {});
+        const wrapper = create_svg_elem('svg', {});
         wrapper.innerHTML = tmpl.trim();
-        let elems = [];
-        let children = wrapper.childNodes;
+        const elems = [];
+        const children = wrapper.childNodes;
         for (let i = 0; i < children.length; i++) {
-            let elem = children[i];
+            const elem = children[i];
             elems.push(elem);
             wrapper.removeChild(elem);
             if (container !== undefined) {
@@ -174,11 +243,15 @@ var ts = (function (exports, $) {
         return elems;
     }
     function load_svg(url, callback) {
-        $.get(url, function(data) {
-            let svg = $(data).find('svg');
-            svg.removeAttr('xmlns:a');
-            callback(svg);
-        }.bind(this), 'xml');
+        $.get(
+            url,
+            ((data) => {
+                const svg = $(data).find('svg');
+                svg.removeAttr('xmlns:a');
+                callback(svg);
+            }).bind(this),
+            'xml',
+        );
     }
 
     class Property {
@@ -189,7 +262,7 @@ var ts = (function (exports, $) {
             Object.defineProperty(inst, name, {
                 get: this.get.bind(this),
                 set: this.set.bind(this),
-                enumerable: true
+                enumerable: true,
             });
             if (val !== undefined) {
                 inst[name] = val;
@@ -199,14 +272,14 @@ var ts = (function (exports, $) {
             return this._val;
         }
         set(val) {
-            let changed = val !== this._val;
+            const changed = val !== this._val;
             this._val = val;
             if (changed) {
                 this.trigger(`on_${this._name}`, val);
             }
         }
         trigger(evt, opts) {
-            let inst = this._inst;
+            const inst = this._inst;
             if (inst.trigger) {
                 inst.trigger(evt, opts);
             }
@@ -224,7 +297,7 @@ var ts = (function (exports, $) {
                 this._ctx = opts.ctx !== undefined ? opts.ctx : inst[this._ctxa];
                 this._tgt = opts.tgt !== undefined ? opts.tgt : name;
             }
-            let val = opts ? opts.val : undefined;
+            const val = opts ? opts.val : undefined;
             if (val !== undefined) {
                 inst[name] = val;
             }
@@ -248,7 +321,7 @@ var ts = (function (exports, $) {
     class DataProperty extends BoundProperty {
         constructor(inst, name, opts) {
             if (!opts) {
-                opts = {ctx: inst.data};
+                opts = { ctx: inst.data };
             } else {
                 opts.ctx = opts.ctx !== undefined ? opts.ctx : inst.data;
             }
@@ -283,7 +356,9 @@ var ts = (function (exports, $) {
             super(inst, name, opts);
             this.extract = opts ? opts.extract : null;
             this.state_evt = opts
-                ? (opts.state_evt ? opts.state_evt : 'on_prop_state')
+                ? opts.state_evt
+                    ? opts.state_evt
+                    : 'on_prop_state'
                 : 'on_prop_state';
             this.error = false;
             this.msg = '';
@@ -295,7 +370,7 @@ var ts = (function (exports, $) {
             this._set(val);
         }
         _change(evt) {
-            let val = $(evt.currentTarget).val();
+            const val = $(evt.currentTarget).val();
             this._set(val);
         }
         _set(val) {
@@ -333,19 +408,19 @@ var ts = (function (exports, $) {
             this.ctx.text(val);
             super.set(val);
         }
-        _down(evt) {
+        _down(_evt) {
             this.trigger(`on_${this.name}_down`, this);
         }
-        _up(evt) {
+        _up(_evt) {
             this.trigger(`on_${this.name}_up`, this);
         }
-        _click(evt) {
+        _click(_evt) {
             this.trigger(`on_${this.name}_click`, this);
         }
     }
     class SVGProperty extends BoundProperty {
         set(val) {
-            let attrs = {};
+            const attrs = {};
             attrs[this._name] = val;
             set_svg_attrs(this.ctx, attrs);
             super.set(val);
@@ -354,20 +429,19 @@ var ts = (function (exports, $) {
 
     class Parser {
         walk(node) {
-           let children = node.childNodes;
-           for (let child of children) {
-               this.walk(child);
-           }
-           if (node.nodeType === Node.ELEMENT_NODE) {
-               this.parse(node);
-           }
+            const children = node.childNodes;
+            for (const child of children) {
+                this.walk(child);
+            }
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                this.parse(node);
+            }
         }
-        parse(node) {
-        }
+        parse(_node) {}
         node_attrs(node) {
-            let attrs = {};
-            for (let attr of node.attributes) {
-                if (attr && attr.nodeName) {
+            const attrs = {};
+            for (const attr of node.attributes) {
+                if (attr?.nodeName) {
                     attrs[attr.nodeName] = attr.nodeValue;
                 }
             }
@@ -381,10 +455,10 @@ var ts = (function (exports, $) {
             this.handlers = {};
         }
         parse(node) {
-            let attrs = this.node_attrs(node),
+            const attrs = this.node_attrs(node),
                 wrapped = this.wrap_node(node);
             this.handle_elem_attr(wrapped, attrs);
-            let tag = node.tagName.toLowerCase(),
+            const tag = node.tagName.toLowerCase(),
                 handler = this.handlers[tag];
             if (handler) {
                 handler(wrapped, attrs);
@@ -394,17 +468,18 @@ var ts = (function (exports, $) {
             return node;
         }
         handle_elem_attr(node, attrs) {
-            let elem_attr = attrs['t-elem'];
+            const elem_attr = attrs['t-elem'];
             if (elem_attr) {
                 this.widget[elem_attr] = node;
             }
         }
     }
     function extract_number(val) {
-        if (isNaN(val)) {
+        const num = Number(val);
+        if (Number.isNaN(num)) {
             throw 'Input is not a number';
         }
-        return Number(val);
+        return num;
     }
     class HTMLParser extends TemplateParser {
         constructor(widget) {
@@ -412,17 +487,17 @@ var ts = (function (exports, $) {
             this.handlers = {
                 input: this.handle_input.bind(this),
                 select: this.handle_select.bind(this),
-                button: this.handle_button.bind(this)
+                button: this.handle_button.bind(this),
             };
             this.extractors = {
-                number: extract_number
+                number: extract_number,
             };
         }
         wrap_node(node) {
             return $(node);
         }
         handle_input(node, attrs) {
-            let prop = attrs['t-prop'];
+            const prop = attrs['t-prop'];
             if (!prop) {
                 return;
             }
@@ -440,148 +515,75 @@ var ts = (function (exports, $) {
                 ctxa: attrs['t-elem'],
                 val: val,
                 extract: extract,
-                state_evt: attrs['t-state-evt']
+                state_evt: attrs['t-state-evt'],
             });
         }
         handle_select(node, attrs) {
-            let opts = attrs['t-options'];
+            const opts = attrs['t-options'];
             if (opts) {
-                for (let opt of JSON.parse(opts)) {
+                for (const opt of JSON.parse(opts)) {
                     node.append(`<option value="${opt[0]}">${opt[1]}</option>`);
                 }
             }
             this.handle_input(node, attrs);
         }
         handle_button(node, attrs) {
-            let prop = attrs['t-prop'];
+            const prop = attrs['t-prop'];
             if (!prop) {
                 return;
             }
-            let widget = this.widget;
+            const widget = this.widget;
             new ButtonProperty(widget, prop, {
                 ctx: node,
                 ctxa: attrs['t-elem'],
-                val: attrs['t-val']
+                val: attrs['t-val'],
             });
-            for (let evt of ['down', 'up', 'click']) {
+            for (const evt of ['down', 'up', 'click']) {
                 if (attrs[`t-bind-${evt}`]) {
-                    let handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
+                    const handler = widget[attrs[`t-bind-${evt}`]].bind(widget);
                     this.widget.on(`on_${prop}_${evt}`, handler);
                 }
             }
         }
     }
     function compile_template(inst, tmpl, container) {
-        let elem = $(tmpl.trim());
+        const elem = $(tmpl.trim());
         if (container) {
             container.append(elem);
         }
-        let parser = new HTMLParser(inst);
-        elem.each(function() {
+        const parser = new HTMLParser(inst);
+        elem.each(function () {
             parser.walk(this);
         });
         return elem;
     }
-    class SVGParser extends TemplateParser {
-    }
+    class SVGParser extends TemplateParser {}
     function compile_svg(inst, tmpl, container) {
-        let elems = parse_svg(tmpl, container),
+        const elems = parse_svg(tmpl, container),
             parser = new SVGParser(inst);
-        elems.forEach(function (elem, index) {
+        elems.forEach((elem, _index) => {
             parser.walk(elem);
         });
         return elems;
     }
 
-    class Events {
-        constructor() {
-            this._subscribers = {};
-            this._suppress_events = false;
-        }
-        on(event, subscriber) {
-            let subscribers = this._subscribers[event];
-            if (subscribers === undefined) {
-                this._subscribers[event] = subscribers = new Array();
-            }
-            if (this._contains_subscriber(event, subscriber)) {
-                return this;
-            }
-            subscribers.push(subscriber);
-            return this;
-        }
-        off(event, subscriber) {
-            let subscribers = this._subscribers[event];
-            if (subscribers === undefined) {
-                return this;
-            }
-            if (!subscriber) {
-                delete this._subscribers[event];
-                return this;
-            }
-            let idx = subscribers.indexOf(subscriber);
-            if (idx > -1) {
-                subscribers.splice(idx, 1);
-            }
-            this._subscribers[event] = subscribers;
-            return this;
-        }
-        trigger(event, ...opts) {
-            if (this._suppress_events) {
-                return;
-            }
-            if (this[event]) {
-                this[event](...opts);
-            }
-            let subscribers = this._subscribers[event];
-            if (!subscribers) {
-                return this;
-            }
-            for (let i = 0; i < subscribers.length; i++) {
-                subscribers[i](this, ...opts);
-            }
-            return this;
-        }
-        suppress_events(fn) {
-            this._suppress_events = true;
-            fn();
-            this._suppress_events = false;
-        }
-        bind_from_options(events, opts) {
-            for (let event of events) {
-                if (opts[event]) {
-                    this.on(event, opts[event]);
-                }
-            }
-        }
-        _contains_subscriber(event, subscriber) {
-            let subscribers = this._subscribers[event];
-            if (!subscribers) {
-                return false;
-            }
-            for (let i = 0; i < subscribers.length; i++) {
-                if (subscribers[i] === subscriber) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
     var destroy_handles = [];
     class AjaxDestroy extends Parser {
         parse(node) {
-            let instances = node._ajax_attached;
+            const instances = node._ajax_attached;
             if (instances !== undefined) {
-                for (let instance of instances) {
+                for (const instance of instances) {
                     if (instance.destroy !== undefined) {
                         instance.destroy();
                     } else {
-                        console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
+                        console.warn(
+                            `ts.ajax bound but no destroy method defined: ${instance.constructor.name}`,
+                        );
                     }
                 }
                 node._ajax_attached = null;
             }
-            for (let cb of destroy_handles) {
+            for (const cb of destroy_handles) {
                 cb(node);
             }
             $(node).off().removeData().empty();
@@ -598,8 +600,7 @@ var ts = (function (exports, $) {
             destroy_handles.push(callback);
         } else {
             console.warn(
-                'Warning: Ajax destroy handle already registered, skipping registration: '
-                + callback
+                `Warning: Ajax destroy handle already registered, skipping registration: ${callback}`,
             );
         }
     }
@@ -609,8 +610,8 @@ var ts = (function (exports, $) {
             destroy_handles.splice(index, 1);
         } else {
             console.warn(
-                'Warning: Ajax destroy handle is not registered and cannot be unregistered: '
-                + callback
+                'Warning: Ajax destroy handle is not registered and cannot be unregistered: ' +
+                    callback,
             );
         }
     }
@@ -632,7 +633,9 @@ var ts = (function (exports, $) {
         compile() {
             let z_index = 1055;
             z_index += $('.modal:visible').length;
-            compile_template(this, `
+            compile_template(
+                this,
+                `
           <div class="modal-wrapper position-absolute" t-elem="wrapper" style="z-index: ${z_index}">
             <div class="modal-backdrop opacity-25" t-elem="backdrop"></div>
             <div class="modal ${this.flavor} ${this.css}" id="${this.uid}" t-elem="elem">
@@ -650,7 +653,8 @@ var ts = (function (exports, $) {
               </div>
             </div>
           </div>
-        `);
+        `,
+            );
         }
         open() {
             $('body').addClass('modal-open');
@@ -670,11 +674,11 @@ var ts = (function (exports, $) {
         }
     }
     function get_overlay(uid) {
-        let elem = $(`#${uid}`);
+        const elem = $(`#${uid}`);
         if (!elem.length) {
             return null;
         }
-        let ol = elem.data('overlay');
+        const ol = elem.data('overlay');
         if (!ol) {
             return null;
         }
@@ -687,10 +691,14 @@ var ts = (function (exports, $) {
             this.compile_actions();
         }
         compile_actions() {
-            compile_template(this, `
+            compile_template(
+                this,
+                `
           <button class="btn p-0 text-primary text-decoration-underline link-offset-2 close allowMultiSubmit"
                   t-prop="f_close_btn" t-bind-click="close">Close</button>
-        `, this.footer);
+        `,
+                this.footer,
+            );
         }
     }
     function show_message(opts) {
@@ -699,9 +707,9 @@ var ts = (function (exports, $) {
             message: opts.message,
             flavor: opts.flavor,
             css: opts.css,
-            on_open: function(inst) {
+            on_open: (inst) => {
                 $('button', inst.elem).first().focus();
-            }
+            },
         }).open();
     }
     function show_info(message, css) {
@@ -709,7 +717,7 @@ var ts = (function (exports, $) {
             title: 'Info',
             message: message,
             flavor: 'info',
-            css: css
+            css: css,
         });
     }
     function show_warning(message, css) {
@@ -717,7 +725,7 @@ var ts = (function (exports, $) {
             title: 'Warning',
             message: message,
             flavor: 'warning',
-            css: css
+            css: css,
         });
     }
     function show_error(message, css) {
@@ -725,7 +733,7 @@ var ts = (function (exports, $) {
             title: 'Error',
             message: message,
             flavor: 'error',
-            css: css
+            css: css,
         });
     }
     class Dialog extends Message {
@@ -735,12 +743,16 @@ var ts = (function (exports, $) {
             this.bind_from_options(['on_confirm'], opts);
         }
         compile_actions() {
-            compile_template(this, `
+            compile_template(
+                this,
+                `
           <button class="ok btn btn-primary allowMultiSubmit"
                   t-prop="ok_btn">OK</button>
           <button class="cancel btn btn-outline-primary allowMultiSubmit"
                   t-prop="cancel_btn" t-bind-click="close">Cancel</button>
-        `, this.footer);
+        `,
+                this.footer,
+            );
         }
         on_ok_btn_click() {
             this.close();
@@ -751,7 +763,7 @@ var ts = (function (exports, $) {
         new Dialog({
             title: opts.title,
             message: opts.message,
-            on_confirm: opts.on_confirm
+            on_confirm: opts.on_confirm,
         }).open();
     }
 
@@ -760,11 +772,14 @@ var ts = (function (exports, $) {
             this._count = 0;
         }
         compile() {
-            compile_template(this, `
+            compile_template(
+                this,
+                `
           <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
-        `);
+        `,
+            );
         }
         show() {
             this._count++;
@@ -802,16 +817,16 @@ var ts = (function (exports, $) {
         }
         execute(opts) {
             if (opts.url.indexOf('?') !== -1) {
-                let params_ = opts.params;
+                const params_ = opts.params;
                 opts.params = parse_query(opts.url);
                 opts.url = parse_url(opts.url);
-                for (let key in params_) {
+                for (const key in params_) {
                     opts.params[key] = params_[key];
                 }
             } else {
                 set_default(opts, 'params', {});
             }
-            set_default(opts, 'error', (request, status, error) => {
+            set_default(opts, 'error', (_request, status, error) => {
                 if (parseInt(status, 10) === 403) {
                     this.redirect(this.default_403);
                     return;
@@ -838,7 +853,7 @@ var ts = (function (exports, $) {
                     this.hide_spinner(true);
                     opts.error(request, status, error);
                 },
-                cache: set_default(opts, 'cache', false)
+                cache: set_default(opts, 'cache', false),
             });
         }
         redirect(path) {
@@ -861,7 +876,7 @@ var ts = (function (exports, $) {
         new HTTPRequest({
             spinner: set_default(opts, 'spinner', spinner),
             win: set_default(opts, 'win', window),
-            default_403: set_default(opts, 'default_403', '/login')
+            default_403: set_default(opts, 'default_403', '/login'),
         }).execute(opts);
     }
 
@@ -871,7 +886,7 @@ var ts = (function (exports, $) {
                 url: target ? parse_url(target) : undefined,
                 params: target ? parse_query(target) : {},
                 path: target ? parse_path(target) : undefined,
-                query: target ? parse_query(target, true) : undefined
+                query: target ? parse_query(target, true) : undefined,
             };
         }
         parse_definition(val) {
@@ -891,67 +906,11 @@ var ts = (function (exports, $) {
             this.dispatcher = opts.dispatcher;
             this.dispatcher.on(this.event, this.handle.bind(this));
         }
-        execute(opts) {
+        execute(_opts) {
             throw 'Abstract AjaxOperation does not implement execute';
         }
-        handle(inst, opts) {
+        handle(_inst, _opts) {
             throw 'Abstract AjaxOperation does not implement handle';
-        }
-    }
-
-    class AjaxDispatcher extends AjaxUtil {
-        bind(node, evts) {
-            $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
-        }
-        dispatch_handle(evt) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            let elem = $(evt.currentTarget),
-                opts = {
-                    elem: elem,
-                    event: evt
-                };
-            if (elem.attr('ajax:confirm')) {
-                show_dialog({
-                    message: elem.attr('ajax:confirm'),
-                    on_confirm: function(inst) {
-                        this.dispatch(opts);
-                    }.bind(this)
-                });
-            } else {
-                this.dispatch(opts);
-            }
-        }
-        dispatch(opts) {
-            let elem = opts.elem,
-                event = opts.event;
-            if (elem.attr('ajax:action')) {
-                this.trigger('on_action', {
-                    target: this.action_target(elem, event),
-                    action: elem.attr('ajax:action')
-                });
-            }
-            if (elem.attr('ajax:event')) {
-                this.trigger('on_event', {
-                    target: elem.attr('ajax:target'),
-                    event: elem.attr('ajax:event')
-                });
-            }
-            if (elem.attr('ajax:overlay')) {
-                this.trigger('on_overlay', {
-                    target: this.action_target(elem, event),
-                    overlay: elem.attr('ajax:overlay'),
-                    css: elem.attr('ajax:overlay-css'),
-                    uid: elem.attr('ajax:overlay-uid'),
-                    title: elem.attr('ajax:overlay-title')
-                });
-            }
-            if (elem.attr('ajax:path')) {
-                this.trigger('on_path', {
-                    elem: elem,
-                    event: event
-                });
-            }
         }
     }
 
@@ -972,10 +931,10 @@ var ts = (function (exports, $) {
             opts.params['ajax.mode'] = opts.mode;
             opts.params['ajax.selector'] = opts.selector;
             this._request.execute({
-                url: parse_url(opts.url) + '/ajaxaction',
+                url: `${parse_url(opts.url)}/ajaxaction`,
                 type: 'json',
                 params: opts.params,
-                success: opts.success
+                success: opts.success,
             });
         }
         complete(data) {
@@ -987,18 +946,224 @@ var ts = (function (exports, $) {
                 this._handle.next(data.continuation);
             }
         }
-        handle(inst, opts) {
-            let target = opts.target,
+        handle(_inst, opts) {
+            const target = opts.target,
                 action = opts.action;
-            for (let action_ of this.parse_definition(action)) {
-                let defs = action_.split(':');
+            for (const action_ of this.parse_definition(action)) {
+                const defs = action_.split(':');
                 this.execute({
                     name: defs[0],
                     selector: defs[1],
                     mode: defs[2],
                     url: target.url,
-                    params: target.params
+                    params: target.params,
                 });
+            }
+        }
+    }
+
+    class AjaxDispatcher extends AjaxUtil {
+        bind(node, evts) {
+            $(node).off(evts).on(evts, this.dispatch_handle.bind(this));
+        }
+        dispatch_handle(evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            const elem = $(evt.currentTarget),
+                opts = {
+                    elem: elem,
+                    event: evt,
+                };
+            if (elem.attr('ajax:confirm')) {
+                show_dialog({
+                    message: elem.attr('ajax:confirm'),
+                    on_confirm: function (_inst) {
+                        this.dispatch(opts);
+                    }.bind(this),
+                });
+            } else {
+                this.dispatch(opts);
+            }
+        }
+        dispatch(opts) {
+            const elem = opts.elem,
+                event = opts.event;
+            if (elem.attr('ajax:action')) {
+                this.trigger('on_action', {
+                    target: this.action_target(elem, event),
+                    action: elem.attr('ajax:action'),
+                });
+            }
+            if (elem.attr('ajax:event')) {
+                this.trigger('on_event', {
+                    target: elem.attr('ajax:target'),
+                    event: elem.attr('ajax:event'),
+                });
+            }
+            if (elem.attr('ajax:overlay')) {
+                this.trigger('on_overlay', {
+                    target: this.action_target(elem, event),
+                    overlay: elem.attr('ajax:overlay'),
+                    css: elem.attr('ajax:overlay-css'),
+                    uid: elem.attr('ajax:overlay-uid'),
+                    title: elem.attr('ajax:overlay-title'),
+                });
+            }
+            if (elem.attr('ajax:path')) {
+                this.trigger('on_path', {
+                    elem: elem,
+                    event: event,
+                });
+            }
+        }
+    }
+
+    class AjaxEvent extends AjaxOperation {
+        constructor(opts) {
+            opts.event = 'on_event';
+            super(opts);
+        }
+        execute(opts) {
+            const create_event = this.create_event.bind(this);
+            $(opts.selector).each(function () {
+                $(this).trigger(create_event(opts.name, opts.target, opts.data));
+            });
+        }
+        create_event(name, target, data) {
+            const evt = $.Event(name);
+            if (target.url) {
+                evt.ajaxtarget = target;
+            } else {
+                evt.ajaxtarget = this.parse_target(target);
+            }
+            evt.ajaxdata = data;
+            return evt;
+        }
+        handle(_inst, opts) {
+            const target = opts.target,
+                event = opts.event;
+            for (const event_ of this.parse_definition(event)) {
+                const def = event_.split(':');
+                this.execute({
+                    name: def[0],
+                    selector: def[1],
+                    target: target,
+                });
+            }
+        }
+    }
+
+    class AjaxForm {
+        constructor(opts) {
+            this.handle = opts.handle;
+            this.spinner = opts.spinner;
+            this.afr = null;
+        }
+        bind(form) {
+            if (!this.afr) {
+                compile_template(
+                    this,
+                    `
+              <iframe t-elem="afr" id="ajaxformresponse"
+                      name="ajaxformresponse" src="about:blank"
+                      style="width:0px;height:0px;display:none">
+              </iframe>
+            `,
+                    $('body'),
+                );
+            }
+            $(form)
+                .append('<input type="hidden" name="ajax" value="1" />')
+                .attr('target', 'ajaxformresponse')
+                .off()
+                .on(
+                    'submit',
+                    function (_event) {
+                        this.spinner.show();
+                    }.bind(this),
+                );
+        }
+        render(opts) {
+            this.spinner.hide();
+            if (!opts.error) {
+                this.afr.remove();
+                this.afr = null;
+            }
+            if (opts.payload) {
+                this.handle.update(opts);
+            }
+            this.handle.next(opts.next);
+        }
+    }
+
+    class AjaxHandle extends AjaxUtil {
+        constructor(ajax) {
+            super();
+            this.ajax = ajax;
+            this.spinner = ajax.spinner;
+        }
+        destroy(context) {
+            const parser = new AjaxDestroy();
+            context.each(function () {
+                parser.walk(this);
+            });
+        }
+        update(opts) {
+            let payload = opts.payload,
+                selector = opts.selector,
+                mode = opts.mode,
+                context;
+            if (mode === 'replace') {
+                const old_context = $(selector);
+                this.destroy(old_context);
+                old_context.replaceWith(payload);
+                context = $(selector);
+                if (context.length) {
+                    this.ajax.bind(context.parent());
+                } else {
+                    this.ajax.bind($(document));
+                }
+            } else if (mode === 'inner') {
+                context = $(selector);
+                this.destroy(context.children());
+                context.html(payload);
+                this.ajax.bind(context);
+            }
+        }
+        next(operations) {
+            if (!operations || !operations.length) {
+                return;
+            }
+            this.spinner.hide();
+            for (const op of operations) {
+                const type = op.type;
+                delete op.type;
+                if (type === 'path') {
+                    this.ajax.path(op);
+                } else if (type === 'action') {
+                    const target = this.parse_target(op.target);
+                    op.url = target.url;
+                    op.params = target.params;
+                    this.ajax.action(op);
+                } else if (type === 'event') {
+                    this.ajax.trigger(op);
+                } else if (type === 'overlay') {
+                    const target = this.parse_target(op.target);
+                    op.url = target.url;
+                    op.params = target.params;
+                    this.ajax.overlay(op);
+                } else if (type === 'message') {
+                    if (op.flavor) {
+                        show_message({
+                            message: op.payload,
+                            flavor: op.flavor,
+                            css: op.css ? op.css : '',
+                            title: op.title ? op.title : '',
+                        });
+                    } else {
+                        $(op.selector).html(op.payload);
+                    }
+                }
             }
         }
     }
@@ -1030,13 +1195,13 @@ var ts = (function (exports, $) {
                 url = opts.url;
                 params = opts.params;
             }
-            let uid = opts.uid ? opts.uid : uuid4();
+            const uid = opts.uid ? opts.uid : uuid4();
             params['ajax.overlay-uid'] = uid;
             ol = new Overlay({
                 uid: uid,
                 css: opts.css,
                 title: opts.title,
-                on_close: opts.on_close
+                on_close: opts.on_close,
             });
             this.request({
                 name: opts.action,
@@ -1044,24 +1209,24 @@ var ts = (function (exports, $) {
                 mode: 'inner',
                 url: url,
                 params: params,
-                success: function(data) {
+                success: function (data) {
                     if (!data.payload) {
                         this.complete(data);
                         return;
                     }
                     ol.open();
                     this.complete(data);
-                }.bind(this)
+                }.bind(this),
             });
             return ol;
         }
-        handle(inst, opts) {
-            let target = opts.target,
+        handle(_inst, opts) {
+            const target = opts.target,
                 overlay = opts.overlay;
             if (overlay.indexOf('CLOSE') > -1) {
                 this.execute({
                     close: true,
-                    uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid
+                    uid: overlay.indexOf(':') > -1 ? overlay.split(':')[1] : opts.uid,
                 });
                 return;
             }
@@ -1071,44 +1236,34 @@ var ts = (function (exports, $) {
                 params: target.params,
                 css: opts.css,
                 uid: opts.uid,
-                title: opts.title
+                title: opts.title,
             });
         }
     }
 
-    class AjaxForm {
+    class AjaxParser extends Parser {
         constructor(opts) {
-            this.handle = opts.handle;
-            this.spinner = opts.spinner;
-            this.afr = null;
+            super();
+            this.dispatcher = opts.dispatcher;
+            this.form = opts.form;
         }
-        bind(form) {
-            if (!this.afr) {
-                compile_template(this, `
-              <iframe t-elem="afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `, $('body'));
+        parse(node) {
+            const attrs = this.node_attrs(node);
+            if (
+                attrs['ajax:bind'] &&
+                (attrs['ajax:action'] || attrs['ajax:event'] || attrs['ajax:overlay'])
+            ) {
+                const evts = attrs['ajax:bind'];
+                this.dispatcher.bind(node, evts);
             }
-            $(form)
-                .append('<input type="hidden" name="ajax" value="1" />')
-                .attr('target', 'ajaxformresponse')
-                .off()
-                .on('submit', function(event) {
-                    this.spinner.show();
-                }.bind(this));
-        }
-        render(opts) {
-            this.spinner.hide();
-            if (!opts.error) {
-                this.afr.remove();
-                this.afr = null;
+            if (attrs['ajax:form']) {
+                this.form.bind(node);
             }
-            if (opts.payload) {
-                this.handle.update(opts);
+            if (node.tagName.toLowerCase() === 'form') {
+                if (node.className.split(' ').includes('ajax')) {
+                    this.form.bind(node);
+                }
             }
-            this.handle.next(opts.next);
         }
     }
 
@@ -1120,14 +1275,14 @@ var ts = (function (exports, $) {
             $(this.win).on('popstate', this.state_handle.bind(this));
         }
         execute(opts) {
-            let history = this.win.history;
+            const history = this.win.history;
             if (history.pushState === undefined) {
                 return;
             }
-            let path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
+            const path = opts.path.charAt(0) !== '/' ? `/${opts.path}` : opts.path;
             set_default(opts, 'target', this.win.location.origin + path);
             set_default(opts, 'replace', false);
-            let replace = opts.replace;
+            const replace = opts.replace;
             delete opts.path;
             delete opts.replace;
             opts._t_ajax = true;
@@ -1138,7 +1293,7 @@ var ts = (function (exports, $) {
             }
         }
         state_handle(evt) {
-            let state = evt.originalEvent.state;
+            const state = evt.originalEvent.state;
             if (!state) {
                 return;
             }
@@ -1156,13 +1311,13 @@ var ts = (function (exports, $) {
             if (state.action) {
                 this.dispatcher.trigger('on_action', {
                     target: target,
-                    action: state.action
+                    action: state.action,
                 });
             }
             if (state.event) {
                 this.dispatcher.trigger('on_event', {
                     target: target,
-                    event: state.event
+                    event: state.event,
                 });
             }
             if (state.overlay) {
@@ -1171,61 +1326,53 @@ var ts = (function (exports, $) {
                     overlay: state.overlay,
                     css: state.overlay_css,
                     uid: state.overlay_uid,
-                    title: state.overlay_title
+                    title: state.overlay_title,
                 });
             }
             if (!state.action && !state.event && !state.overlay) {
                 this.win.location = target.url;
             }
         }
-        handle(inst, opts) {
+        handle(_inst, opts) {
             let elem = opts.elem,
                 evt = opts.event,
                 path = elem.attr('ajax:path');
             if (path === 'href') {
-                let href = elem.attr('href');
+                const href = elem.attr('href');
                 path = parse_path(href, true);
             } else if (path === 'target') {
-                let tgt = this.action_target(elem, evt);
+                const tgt = this.action_target(elem, evt);
                 path = tgt.path + tgt.query;
             }
             let target;
             if (this.has_attr(elem, 'ajax:path-target')) {
-                let path_target = elem.attr('ajax:path-target');
+                const path_target = elem.attr('ajax:path-target');
                 if (path_target) {
                     target = this.parse_target(path_target);
                 }
             } else {
                 target = this.action_target(elem, evt);
             }
-            let p_opts = {
+            const p_opts = {
                 path: path,
-                target: target
+                target: target,
             };
             p_opts.action = this.attr_val(elem, 'ajax:path-action', 'ajax:action');
             p_opts.event = this.attr_val(elem, 'ajax:path-event', 'ajax:event');
             p_opts.overlay = this.attr_val(elem, 'ajax:path-overlay', 'ajax:overlay');
             if (p_opts.overlay) {
-                p_opts.overlay_css = this.attr_val(
-                    elem,
-                    'ajax:path-overlay-css',
-                    'ajax:overlay-css'
-                );
-                p_opts.overlay_uid = this.attr_val(
-                    elem,
-                    'ajax:path-overlay-uid',
-                    'ajax:overlay-uid'
-                );
+                p_opts.overlay_css = this.attr_val(elem, 'ajax:path-overlay-css', 'ajax:overlay-css');
+                p_opts.overlay_uid = this.attr_val(elem, 'ajax:path-overlay-uid', 'ajax:overlay-uid');
                 p_opts.overlay_title = this.attr_val(
                     elem,
                     'ajax:path-overlay-title',
-                    'ajax:overlay-title'
+                    'ajax:overlay-title',
                 );
             }
             this.execute(p_opts);
         }
         has_attr(elem, name) {
-            let val = elem.attr(name);
+            const val = elem.attr(name);
             return val !== undefined && val !== false;
         }
         attr_val(elem, name, fallback) {
@@ -1237,169 +1384,39 @@ var ts = (function (exports, $) {
         }
     }
 
-    class AjaxEvent extends AjaxOperation {
-        constructor(opts) {
-            opts.event = 'on_event';
-            super(opts);
-        }
-        execute(opts) {
-            let create_event = this.create_event.bind(this);
-            $(opts.selector).each(function() {
-                $(this).trigger(create_event(opts.name, opts.target, opts.data));
-            });
-        }
-        create_event(name, target, data) {
-            let evt = $.Event(name);
-            if (target.url) {
-                evt.ajaxtarget = target;
-            } else {
-                evt.ajaxtarget = this.parse_target(target);
-            }
-            evt.ajaxdata = data;
-            return evt;
-        }
-        handle(inst, opts) {
-            let target = opts.target,
-                event = opts.event;
-            for (let event_ of this.parse_definition(event)) {
-                let def = event_.split(':');
-                this.execute({
-                    name: def[0],
-                    selector: def[1],
-                    target: target
-                });
-            }
-        }
-    }
-
-    class AjaxHandle extends AjaxUtil {
-        constructor(ajax) {
-            super();
-            this.ajax = ajax;
-            this.spinner = ajax.spinner;
-        }
-        destroy(context) {
-            let parser = new AjaxDestroy();
-            context.each(function() {
-                parser.walk(this);
-            });
-        }
-        update(opts) {
-            let payload = opts.payload,
-                selector = opts.selector,
-                mode = opts.mode,
-                context;
-            if (mode === 'replace') {
-                let old_context = $(selector);
-                this.destroy(old_context);
-                old_context.replaceWith(payload);
-                context = $(selector);
-                if (context.length) {
-                    this.ajax.bind(context.parent());
-                } else {
-                    this.ajax.bind($(document));
-                }
-            } else if (mode === 'inner') {
-                context = $(selector);
-                this.destroy(context.children());
-                context.html(payload);
-                this.ajax.bind(context);
-            }
-        }
-        next(operations) {
-            if (!operations || !operations.length) {
-                return;
-            }
-            this.spinner.hide();
-            for (let op of operations) {
-                let type = op.type;
-                delete op.type;
-                if (type === 'path') {
-                    this.ajax.path(op);
-                } else if (type === 'action') {
-                    let target = this.parse_target(op.target);
-                    op.url = target.url;
-                    op.params = target.params;
-                    this.ajax.action(op);
-                } else if (type === 'event') {
-                    this.ajax.trigger(op);
-                } else if (type === 'overlay') {
-                    let target = this.parse_target(op.target);
-                    op.url = target.url;
-                    op.params = target.params;
-                    this.ajax.overlay(op);
-                } else if (type === 'message') {
-                    if (op.flavor) {
-                        show_message({
-                            message: op.payload,
-                            flavor: op.flavor,
-                            css: op.css ? op.css : '',
-                            title: op.title ? op.title : ''
-                        });
-                    } else {
-                        $(op.selector).html(op.payload);
-                    }
-                }
-            }
-        }
-    }
-
-    class AjaxParser extends Parser {
-        constructor(opts) {
-            super();
-            this.dispatcher = opts.dispatcher;
-            this.form = opts.form;
-        }
-        parse(node) {
-            let attrs = this.node_attrs(node);
-            if (attrs['ajax:bind'] && (
-                attrs['ajax:action'] ||
-                attrs['ajax:event'] ||
-                attrs['ajax:overlay'])) {
-                let evts = attrs['ajax:bind'];
-                this.dispatcher.bind(node, evts);
-            }
-            if (attrs['ajax:form']) {
-                this.form.bind(node);
-            }
-            if (node.tagName.toLowerCase() === 'form') {
-                if (node.className.split(' ').includes('ajax')) {
-                    this.form.bind(node);
-                }
-            }
-        }
-    }
-
     class Ajax extends AjaxUtil {
-        constructor(win=window) {
+        constructor(win = window) {
             super();
             this.win = win;
             this.binders = {};
-            let spinner_ = this.spinner = spinner;
-            let dispatcher = this.dispatcher = new AjaxDispatcher();
-            let request = this._request = new HTTPRequest({win: win});
-            this._path = new AjaxPath({dispatcher: dispatcher, win: win});
-            this._event = new AjaxEvent({dispatcher: dispatcher});
-            let handle = new AjaxHandle(this);
-            let action_opts = {
+            this.spinner = spinner;
+            this.dispatcher = new AjaxDispatcher();
+            this._request = new HTTPRequest({ win: win });
+            const spinner_ = this.spinner;
+            const dispatcher = this.dispatcher;
+            const request = this._request;
+            this._path = new AjaxPath({ dispatcher: dispatcher, win: win });
+            this._event = new AjaxEvent({ dispatcher: dispatcher });
+            const handle = new AjaxHandle(this);
+            const action_opts = {
                 dispatcher: dispatcher,
                 win: win,
                 handle: handle,
                 spinner: spinner_,
-                request: request
+                request: request,
             };
             this._action = new AjaxAction(action_opts);
             this._overlay = new AjaxOverlay(action_opts);
-            this._form = new AjaxForm({handle: handle, spinner: spinner_});
+            this._form = new AjaxForm({ handle: handle, spinner: spinner_ });
             this._is_bound = false;
         }
         register(func, instant) {
-            let func_name = 'binder_' + uuid4();
+            let func_name = `binder_${uuid4()}`;
             while (true) {
                 if (this.binders[func_name] === undefined) {
                     break;
                 }
-                func_name = 'binder_' + uuid4();
+                func_name = `binder_${uuid4()}`;
             }
             this.binders[func_name] = func;
             if (instant && this._is_bound) {
@@ -1408,14 +1425,14 @@ var ts = (function (exports, $) {
         }
         bind(context) {
             this._is_bound = true;
-            let parser = new AjaxParser({
+            const parser = new AjaxParser({
                 dispatcher: this.dispatcher,
-                form: this._form
+                form: this._form,
             });
-            context.each(function() {
+            context.each(function () {
                 parser.walk(this);
             });
-            for (let func_name in this.binders) {
+            for (const func_name in this.binders) {
                 try {
                     this.binders[func_name](context);
                 } catch (err) {
@@ -1426,7 +1443,7 @@ var ts = (function (exports, $) {
         }
         attach(instance, elem) {
             if (elem instanceof $) {
-                if (elem.length != 1) {
+                if (elem.length !== 1) {
                     throw `${instance.constructor.name}: Instance can be attached to exactly one DOM element`;
                 }
                 elem = elem[0];
@@ -1442,15 +1459,18 @@ var ts = (function (exports, $) {
         action(opts) {
             this._action.execute(opts);
         }
-        trigger(opts) {
-            if (arguments.length > 1) {
+        trigger(...args) {
+            let opts;
+            if (args.length > 1) {
                 deprecate('Calling Ajax.event with positional arguments', 'opts', '1.0');
                 opts = {
-                    name: arguments[0],
-                    selector: arguments[1],
-                    target: arguments[2],
-                    data: arguments[3]
+                    name: args[0],
+                    selector: args[1],
+                    target: args[2],
+                    data: args[3],
                 };
+            } else {
+                opts = args[0];
             }
             this._event.execute(opts);
         }
@@ -1476,9 +1496,9 @@ var ts = (function (exports, $) {
             deprecate('ts.ajax.parsetarget', 'ts.ajax.parse_target', '1.0');
             return this.parse_target(target);
         }
-        message(message, flavor='') {
+        message(message, flavor = '') {
             deprecate('ts.ajax.message', 'ts.show_message', '1.0');
-            show_message({message: message, flavor: flavor});
+            show_message({ message: message, flavor: flavor });
         }
         info(message) {
             deprecate('ts.ajax.info', 'ts.show_info', '1.0');
@@ -1496,9 +1516,9 @@ var ts = (function (exports, $) {
             deprecate('ts.ajax.dialog', 'ts.show_dialog', '1.0');
             show_dialog({
                 message: opts.message,
-                on_confirm: function() {
+                on_confirm: () => {
                     callback(opts);
-                }
+                },
             });
         }
         request(opts) {
@@ -1506,8 +1526,8 @@ var ts = (function (exports, $) {
             http_request(opts);
         }
     }
-    let ajax = new Ajax();
-    $.fn.tsajax = function() {
+    const ajax = new Ajax();
+    $.fn.tsajax = function () {
         ajax.bind(this);
         return this;
     };
@@ -1524,7 +1544,7 @@ var ts = (function (exports, $) {
         dd = null;
         tt = null;
     }
-    $(function() {
+    $(() => {
         if (window.bootstrap !== undefined) {
             register_ajax_destroy_handle(destroy_bootstrap);
         }
@@ -1580,7 +1600,7 @@ var ts = (function (exports, $) {
             return new ClockIntervalEvent(callback, interval, ...opts);
         }
     }
-    let clock = new Clock();
+    const clock = new Clock();
 
     class DnD extends Events {
         static _drag_source = null;
@@ -1652,7 +1672,7 @@ var ts = (function (exports, $) {
         }
     }
 
-    function create_listener(event, base=null) {
+    function create_listener(event, base = null) {
         base = base || Events;
         if (!(base === Events || base.prototype instanceof Events)) {
             throw 'Base class must be subclass of or Events';
@@ -1684,10 +1704,10 @@ var ts = (function (exports, $) {
             }
         };
     }
-    let ClickListener = create_listener('click');
-    let clickListener = Base => create_listener('click', Base);
-    let ChangeListener = create_listener('change');
-    let changeListener = Base => create_listener('change', Base);
+    const ClickListener = create_listener('click');
+    const clickListener = (Base) => create_listener('click', Base);
+    const ChangeListener = create_listener('change');
+    const changeListener = (Base) => create_listener('change', Base);
 
     class Motion extends Events {
         constructor() {
@@ -1720,7 +1740,7 @@ var ts = (function (exports, $) {
             this._motion = false;
             this._prev_pos = {
                 x: evt.pageX,
-                y: evt.pageY
+                y: evt.pageY,
             };
             if (this._move_scope) {
                 this._move_handle = this._mousemove.bind(this);
@@ -1758,19 +1778,17 @@ var ts = (function (exports, $) {
             new Property(this, 'parent');
             this.parent = opts.parent || null;
         }
-        add_widget(widget){
+        add_widget(widget) {
             widget.parent = this;
             this.children.push(widget);
         }
-        remove_widget(widget){
+        remove_widget(widget) {
             widget.parent = null;
-            this.children.splice(
-                this.children.indexOf(widget), 1
-            );
+            this.children.splice(this.children.indexOf(widget), 1);
         }
         acquire(cls) {
             let parent = this.parent;
-            while(parent) {
+            while (parent) {
                 if (!parent || parent instanceof cls) {
                     break;
                 }
@@ -1783,8 +1801,8 @@ var ts = (function (exports, $) {
         constructor(opts) {
             super(opts);
             this.elem = opts.elem;
-            new CSSProperty(this, 'x', {tgt: 'left'});
-            new CSSProperty(this, 'y', {tgt: 'top'});
+            new CSSProperty(this, 'x', { tgt: 'left' });
+            new CSSProperty(this, 'y', { tgt: 'top' });
             new CSSProperty(this, 'width');
             new CSSProperty(this, 'height');
         }
@@ -1794,14 +1812,14 @@ var ts = (function (exports, $) {
     }
     class SVGContext extends HTMLWidget {
         constructor(opts) {
-            let container = opts.parent.elem.get(0);
-            opts.elem = create_svg_elem('svg', {'class': opts.name}, container);
+            const container = opts.parent.elem.get(0);
+            opts.elem = create_svg_elem('svg', { class: opts.name }, container);
             super(opts);
             this.svg_ns = svg_ns;
             this.xyz = {
                 x: 0,
                 y: 0,
-                z: 1
+                z: 1,
             };
         }
         svg_attrs(el, opts) {
@@ -1823,7 +1841,7 @@ var ts = (function (exports, $) {
             return !this.elem.hasClass('hidden');
         }
         set visible(value) {
-            let trigger = value !== !this.elem.hasClass('hidden');
+            const trigger = value !== !this.elem.hasClass('hidden');
             set_visible(this.elem, value);
             if (trigger) {
                 this.trigger('on_visible', value);
@@ -1865,13 +1883,9 @@ var ts = (function (exports, $) {
         }
         set selected(value) {
             if (value) {
-                this.elem
-                    .removeClass(this.unselected_class)
-                    .addClass(this.selected_class);
+                this.elem.removeClass(this.unselected_class).addClass(this.selected_class);
             } else {
-                this.elem
-                    .removeClass(this.selected_class)
-                    .addClass(this.unselected_class);
+                this.elem.removeClass(this.selected_class).addClass(this.unselected_class);
             }
         }
     }
@@ -1880,7 +1894,7 @@ var ts = (function (exports, $) {
         if (opts.elem) {
             return opts.elem;
         }
-        let form = opts.form,
+        const form = opts.form,
             name = opts.name,
             elem = get_elem(`${prefix}-${form.name}-${name}`, form.elem, true);
         return elem;
@@ -1915,8 +1929,8 @@ var ts = (function (exports, $) {
         }
         set options(value) {
             this.clear();
-            let selection = this.elem[0];
-            for (let option of value) {
+            const selection = this.elem[0];
+            for (const option of value) {
                 if (!(option instanceof Option)) {
                     selection.add(new Option(option[1], option[0]));
                 } else {
@@ -1938,9 +1952,9 @@ var ts = (function (exports, $) {
                 type: 'json',
                 url: this.vocab,
                 params: params,
-                success: function(data, status, request) {
+                success: function (data, _status, _request) {
                     this.options = data;
-                }.bind(this)
+                }.bind(this),
             });
         }
     }
@@ -1953,7 +1967,7 @@ var ts = (function (exports, $) {
             return this.elem.is(':checked');
         }
         set checked(value) {
-            return this.elem.prop('checked', value);
+            this.elem.prop('checked', value);
         }
     }
     class FormField extends Visibility {
@@ -1966,7 +1980,7 @@ var ts = (function (exports, $) {
             if (input && !(input instanceof FormInput)) {
                 input = new input({
                     form: this.form,
-                    name: this.name
+                    name: this.name,
                 });
             }
             this.input = input;
@@ -1975,14 +1989,14 @@ var ts = (function (exports, $) {
             return this.elem.hasClass('has-error');
         }
         set has_error(value) {
-            let elem = this.elem;
+            const elem = this.elem;
             if (value) {
                 elem.addClass('has-error');
             } else {
                 elem.removeClass('has-error');
             }
         }
-        reset(value='') {
+        reset(value = '') {
             this.input.value = value;
             this.has_error = false;
             $('.help-block', this.elem).remove();
@@ -1990,13 +2004,13 @@ var ts = (function (exports, $) {
     }
     class Form {
         static initialize(context, factory, name) {
-            let elem = query_elem(`#form-${name}`, context, true);
+            const elem = query_elem(`#form-${name}`, context, true);
             if (!elem) {
                 return;
             }
-            let form = new factory({
+            const form = new factory({
                 name: name,
-                elem: elem
+                elem: elem,
             });
             elem.data(name, form);
         }
@@ -2008,7 +2022,7 @@ var ts = (function (exports, $) {
             this.elem = opts.elem;
         }
         set_field_visibility(fields, visible) {
-            for (let field of fields) {
+            for (const field of fields) {
                 field.visible = visible;
             }
         }
@@ -2028,45 +2042,41 @@ var ts = (function (exports, $) {
             this.bind();
         }
         unload() {
-            $(window)
-                .off('keydown', this._on_dom_keydown)
-                .off('keyup', this._on_dom_keyup);
+            $(window).off('keydown', this._on_dom_keydown).off('keyup', this._on_dom_keyup);
         }
         bind() {
             this._on_dom_keydown = this._on_dom_keydown.bind(this);
             this._on_dom_keyup = this._on_dom_keyup.bind(this);
-            $(window)
-                .on('keydown', this._on_dom_keydown)
-                .on('keyup', this._on_dom_keyup);
+            $(window).on('keydown', this._on_dom_keydown).on('keyup', this._on_dom_keyup);
         }
         _add_key(name, key_code) {
             this._keys.push(name);
             this[`_${name}`] = false;
             Object.defineProperty(this, name, {
-                get: function() {
+                get: function () {
                     return this[`_${name}`];
                 },
-                set: function(evt) {
-                    let val = this[`_${name}`];
-                    if (evt.type == 'keydown') {
-                        if (!val && evt.keyCode == key_code) {
+                set: function (evt) {
+                    const val = this[`_${name}`];
+                    if (evt.type === 'keydown') {
+                        if (!val && evt.keyCode === key_code) {
                             this[`_${name}`] = true;
                         }
                     } else {
-                        if (val && evt.keyCode == key_code) {
+                        if (val && evt.keyCode === key_code) {
                             this[`_${name}`] = false;
                         }
                     }
-                }
+                },
             });
         }
         _set_keys(evt) {
-            for (let name of this._keys) {
+            for (const name of this._keys) {
                 this[name] = evt;
             }
         }
         _filter_event(evt) {
-            return this.filter_keyevent && this.filter_keyevent(evt);
+            return this.filter_keyevent?.(evt);
         }
         _on_dom_keydown(evt) {
             this._set_keys(evt);
@@ -2087,7 +2097,7 @@ var ts = (function (exports, $) {
     const WS_STATE_CLOSING = 2;
     const WS_STATE_CLOSED = 3;
     class Websocket extends Events {
-        constructor(path, factory=WebSocket) {
+        constructor(path, factory = WebSocket) {
             super();
             this._ws_factory = factory;
             this.path = path;
@@ -2100,7 +2110,7 @@ var ts = (function (exports, $) {
         }
         get uri() {
             let scheme;
-            if (window.location.protocol == 'http:') {
+            if (window.location.protocol === 'http:') {
                 scheme = 'ws://';
             } else {
                 scheme = 'wss://';
@@ -2114,17 +2124,18 @@ var ts = (function (exports, $) {
             if (this.sock !== null) {
                 this.sock.close();
             }
-            let sock = this.sock = new this._ws_factory(this.uri);
-            sock.onopen = function() {
+            this.sock = new this._ws_factory(this.uri);
+            const sock = this.sock;
+            sock.onopen = function () {
                 this.trigger('on_open');
             }.bind(this);
-            sock.onclose = function(evt) {
+            sock.onclose = function (evt) {
                 this.trigger('on_close', evt);
             }.bind(this);
-            sock.onerror = function() {
+            sock.onerror = function () {
                 this.trigger('on_error');
             }.bind(this);
-            sock.onmessage = function(evt) {
+            sock.onmessage = function (evt) {
                 this.trigger('on_raw_message', evt);
             }.bind(this);
         }
@@ -2140,16 +2151,12 @@ var ts = (function (exports, $) {
                 this.sock = null;
             }
         }
-        on_open() {
-        }
-        on_close(evt) {
-        }
-        on_error() {
-        }
-        on_message(data) {
-        }
+        on_open() {}
+        on_close(_evt) {}
+        on_error() {}
+        on_message(_data) {}
         on_raw_message(evt) {
-            let data = JSON.parse(evt.data);
+            const data = JSON.parse(evt.data);
             if (data.HEARTBEAT !== undefined) {
                 return;
             }
@@ -2157,7 +2164,7 @@ var ts = (function (exports, $) {
         }
     }
 
-    $(function() {
+    $(() => {
         ajax.spinner.hide();
         $(document).tsajax();
     });

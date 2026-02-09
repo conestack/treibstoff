@@ -1,10 +1,9 @@
-import {Parser} from '../parser.js';
+import { Parser } from '../parser.js';
 
 /**
  * DOM Parser for binding Ajax operations.
  */
 export class AjaxParser extends Parser {
-
     /**
      * @param {Object} opts - Options.
      * @param {AjaxDispatcher} opts.dispatcher - The Ajax dispatcher.
@@ -23,12 +22,12 @@ export class AjaxParser extends Parser {
      * @override
      */
     parse(node) {
-        let attrs = this.node_attrs(node);
-        if (attrs['ajax:bind'] && (
-            attrs['ajax:action'] ||
-            attrs['ajax:event'] ||
-            attrs['ajax:overlay'])) {
-            let evts = attrs['ajax:bind'];
+        const attrs = this.node_attrs(node);
+        if (
+            attrs['ajax:bind'] &&
+            (attrs['ajax:action'] || attrs['ajax:event'] || attrs['ajax:overlay'])
+        ) {
+            const evts = attrs['ajax:bind'];
             this.dispatcher.bind(node, evts);
         }
         if (attrs['ajax:form']) {

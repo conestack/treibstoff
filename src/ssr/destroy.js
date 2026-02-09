@@ -1,5 +1,5 @@
-import {Parser} from "../parser";
 import $ from 'jquery';
+import { Parser } from '../parser';
 
 var destroy_handles = [];
 
@@ -8,7 +8,6 @@ var destroy_handles = [];
  * going to be removed.
  */
 export class AjaxDestroy extends Parser {
-
     /**
      * Parse a DOM node and destroy all attached JavaScript instances.
      * Runs registered destroy callbacks and cleans up jQuery data.
@@ -17,20 +16,22 @@ export class AjaxDestroy extends Parser {
      * @override
      */
     parse(node) {
-        let instances = node._ajax_attached;
+        const instances = node._ajax_attached;
         if (instances !== undefined) {
-            for (let instance of instances) {
+            for (const instance of instances) {
                 if (instance.destroy !== undefined) {
                     instance.destroy();
                 } else {
-                    console.warn('ts.ajax bound but no destroy method defined: '  + instance.constructor.name);
+                    console.warn(
+                        `ts.ajax bound but no destroy method defined: ${instance.constructor.name}`,
+                    );
                 }
             }
             node._ajax_attached = null; // remove class instances from memory
         }
 
         // Run all registered callbacks
-        for (let cb of destroy_handles) {
+        for (const cb of destroy_handles) {
             cb(node);
         }
         // remove event listeners, cached data and retained comments
@@ -62,8 +63,7 @@ export function register_ajax_destroy_handle(callback) {
         destroy_handles.push(callback);
     } else {
         console.warn(
-            'Warning: Ajax destroy handle already registered, skipping registration: '
-            + callback
+            `Warning: Ajax destroy handle already registered, skipping registration: ${callback}`,
         );
     }
 }
@@ -80,8 +80,8 @@ export function unregister_ajax_destroy_handle(callback) {
         destroy_handles.splice(index, 1);
     } else {
         console.warn(
-            'Warning: Ajax destroy handle is not registered and cannot be unregistered: '
-            + callback
+            'Warning: Ajax destroy handle is not registered and cannot be unregistered: ' +
+                callback,
         );
     }
 }

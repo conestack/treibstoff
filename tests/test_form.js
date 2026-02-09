@@ -6,15 +6,15 @@ import {
     FormInput,
     FormRemoteSelect,
     FormSelect,
-    lookup_form_elem
+    lookup_form_elem,
 } from '../src/form.js';
-import {Visibility} from '../src/widget.js';
+import { Visibility } from '../src/widget.js';
 
-QUnit.module('treibstoff.form', hooks => {
+QUnit.module('treibstoff.form', (hooks) => {
     let container;
-    let ajax_orgin = $.ajax;
+    const ajax_orgin = $.ajax;
 
-    hooks.beforeEach(assert => {
+    hooks.beforeEach((_assert) => {
         container = $('<div></div>');
         $('body').append(container);
     });
@@ -25,37 +25,41 @@ QUnit.module('treibstoff.form', hooks => {
         $.ajax = ajax_orgin;
     });
 
-    QUnit.test('Test lookup_form_elem', assert => {
+    QUnit.test('Test lookup_form_elem', (assert) => {
         let elem = $('<input type="text" />');
-        assert.ok(lookup_form_elem({elem: elem}) === elem);
+        assert.ok(lookup_form_elem({ elem: elem }) === elem);
 
         container.append('<input id="input-formname-fieldname" type="text" />');
-        elem = lookup_form_elem({
-            form: {name: 'formname'},
-            name: 'fieldname'
-        }, '#input');
+        elem = lookup_form_elem(
+            {
+                form: { name: 'formname' },
+                name: 'fieldname',
+            },
+            '#input',
+        );
         assert.deepEqual(elem.attr('id'), 'input-formname-fieldname');
 
         try {
-            lookup_form_elem({
-                form: {name: 'formname'},
-                name: 'inexisting'
-            }, '#input');
+            lookup_form_elem(
+                {
+                    form: { name: 'formname' },
+                    name: 'inexisting',
+                },
+                '#input',
+            );
         } catch (error) {
             assert.step(error);
         }
-        assert.verifySteps([
-            'Element by selector #input-formname-inexisting not found.'
-        ]);
+        assert.verifySteps(['Element by selector #input-formname-inexisting not found.']);
     });
 
-    QUnit.test('Test FormInput', assert => {
+    QUnit.test('Test FormInput', (assert) => {
         container.append('<input id="input-formname-fieldname" type="text" />');
         let input = new FormInput({
-            form: {name: 'formname'},
-            name: 'fieldname'
+            form: { name: 'formname' },
+            name: 'fieldname',
         });
-        assert.deepEqual(input.form, {name: 'formname'});
+        assert.deepEqual(input.form, { name: 'formname' });
         assert.deepEqual(input.name, 'fieldname');
 
         assert.deepEqual(input.value, '');
@@ -70,8 +74,8 @@ QUnit.module('treibstoff.form', hooks => {
         input.disabled = false;
         assert.false(input.disabled);
 
-        let elem = $('<input type="text" value="value" disabled="disabled"/>');
-        input = new FormInput({elem: elem});
+        const elem = $('<input type="text" value="value" disabled="disabled"/>');
+        input = new FormInput({ elem: elem });
         assert.ok(input.elem === elem);
         assert.ok(input.form === undefined);
         assert.ok(input.name === undefined);
@@ -85,44 +89,56 @@ QUnit.module('treibstoff.form', hooks => {
         assert.false(input.disabled);
     });
 
-    QUnit.test('Test FormSelect', assert => {
-        let elem = $(`
+    QUnit.test('Test FormSelect', (assert) => {
+        const elem = $(`
             <select>
                 <option value="1">Option 1</option>
                 <option value="2">Option 2</option>
             </select>
         `);
-        let selection = new FormSelect({elem: elem});
+        let selection = new FormSelect({ elem: elem });
         let options = [];
-        for (let opt of selection.options) {
+        for (const opt of selection.options) {
             options.push([opt.value, opt.text]);
         }
-        assert.deepEqual(options, [['1', 'Option 1'], ['2', 'Option 2']]);
-
-        selection.options = [['3', 'Option 3'], ['4', 'Option 4']];
-        options = [];
-        for (let opt of selection.options) {
-            options.push([opt.value, opt.text]);
-        }
-        assert.deepEqual(options, [['3', 'Option 3'], ['4', 'Option 4']]);
+        assert.deepEqual(options, [
+            ['1', 'Option 1'],
+            ['2', 'Option 2'],
+        ]);
 
         selection.options = [
-            new Option('Option 1', '1'),
-            new Option('Option 2', '2')
+            ['3', 'Option 3'],
+            ['4', 'Option 4'],
         ];
         options = [];
-        for (let opt of selection.options) {
+        for (const opt of selection.options) {
             options.push([opt.value, opt.text]);
         }
-        assert.deepEqual(options, [['1', 'Option 1'], ['2', 'Option 2']]);
+        assert.deepEqual(options, [
+            ['3', 'Option 3'],
+            ['4', 'Option 4'],
+        ]);
+
+        selection.options = [new Option('Option 1', '1'), new Option('Option 2', '2')];
+        options = [];
+        for (const opt of selection.options) {
+            options.push([opt.value, opt.text]);
+        }
+        assert.deepEqual(options, [
+            ['1', 'Option 1'],
+            ['2', 'Option 2'],
+        ]);
 
         assert.deepEqual(selection.value, '1');
         selection.options[1].selected = true;
         assert.deepEqual(selection.value, '2');
 
-        selection.on('on_change', function(evt) {
-            assert.step(this.value);
-        }.bind(selection));
+        selection.on(
+            'on_change',
+            function (_evt) {
+                assert.step(this.value);
+            }.bind(selection),
+        );
         selection.elem.trigger('change');
         assert.verifySteps(['2']);
 
@@ -132,16 +148,19 @@ QUnit.module('treibstoff.form', hooks => {
             </select>
         `);
         selection = new FormSelect({
-            form: {name: 'formname'},
-            name: 'fieldname'
+            form: { name: 'formname' },
+            name: 'fieldname',
         });
         assert.deepEqual(selection.elem.attr('id'), 'input-formname-fieldname');
-        assert.deepEqual(selection.form, {name: 'formname'});
+        assert.deepEqual(selection.form, { name: 'formname' });
         assert.deepEqual(selection.name, 'fieldname');
 
-        selection.on('on_change', function(evt) {
-            assert.step(this.value);
-        }.bind(selection));
+        selection.on(
+            'on_change',
+            function (_evt) {
+                assert.step(this.value);
+            }.bind(selection),
+        );
         selection.elem.trigger('change');
         assert.verifySteps(['a']);
 
@@ -149,22 +168,32 @@ QUnit.module('treibstoff.form', hooks => {
         assert.deepEqual(selection.options.length, 0);
     });
 
-    QUnit.test('Test FormRemoteSelect', assert => {
-        $.ajax = function(opts) {
+    QUnit.test('Test FormRemoteSelect', (assert) => {
+        $.ajax = (opts) => {
             assert.step(JSON.stringify(opts));
-            opts.success([['1', 'Option 1'], ['2', 'Option 2']], '200', {});
-        }
-        let elem = $('<select />');
-        let selection = new FormRemoteSelect({
+            opts.success(
+                [
+                    ['1', 'Option 1'],
+                    ['2', 'Option 2'],
+                ],
+                '200',
+                {},
+            );
+        };
+        const elem = $('<select />');
+        const selection = new FormRemoteSelect({
             elem: elem,
-            vocab: 'json_vocab'
+            vocab: 'json_vocab',
         });
-        selection.fetch({param: 'value'});
-        let options = [];
-        for (let opt of selection.options) {
+        selection.fetch({ param: 'value' });
+        const options = [];
+        for (const opt of selection.options) {
             options.push([opt.value, opt.text]);
         }
-        assert.deepEqual(options, [['1', 'Option 1'], ['2', 'Option 2']]);
+        assert.deepEqual(options, [
+            ['1', 'Option 1'],
+            ['2', 'Option 2'],
+        ]);
         assert.verifySteps([
             '{' +
                 '"url":"json_vocab",' +
@@ -172,13 +201,13 @@ QUnit.module('treibstoff.form', hooks => {
                 '"data":{"param":"value"},' +
                 '"method":"GET",' +
                 '"cache":false' +
-            '}'
+                '}',
         ]);
     });
 
-    QUnit.test('Test FormCheckbox', assert => {
-        let elem = $('<input type="checkbox" checked="checked" />');
-        let cb = new FormCheckbox({elem: elem});
+    QUnit.test('Test FormCheckbox', (assert) => {
+        const elem = $('<input type="checkbox" checked="checked" />');
+        let cb = new FormCheckbox({ elem: elem });
         assert.ok(cb.checked);
         assert.ok(cb.elem.is(':checked'));
 
@@ -186,9 +215,12 @@ QUnit.module('treibstoff.form', hooks => {
         assert.false(cb.checked);
         assert.false(cb.elem.is(':checked'));
 
-        cb.on('on_change', function(evt) {
-            assert.step(this.checked ? 'checked' : 'unchecked');
-        }.bind(cb));
+        cb.on(
+            'on_change',
+            function (_evt) {
+                assert.step(this.checked ? 'checked' : 'unchecked');
+            }.bind(cb),
+        );
         cb.elem.trigger('change');
         assert.verifySteps(['unchecked']);
 
@@ -196,11 +228,11 @@ QUnit.module('treibstoff.form', hooks => {
             <input type="checkbox" id="input-formname-fieldname" />
         `);
         cb = new FormCheckbox({
-            form: {name: 'formname'},
-            name: 'fieldname'
+            form: { name: 'formname' },
+            name: 'fieldname',
         });
         assert.deepEqual(cb.elem.attr('id'), 'input-formname-fieldname');
-        assert.deepEqual(cb.form, {name: 'formname'});
+        assert.deepEqual(cb.form, { name: 'formname' });
         assert.deepEqual(cb.name, 'fieldname');
 
         assert.false(cb.checked);
@@ -210,15 +242,18 @@ QUnit.module('treibstoff.form', hooks => {
         assert.ok(cb.checked);
         assert.ok(cb.elem.is(':checked'));
 
-        cb.on('on_change', function(evt) {
-            assert.step(this.checked ? 'checked' : 'unchecked');
-        }.bind(cb));
+        cb.on(
+            'on_change',
+            function (_evt) {
+                assert.step(this.checked ? 'checked' : 'unchecked');
+            }.bind(cb),
+        );
         cb.elem.trigger('change');
         assert.verifySteps(['checked']);
     });
 
-    QUnit.test('Test FormField', assert => {
-        let elem = $(`
+    QUnit.test('Test FormField', (assert) => {
+        const elem = $(`
             <div id="field-formname-fieldname">
               <input id="input-formname-fieldname" type="text" />
             </div>
@@ -229,10 +264,10 @@ QUnit.module('treibstoff.form', hooks => {
             elem: elem,
             form: {
                 elem: container,
-                name: 'formname'
+                name: 'formname',
             },
             name: 'fieldname',
-            input: FormInput
+            input: FormInput,
         });
         assert.ok(field.elem === elem);
 
@@ -241,10 +276,7 @@ QUnit.module('treibstoff.form', hooks => {
 
         assert.deepEqual(field.name, 'fieldname');
         assert.ok(field.input instanceof FormInput);
-        assert.deepEqual(
-            field.input.elem.attr('id'),
-            'input-formname-fieldname'
-        );
+        assert.deepEqual(field.input.elem.attr('id'), 'input-formname-fieldname');
 
         assert.false(field.has_error);
         field.has_error = true;
@@ -252,7 +284,7 @@ QUnit.module('treibstoff.form', hooks => {
         field.has_error = false;
         assert.deepEqual(field.elem.attr('class'), '');
 
-        field.input.value = 'value'
+        field.input.value = 'value';
         assert.deepEqual(field.input.elem.val(), 'value');
         assert.deepEqual(field.input.value, 'value');
 
@@ -262,16 +294,16 @@ QUnit.module('treibstoff.form', hooks => {
         assert.deepEqual(field.input.value, 'new value');
         assert.false(field.has_error);
 
-        let field_elem = $(`
+        const field_elem = $(`
             <div class="has-error" id="field-formname-fieldname">
               <input id="input-formname-fieldname" type="text" value="value" />
               <span class="help-block">Error Message</span>
             </div>
         `);
-        let input_elem = $('input', field_elem);
+        const input_elem = $('input', field_elem);
         field = new FormField({
             elem: field_elem,
-            input: new FormInput({elem: input_elem})
+            input: new FormInput({ elem: input_elem }),
         });
         assert.ok(field.elem === field_elem);
 
@@ -299,14 +331,14 @@ QUnit.module('treibstoff.form', hooks => {
         assert.false(field.hidden);
     });
 
-    QUnit.test('Test Form.initialize with missing element', assert => {
+    QUnit.test('Test Form.initialize with missing element', (assert) => {
         // No form element in container — should return without error
         Form.initialize(container, Form, 'nonexistent');
-        let form = Form.instance('nonexistent');
+        const form = Form.instance('nonexistent');
         assert.strictEqual(form, undefined, 'No form instance created');
     });
 
-    QUnit.test('Test Form', assert => {
+    QUnit.test('Test Form', (assert) => {
         container.append(`
             <form id="form-formname">
                 <div id="field-formname-field-1">
@@ -318,16 +350,16 @@ QUnit.module('treibstoff.form', hooks => {
             </form>
         `);
         Form.initialize(container, Form, 'formname');
-        let form = Form.instance('formname'),
+        const form = Form.instance('formname'),
             field_1 = new FormField({
                 form: form,
                 name: 'field-1',
-                input: FormInput
+                input: FormInput,
             }),
             field_2 = new FormField({
                 form: form,
                 name: 'field-2',
-                input: FormInput
+                input: FormInput,
             });
         assert.deepEqual(field_1.input.value, '1');
         assert.deepEqual(field_2.input.value, '2');

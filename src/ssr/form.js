@@ -1,12 +1,10 @@
 import $ from 'jquery';
-import {compile_template} from '../parser.js';
-
+import { compile_template } from '../parser.js';
 
 /**
  * Handle for Ajax form.
  */
 export class AjaxForm {
-
     /**
      * @param {Object} opts - Options.
      * @param {AjaxHandle} opts.handle - DOM manipulation handle.
@@ -25,20 +23,27 @@ export class AjaxForm {
      */
     bind(form) {
         if (!this.afr) {
-            compile_template(this, `
+            compile_template(
+                this,
+                `
               <iframe t-elem="afr" id="ajaxformresponse"
                       name="ajaxformresponse" src="about:blank"
                       style="width:0px;height:0px;display:none">
               </iframe>
-            `, $('body'));
+            `,
+                $('body'),
+            );
         }
         $(form)
             .append('<input type="hidden" name="ajax" value="1" />')
             .attr('target', 'ajaxformresponse')
             .off()
-            .on('submit', function(event) {
-                this.spinner.show();
-            }.bind(this));
+            .on(
+                'submit',
+                function (_event) {
+                    this.spinner.show();
+                }.bind(this),
+            );
     }
 
     /**
