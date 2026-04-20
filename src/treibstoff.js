@@ -1,5 +1,6 @@
-import * as ajax from './ajax.js';
+import * as bootstrap from './bootstrap.js';
 import * as clock from './clock.js';
+import * as dnd from './dnd.js';
 import * as events from './events.js';
 import * as form from './form.js';
 import * as keystate from './keystate.js';
@@ -10,14 +11,38 @@ import * as parser from './parser.js';
 import * as properties from './properties.js';
 import * as request from './request.js';
 import * as spinner from './spinner.js';
+import * as ajax_action from './ssr/action.js';
+import * as ajax from './ssr/ajax.js';
+import * as ajax_destroy from './ssr/destroy.js';
+import * as ajax_dispatcher from './ssr/dispatcher.js';
+import * as ajax_event from './ssr/event.js';
+import * as ajax_form from './ssr/form.js';
+import * as ajax_handle from './ssr/handle.js';
+import * as ajax_overlay from './ssr/overlay.js';
+import * as ajax_parser from './ssr/parser.js';
+import * as ajax_path from './ssr/path.js';
+import * as ajax_util from './ssr/util.js';
 import * as utils from './utils.js';
 import * as websocket from './websocket.js';
 import * as widget from './widget.js';
 
-let api = {};
+const api = {};
 
 Object.assign(api, ajax);
+Object.assign(api, ajax_action);
+Object.assign(api, ajax_destroy);
+Object.assign(api, ajax_dispatcher);
+Object.assign(api, ajax_event);
+Object.assign(api, ajax_form);
+Object.assign(api, ajax_handle);
+Object.assign(api, ajax_overlay);
+Object.assign(api, ajax_parser);
+Object.assign(api, ajax_path);
+Object.assign(api, ajax_util);
+
+Object.assign(api, bootstrap);
 Object.assign(api, clock);
+Object.assign(api, dnd);
 Object.assign(api, events);
 Object.assign(api, form);
 Object.assign(api, keystate);
@@ -33,4 +58,5 @@ Object.assign(api, websocket);
 Object.assign(api, widget);
 
 const ts = api;
+
 export default ts;

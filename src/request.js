@@ -1,11 +1,7 @@
 import $ from 'jquery';
-import {show_error} from './overlay.js';
-import {
-    parse_query,
-    parse_url,
-    set_default
-} from './utils.js';
-import {spinner} from './spinner.js';
+import { show_error } from './overlay.js';
+import { spinner } from './spinner.js';
+import { parse_query, parse_url, set_default } from './utils.js';
 
 /**
  * HTTP request convenience object.
@@ -14,7 +10,6 @@ import {spinner} from './spinner.js';
  * automatic redirection for forbidden resources.
  */
 export class HTTPRequest {
-
     /**
      * @param {Object} opts - Request settings.
      * @param {string} opts.spinner - ``LoadingSpinner`` instance to use.
@@ -56,16 +51,16 @@ export class HTTPRequest {
      */
     execute(opts) {
         if (opts.url.indexOf('?') !== -1) {
-            let params_ = opts.params;
+            const params_ = opts.params;
             opts.params = parse_query(opts.url);
             opts.url = parse_url(opts.url);
-            for (let key in params_) {
+            for (const key in params_) {
                 opts.params[key] = params_[key];
             }
         } else {
             set_default(opts, 'params', {});
         }
-        set_default(opts, 'error', (request, status, error) => {
+        set_default(opts, 'error', (_request, status, error) => {
             if (parseInt(status, 10) === 403) {
                 this.redirect(this.default_403);
                 return;
@@ -92,7 +87,7 @@ export class HTTPRequest {
                 this.hide_spinner(true);
                 opts.error(request, status, error);
             },
-            cache: set_default(opts, 'cache', false)
+            cache: set_default(opts, 'cache', false),
         });
     }
 
@@ -175,6 +170,6 @@ export function http_request(opts) {
     new HTTPRequest({
         spinner: set_default(opts, 'spinner', spinner),
         win: set_default(opts, 'win', window),
-        default_403: set_default(opts, 'default_403', '/login')
+        default_403: set_default(opts, 'default_403', '/login'),
     }).execute(opts);
 }

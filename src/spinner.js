@@ -1,7 +1,5 @@
 import $ from 'jquery';
-import {compile_template} from './parser.js';
-
-const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
+import { compile_template } from './parser.js';
 
 /**
  * Loading spinner.
@@ -31,18 +29,22 @@ const default_spinner_image = '/resources/treibstoff/loading-spokes.svg';
  *     ts.spinner.close(true);
  */
 export class LoadingSpinner {
-
     constructor() {
         this._count = 0;
-        this.compile();
     }
 
+    /**
+     * Compile the spinner DOM element from template.
+     */
     compile() {
-        compile_template(this, `
-          <div id="t-loading-spinner" t-elem="elem">
-            <img src="${default_spinner_image}" width="64" height="64" alt="" />
+        compile_template(
+            this,
+            `
+          <div id="t-loading-spinner" t-elem="elem" class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
           </div>
-        `);
+        `,
+        );
     }
 
     /**
@@ -53,6 +55,7 @@ export class LoadingSpinner {
         if (this._count > 1) {
             return;
         }
+        this.compile();
         $('body').append(this.elem);
     }
 
@@ -66,14 +69,20 @@ export class LoadingSpinner {
         this._count--;
         if (force) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
             return;
         } else if (this._count <= 0) {
             this._count = 0;
-            this.elem.remove();
+            if (this.elem) {
+                this.elem.remove();
+            }
+            this.elem = null;
         }
     }
 }
 
 const spinner = new LoadingSpinner();
-export {spinner};
+export { spinner };

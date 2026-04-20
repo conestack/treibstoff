@@ -18,11 +18,11 @@
 # -- Project information -----------------------------------------------------
 
 project = 'treibstoff'
-copyright = '2021-2022, Treibstoff Contributors'
+copyright = '2021-2026, Treibstoff Contributors'
 author = 'Treibstoff Contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '0.2.0'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -66,4 +66,5 @@ html_css_files = [
 
 # -- sphinx_js configuration -------------------------------------------------
 
-js_source_path = '../../src'
+js_source_path = ['../../src', '../../src/ssr']
+root_for_relative_js_paths = '../../src'

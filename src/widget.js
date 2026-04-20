@@ -1,20 +1,11 @@
 import $ from 'jquery';
-import {Events} from './events.js';
-import {ClickListener} from './listener.js';
-import {Motion} from './motion.js';
-import {
-    CSSProperty,
-    Property
-} from './properties.js';
-import {
-    create_svg_elem,
-    set_svg_attrs,
-    set_visible,
-    svg_ns
-} from './utils.js';
+import { Events } from './events.js';
+import { ClickListener } from './listener.js';
+import { Motion } from './motion.js';
+import { CSSProperty, Property } from './properties.js';
+import { create_svg_elem, set_svg_attrs, set_visible, svg_ns } from './utils.js';
 
 export class Widget extends Motion {
-
     /**
      * Create Widget instance.
      *
@@ -37,9 +28,9 @@ export class Widget extends Motion {
      *
      * @param {Object} widget - The widget which to add as child.
      */
-    add_widget(widget){
+    add_widget(widget) {
         widget.parent = this;
-        this.children.push(widget)
+        this.children.push(widget);
     }
 
     /**
@@ -47,11 +38,9 @@ export class Widget extends Motion {
      *
      * @param {Object} widget - The widget which to remove as child.
      */
-    remove_widget(widget){
+    remove_widget(widget) {
         widget.parent = null;
-        this.children.splice(
-            this.children.indexOf(widget), 1
-        )
+        this.children.splice(this.children.indexOf(widget), 1);
     }
 
     /**
@@ -62,7 +51,7 @@ export class Widget extends Motion {
      */
     acquire(cls) {
         let parent = this.parent;
-        while(parent) {
+        while (parent) {
             if (!parent || parent instanceof cls) {
                 break;
             }
@@ -73,7 +62,6 @@ export class Widget extends Motion {
 }
 
 export class HTMLWidget extends Widget {
-
     /**
      * Create HTMLWidget instance.
      *
@@ -89,19 +77,23 @@ export class HTMLWidget extends Widget {
     constructor(opts) {
         super(opts);
         this.elem = opts.elem;
-        new CSSProperty(this, 'x', {tgt: 'left'});
-        new CSSProperty(this, 'y', {tgt: 'top'});
+        new CSSProperty(this, 'x', { tgt: 'left' });
+        new CSSProperty(this, 'y', { tgt: 'top' });
         new CSSProperty(this, 'width');
         new CSSProperty(this, 'height');
     }
 
+    /**
+     * Current offset position of the element.
+     *
+     * @type {{left: number, top: number}}
+     */
     get offset() {
         return $(this.elem).offset();
     }
 }
 
 export class SVGContext extends HTMLWidget {
-
     /**
      * Create SVGContext instance.
      *
@@ -113,14 +105,14 @@ export class SVGContext extends HTMLWidget {
      * @param {String} opts.name - Name of the svg element
      */
     constructor(opts) {
-        let container = opts.parent.elem.get(0);
-        opts.elem = create_svg_elem('svg', {'class': opts.name}, container);
+        const container = opts.parent.elem.get(0);
+        opts.elem = create_svg_elem('svg', { class: opts.name }, container);
         super(opts);
         this.svg_ns = svg_ns;
         this.xyz = {
             x: 0,
             y: 0,
-            z: 1
+            z: 1,
         };
     }
 
@@ -151,7 +143,6 @@ export class SVGContext extends HTMLWidget {
  * Class providing visibility for related element.
  */
 export class Visibility extends Events {
-
     /**
      * Create Visibility instance.
      *
@@ -178,7 +169,7 @@ export class Visibility extends Events {
     }
 
     set visible(value) {
-        let trigger = value !== !this.elem.hasClass('hidden');
+        const trigger = value !== !this.elem.hasClass('hidden');
         set_visible(this.elem, value);
         if (trigger) {
             this.trigger('on_visible', value);
@@ -206,7 +197,6 @@ export class Visibility extends Events {
  * Class providing collapsing of related element.
  */
 export class Collapsible {
-
     /**
      * Create Collapsible instance.
      *
@@ -226,7 +216,7 @@ export class Collapsible {
      * @type {boolean}
      */
     get collapsed() {
-        return !this.elem.hasClass('in');
+        return !this.elem.hasClass('show');
     }
 
     set collapsed(value) {
@@ -244,17 +234,18 @@ export class Collapsible {
  * @extends ClickListener
  */
 export class Button extends ClickListener {
-
     /**
      * Create button instance.
      *
      * @param {Object} opts - Button options.
-     * @param {$} opts.elem - jQuery wrapped button element.
+     * @param {$} opts.elem - jQuery wrapped button element.+
+     * @param {$} opts.unselected_class - css class for unselected button.
+     * @param {$} opts.selected_class - css class for selected button.
      */
     constructor(opts) {
         super(opts);
-        this.unselected_class = 'btn-default';
-        this.selected_class = 'btn-success';
+        this.unselected_class = opts.unselected_class ?? 'btn-primary';
+        this.selected_class = opts.selected_class ?? 'btn-success';
     }
 
     /**
@@ -268,13 +259,9 @@ export class Button extends ClickListener {
 
     set selected(value) {
         if (value) {
-            this.elem
-                .removeClass(this.unselected_class)
-                .addClass(this.selected_class);
+            this.elem.removeClass(this.unselected_class).addClass(this.selected_class);
         } else {
-            this.elem
-                .removeClass(this.selected_class)
-                .addClass(this.unselected_class);
+            this.elem.removeClass(this.selected_class).addClass(this.unselected_class);
         }
     }
 }
