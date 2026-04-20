@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { Parser } from '../parser';
+import { Parser } from '../parser.js';
 
 var destroy_handles = [];
 
