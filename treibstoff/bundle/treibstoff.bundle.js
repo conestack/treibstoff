@@ -1113,6 +1113,9 @@ var ts = (function (exports, $) {
                 selector = opts.selector,
                 mode = opts.mode,
                 context;
+            if (payload?.nodeType && payload.ownerDocument !== document) {
+                payload = document.importNode(payload, true);
+            }
             if (mode === 'replace') {
                 const old_context = $(selector);
                 this.destroy(old_context);

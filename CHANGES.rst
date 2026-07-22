@@ -4,6 +4,12 @@ Changes
 2.0.0 (unreleased)
 ------------------
 
+- Import node payloads owned by a foreign document in ``AjaxHandle.update``
+  instead of adopting them. Ajax form responses pass a live node from the
+  response iframe, and Firefox never opens native ``<select>`` popups on
+  adopted nodes.
+  [rnix]
+
 - Split ``ajax.js`` into ``ssr`` js module.
   [lenadax]
 

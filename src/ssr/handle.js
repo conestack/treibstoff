@@ -32,7 +32,8 @@ export class AjaxHandle extends AjaxUtil {
      * Update DOM with server response payload.
      *
      * @param {Object} opts - Update options.
-     * @param {string} opts.payload - HTML payload.
+     * @param {string|Node} opts.payload - HTML payload. Ajax form responses
+     * pass a live node originating from the response iframe.
      * @param {string} opts.selector - CSS selector of target element.
      * @param {string} opts.mode - ``'replace'`` or ``'inner'``.
      */
@@ -41,6 +42,12 @@ export class AjaxHandle extends AjaxUtil {
             selector = opts.selector,
             mode = opts.mode,
             context;
+        // Inserting a node from the response iframe adopts it into this
+        // document. Firefox never opens native `<select>` popups on adopted
+        // nodes, so import a copy originating from this document instead.
+        if (payload?.nodeType && payload.ownerDocument !== document) {
+            payload = document.importNode(payload, true);
+        }
         if (mode === 'replace') {
             const old_context = $(selector);
             this.destroy(old_context);

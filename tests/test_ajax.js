@@ -1422,6 +1422,44 @@ QUnit.module('treibstoff.ajax', (hooks) => {
         container.remove();
     });
 
+    QUnit.test('Test AjaxHandle.update with foreign node payload', (assert) => {
+        class TestAjax extends Ajax {
+            bind() {}
+        }
+
+        const handle = new AjaxHandle(new TestAjax({}));
+        const container = $('<div class="ajax-container" />').appendTo($('body'));
+
+        // Ajax form responses pass a live node owned by the response iframe.
+        // A foreign document stands in for it here.
+        const foreign = document.implementation.createHTMLDocument('');
+        foreign.body.innerHTML = '<span class="payload">Payload</span>';
+        const foreign_node = foreign.body.firstChild;
+
+        handle.update({
+            payload: foreign_node,
+            selector: '.ajax-container',
+            mode: 'inner',
+        });
+
+        // The node is imported, not adopted. Firefox never opens native
+        // `<select>` popups on adopted nodes.
+        assert.deepEqual($('span.payload', container).html(), 'Payload');
+        assert.notOk($('span.payload', container).get(0) === foreign_node);
+        assert.ok(foreign_node.ownerDocument === foreign);
+
+        // Nodes already owned by this document are inserted as they are.
+        const own_node = $('<span class="own">Own</span>').get(0);
+        handle.update({
+            payload: own_node,
+            selector: '.ajax-container',
+            mode: 'inner',
+        });
+        assert.ok($('span.own', container).get(0) === own_node);
+
+        container.remove();
+    });
+
     QUnit.test('Test AjaxHandle.next', (assert) => {
         let path_opts, action_opts, event_opts, overlay_opts;
 
