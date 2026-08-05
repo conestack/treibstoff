@@ -1,4 +1,4 @@
-import {Events} from './events.js';
+import { Events } from './events.js';
 
 export const WS_STATE_CONNECTING = 0;
 export const WS_STATE_OPEN = 1;
@@ -28,13 +28,12 @@ export const WS_STATE_CLOSED = 3;
  * @extends Events
  */
 export class Websocket extends Events {
-
     /**
      * Create Websocket instance.
      *
      * @param {string} path - The path to connect to.
      */
-    constructor(path, factory=WebSocket) {
+    constructor(path, factory = WebSocket) {
         super();
         // factory injection for tests
         this._ws_factory = factory;
@@ -55,7 +54,7 @@ export class Websocket extends Events {
      */
     get uri() {
         let scheme;
-        if (window.location.protocol == 'http:') {
+        if (window.location.protocol === 'http:') {
             scheme = 'ws://';
         } else {
             scheme = 'wss://';
@@ -80,17 +79,18 @@ export class Websocket extends Events {
         if (this.sock !== null) {
             this.sock.close();
         }
-        let sock = this.sock = new this._ws_factory(this.uri);
-        sock.onopen = function() {
+        this.sock = new this._ws_factory(this.uri);
+        const sock = this.sock;
+        sock.onopen = function () {
             this.trigger('on_open');
         }.bind(this);
-        sock.onclose = function(evt) {
+        sock.onclose = function (evt) {
             this.trigger('on_close', evt);
         }.bind(this);
-        sock.onerror = function() {
+        sock.onerror = function () {
             this.trigger('on_error');
         }.bind(this);
-        sock.onmessage = function(evt) {
+        sock.onmessage = function (evt) {
             this.trigger('on_raw_message', evt);
         }.bind(this);
     }
@@ -126,8 +126,7 @@ export class Websocket extends Events {
     /**
      * Subscriber when connection has been opened.
      */
-    on_open() {
-    }
+    on_open() {}
 
     /**
      * Subscriber when connection has been closed.
@@ -136,14 +135,12 @@ export class Websocket extends Events {
      * `CloseEvent <https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent>`_
      * documentation.
      */
-    on_close(evt) {
-    }
+    on_close(_evt) {}
 
     /**
      * Subscriber when connection error has occurred.
      */
-    on_error() {
-    }
+    on_error() {}
 
     /**
      * Subscriber when a message has been received from server.
@@ -154,8 +151,7 @@ export class Websocket extends Events {
      *
      * @param {Object} data - Data received from server.
      */
-    on_message(data) {
-    }
+    on_message(_data) {}
 
     /**
      * Default subscriber when messages are received from server.
@@ -168,7 +164,7 @@ export class Websocket extends Events {
      * documentation.
      */
     on_raw_message(evt) {
-        let data = JSON.parse(evt.data);
+        const data = JSON.parse(evt.data);
         if (data.HEARTBEAT !== undefined) {
             return;
         }

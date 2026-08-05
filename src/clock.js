@@ -2,13 +2,12 @@
  * Class for deferring function call prior to the next repaint.
  */
 export class ClockFrameEvent {
-
     /**
      * Create frame event. The callback gets passed a timestamp as first
      * argument.
      *
      * @param {function} callback - Function to be called before next repaint.
-     * @param {...*} opts - Arbitrary arguments which additionally gets passed
+     * @param {...any} opts - Arbitrary arguments which additionally gets passed
      * to callback.
      */
     constructor(callback, ...opts) {
@@ -32,7 +31,6 @@ export class ClockFrameEvent {
  * Class for deferring function call after timeout.
  */
 export class ClockTimeoutEvent {
-
     /**
      * Create timeout event. The callback gets passed a timestamp as first
      * argument.
@@ -40,7 +38,7 @@ export class ClockTimeoutEvent {
      * @param {function} callback - Function to be called after timeout.
      * @param {number} delay - Time in milliseconds to wait before callback
      * execution.
-     * @param {...*} opts - Arbitrary arguments which additionally gets passed
+     * @param {...any} opts - Arbitrary arguments which additionally gets passed
      * to callback.
      */
     constructor(callback, delay, ...opts) {
@@ -64,14 +62,13 @@ export class ClockTimeoutEvent {
  * Class for executing function call periodically.
  */
 export class ClockIntervalEvent {
-
     /**
      * Create interval event. The callback gets passed a timestamp as first
      * argument and the event instance as second argument.
      *
      * @param {function} callback - Function to be called before next repaint.
      * @param {number} interval - Execution interval time in milliseconds.
-     * @param {...*} opts - Arbitrary arguments which gets additionally passed
+     * @param {...any} opts - Arbitrary arguments which gets additionally passed
      * to callback.
      */
     constructor(callback, interval, ...opts) {
@@ -95,7 +92,6 @@ export class ClockIntervalEvent {
  * Class for creating clock events.
  */
 export class Clock {
-
     /**
      * Creates and returns a frame event instance. See ``ClockFrameEvent``
      * documentation for details.
@@ -121,5 +117,5 @@ export class Clock {
     }
 }
 
-let clock = new Clock();
-export {clock};
+const clock = new Clock();
+export { clock };

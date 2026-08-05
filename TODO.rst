@@ -38,6 +38,23 @@ TODO
     - Support ``data-t-ajax-*`` attributes as substitute of ``ajax:*`` attributes
       and deprecate latter with B/C fallback.
 
+[ ] - ``AjaxEvent`` triggering bubbles into unrelated ajax operations.
+    - ``AjaxEvent.execute`` triggers via jQuery ``.trigger()``, which bubbles up
+      the DOM. If the addressed element does not bind that event name, the
+      closest ancestor binding it handles the event instead, dispatches its own
+      ``ajax:action`` and stops propagation
+      (``AjaxDispatcher.dispatch_handle``).
+    - A wrong or outdated event name therefore does not fail silently, it
+      silently performs a different and usually much bigger operation.
+    - Example: ``ajax:event="contextchanged:#contextmenu"`` while
+      ``#contextmenu`` binds ``contextactionschanged``. The event bubbles to
+      ``#content``, which re-renders the entire content area instead of the
+      context menu.
+    - To analyse: trigger without bubbling (``triggerHandler``), or warn when
+      the selector matches elements not binding the event? Bubbling may be
+      relied upon elsewhere - e.g. ``contextchanged`` triggered on a nested
+      element to reach ``#layout``.
+
 [ ] - Form module
     - Button widget in form?
     - Move form to yafowil?

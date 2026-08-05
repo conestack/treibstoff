@@ -1,31 +1,34 @@
 import ts from '../src/treibstoff.js';
 
-QUnit.module('Test treibstoff', hooks => {
-
-    QUnit.test('Test api members', assert => {
-        let members = [];
-        for (let prop in ts) {
+QUnit.module('Test treibstoff', (_hooks) => {
+    QUnit.test('Test api members', (assert) => {
+        const members = [];
+        for (const prop in ts) {
             members.push(prop);
         }
         assert.deepEqual(members, [
             'Ajax',
+            'ajax',
             'AjaxAction',
             'AjaxDestroy',
+            'ajax_destroy',
+            'register_ajax_destroy_handle',
+            'unregister_ajax_destroy_handle',
             'AjaxDispatcher',
             'AjaxEvent',
             'AjaxForm',
             'AjaxHandle',
-            'AjaxOperation',
             'AjaxOverlay',
             'AjaxParser',
             'AjaxPath',
+            'AjaxOperation',
             'AjaxUtil',
-            'ajax',
             'Clock',
             'ClockFrameEvent',
             'ClockIntervalEvent',
             'ClockTimeoutEvent',
             'clock',
+            'DnD',
             'Events',
             'Form',
             'FormCheckbox',
@@ -98,8 +101,7 @@ QUnit.module('Test treibstoff', hooks => {
             'HTMLWidget',
             'SVGContext',
             'Visibility',
-            'Widget'
+            'Widget',
         ]);
     });
-
 });

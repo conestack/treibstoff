@@ -1,4 +1,5 @@
-import {Events} from '../src/events.js';
+import { Events } from './events.js';
+import { ajax } from './ssr/ajax.js';
 
 /**
  * Create listener base or mixin class handling given DOM event.
@@ -55,7 +56,7 @@ import {Events} from '../src/events.js';
  * @param {class} base - Optional base class to extend. Must extend ``Events``.
  * @returns {class} Newly created listener class.
  */
-export function create_listener(event, base=null) {
+export function create_listener(event, base = null) {
     base = base || Events;
     if (!(base === Events || base.prototype instanceof Events)) {
         throw 'Base class must be subclass of or Events';
@@ -67,16 +68,26 @@ export function create_listener(event, base=null) {
             } else {
                 super(opts);
             }
-            let elem = this.elem
+            let elem = this.elem;
             if (!elem && opts !== undefined) {
                 elem = this.elem = opts.elem;
             }
             if (!elem) {
                 throw 'No element found';
             }
-            elem.on(event, evt => {
-                this.trigger(`on_${event}`, evt);
-            });
+            this.event = event;
+            this.trigger_event = this.trigger_event.bind(this);
+            this.elem.on(this.event, this.trigger_event);
+
+            ajax.attach(this, this.elem);
+        }
+
+        trigger_event(evt) {
+            this.trigger(`on_${event}`, evt);
+        }
+
+        destroy() {
+            this.elem.off(this.event, this.trigger_event);
         }
     };
 }
@@ -84,19 +95,19 @@ export function create_listener(event, base=null) {
 /**
  * DOM ``click`` event listener as base class.
  */
-export let ClickListener = create_listener('click');
+export const ClickListener = create_listener('click');
 
 /**
  * DOM ``click`` event listener as mixin class.
  */
-export let clickListener = Base => create_listener('click', Base);
+export const clickListener = (Base) => create_listener('click', Base);
 
 /**
  * DOM ``change`` event listener as base class.
  */
-export let ChangeListener = create_listener('change');
+export const ChangeListener = create_listener('change');
 
 /**
  * DOM ``change`` event listener as mixin class.
  */
-export let changeListener = Base => create_listener('change', Base);
+export const changeListener = (Base) => create_listener('change', Base);

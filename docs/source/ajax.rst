@@ -589,6 +589,129 @@ Form
     posted to hidden iframe.
 
 
+Programmatic API
+-----------------
+
+In addition to the declarative HTML attribute approach, all Ajax operations can
+be triggered programmatically from JavaScript via the ``ajax`` singleton.
+
+
+Execute an Action
+~~~~~~~~~~~~~~~~~
+
+Request a server-side tile and insert its HTML into the DOM:
+
+.. code-block:: js
+
+    let target = ts.ajax.parse_target('http://example.com/items?page=2');
+    ts.ajax.action({
+        name: 'content',           // server-side tile/action name
+        selector: '#content',      // DOM element to update
+        mode: 'inner',             // 'inner' or 'replace'
+        url: target.url,           // URL without query
+        params: target.params      // query parameters as object
+    });
+
+
+Trigger a Custom Event
+~~~~~~~~~~~~~~~~~~~~~~
+
+Create and dispatch a custom event on matching DOM elements:
+
+.. code-block:: js
+
+    ts.ajax.trigger({
+        name: 'contextchanged',
+        selector: '#layout',
+        target: 'http://example.com/items/42',
+        data: {key: 'value'}     // optional extra data
+    });
+
+Elements bound to ``contextchanged`` via ``ajax:bind`` will receive the event
+with ``evt.ajaxtarget`` and ``evt.ajaxdata`` properties.
+
+
+Open an Overlay Programmatically
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: js
+
+    let overlay = ts.ajax.overlay({
+        action: 'editform',
+        target: 'http://example.com/items/42/edit',
+        css: 'overlay-form',
+        title: 'Edit Item',
+        on_close: function(inst) {
+            console.log('Overlay closed');
+        }
+    });
+
+    // Close an overlay by UID
+    ts.ajax.overlay({close: true, uid: overlay.uid});
+
+
+Manage Browser History
+~~~~~~~~~~~~~~~~~~~~~~
+
+Push or replace a browser history entry with associated Ajax operations:
+
+.. code-block:: js
+
+    ts.ajax.path({
+        path: '/items/42',
+        target: 'http://example.com/items/42',
+        action: 'content:#content:inner',
+        event: 'contextchanged:#layout'
+    });
+
+    // Replace instead of push
+    ts.ajax.path({
+        path: '/items/42',
+        target: 'http://example.com/items/42',
+        action: 'content:#content:inner',
+        replace: true
+    });
+
+
+Register Binder Callbacks
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Register JavaScript that runs every time Ajax updates the DOM. This is the
+primary integration point for custom widgets:
+
+.. code-block:: js
+
+    $(function() {
+        ts.ajax.register(function(context) {
+            // 'context' is the jQuery-wrapped DOM that was just updated
+            $('.my-widget', context).each(function() {
+                new MyWidget($(this));
+            });
+        }, true);  // true = also execute immediately on registration
+    });
+
+
+Attach Instances for Lifecycle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When Ajax replaces DOM elements, attached instances get their ``destroy()``
+method called automatically:
+
+.. code-block:: js
+
+    class Tooltip {
+        constructor(elem) {
+            this.elem = elem;
+            ts.ajax.attach(this, elem);
+            this.tip = new ExternalTooltip(elem[0]);
+        }
+
+        destroy() {
+            this.tip.dispose();
+        }
+    }
+
+
 API
 ---
 
