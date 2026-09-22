@@ -22,18 +22,7 @@ export class AjaxForm {
      * @param {HTMLFormElement} form - The form DOM element.
      */
     bind(form) {
-        if (!this.afr) {
-            compile_template(
-                this,
-                `
-              <iframe t-elem="afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `,
-                $('body'),
-            );
-        }
+        this.ensure_afr();
         $(form)
             .append('<input type="hidden" name="ajax" value="1" />')
             .attr('target', 'ajaxformresponse')
@@ -41,9 +30,38 @@ export class AjaxForm {
             .on(
                 'submit',
                 function (_event) {
+                    // Again here, and not only on bind: a page can carry more
+                    // than one ajax form, the iframe is shared by all of them
+                    // and a successful submit removes it. A form bound before
+                    // that and not re rendered since still points at it by
+                    // name - and a target name the browser cannot resolve
+                    // opens a new tab instead of submitting in place. Creating
+                    // it in the handler is soon enough: the browser resolves
+                    // the target after the submit event has run.
+                    this.ensure_afr();
                     this.spinner.show();
                 }.bind(this),
             );
+    }
+
+    /**
+     * Create the hidden iframe all bound forms submit into, unless it is
+     * already there.
+     */
+    ensure_afr() {
+        if (this.afr) {
+            return;
+        }
+        compile_template(
+            this,
+            `
+          <iframe t-elem="afr" id="ajaxformresponse"
+                  name="ajaxformresponse" src="about:blank"
+                  style="width:0px;height:0px;display:none">
+          </iframe>
+        `,
+            $('body'),
+        );
     }
 
     /**

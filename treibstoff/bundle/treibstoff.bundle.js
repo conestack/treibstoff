@@ -1060,18 +1060,7 @@ var ts = (function (exports, $) {
             this.afr = null;
         }
         bind(form) {
-            if (!this.afr) {
-                compile_template(
-                    this,
-                    `
-              <iframe t-elem="afr" id="ajaxformresponse"
-                      name="ajaxformresponse" src="about:blank"
-                      style="width:0px;height:0px;display:none">
-              </iframe>
-            `,
-                    $('body'),
-                );
-            }
+            this.ensure_afr();
             $(form)
                 .append('<input type="hidden" name="ajax" value="1" />')
                 .attr('target', 'ajaxformresponse')
@@ -1079,9 +1068,25 @@ var ts = (function (exports, $) {
                 .on(
                     'submit',
                     function (_event) {
+                        this.ensure_afr();
                         this.spinner.show();
                     }.bind(this),
                 );
+        }
+        ensure_afr() {
+            if (this.afr) {
+                return;
+            }
+            compile_template(
+                this,
+                `
+          <iframe t-elem="afr" id="ajaxformresponse"
+                  name="ajaxformresponse" src="about:blank"
+                  style="width:0px;height:0px;display:none">
+          </iframe>
+        `,
+                $('body'),
+            );
         }
         render(opts) {
             this.spinner.hide();

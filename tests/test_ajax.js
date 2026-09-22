@@ -1175,6 +1175,43 @@ QUnit.module('treibstoff.ajax', (hooks) => {
         assert.ok(form.afr === null);
     });
 
+    QUnit.test('Test AjaxForm re creates removed iframe on submit', (assert) => {
+        // A page can carry more than one ajax form. The iframe is shared by
+        // all of them and gets removed on a successful submit - a form bound
+        // before that and not re rendered since still points at it by name,
+        // and a target name the browser cannot resolve opens a new tab.
+        const ajax = new Ajax({});
+        const form = new AjaxForm({
+            handle: new AjaxHandle(ajax),
+            spinner: ajax.spinner,
+        });
+
+        const first = $('<form />');
+        const second = $('<form />');
+        form.bind(first.get(0));
+        form.bind(second.get(0));
+
+        // both point at the same iframe
+        assert.deepEqual(first.attr('target'), 'ajaxformresponse');
+        assert.deepEqual(second.attr('target'), 'ajaxformresponse');
+        assert.deepEqual($('body > #ajaxformresponse').length, 1);
+
+        // the first one submits successfully and the iframe goes with it
+        form.render({ payload: null, next: [], error: false });
+        assert.ok(form.afr === null);
+        assert.deepEqual($('body > #ajaxformresponse').length, 0);
+
+        // the second one was never re rendered, so nothing re bound it - its
+        // submit has to find a frame all the same
+        second.trigger('submit');
+        assert.ok(form.afr !== null);
+        assert.deepEqual($('body > #ajaxformresponse').length, 1);
+        assert.deepEqual($('body > #ajaxformresponse').attr('name'), 'ajaxformresponse');
+
+        form.afr.remove();
+        form.afr = null;
+    });
+
     ///////////////////////////////////////////////////////////////////////////
     // Test AjaxDispatcher
     ///////////////////////////////////////////////////////////////////////////
