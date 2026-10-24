@@ -4,7 +4,8 @@ Changes
 2.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Set ``PYTHON_MIN_VERSION`` in the Makefile to 3.10.
+  [rnix]
 
 
 2.0.0 (2026-10-24)
