@@ -9,7 +9,7 @@
 /dist/
 /docs/html/
 /node_modules/
-/pnpm-lock.yaml
+/package-lock.json
 /requirements-mxdev.txt
 /treibstoff-*.tgz
 /venv/

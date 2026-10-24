@@ -30,6 +30,8 @@ QUnit.module('treibstoff.ajax', (hooks) => {
         $.ajax = ajax_orgin;
         // Force hide spinner
         spinner.hide(true);
+        // Reset crypto.getRandomValues patch if any
+        delete crypto.getRandomValues;
     });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1733,6 +1735,34 @@ QUnit.module('treibstoff.ajax', (hooks) => {
             count++;
         }
         assert.deepEqual(count, 2);
+    });
+
+    QUnit.test('Test Ajax.register binder name collision', (assert) => {
+        const ajax = new Ajax();
+        // uuid4 consumes one random byte per generated hex digit. Return
+        // zeros for the first uuid to make it predictable, then delegate.
+        const uuid_length = 31;
+        const orgin_random_values = crypto.getRandomValues.bind(crypto);
+        let random_calls = 0;
+        crypto.getRandomValues = (array) => {
+            random_calls++;
+            if (random_calls <= uuid_length) {
+                return array.fill(0);
+            }
+            return orgin_random_values(array);
+        };
+        const taken_name = 'binder_10000000-1000-4000-8000-100000000000';
+        const taken_binder = () => {};
+        ajax.binders[taken_name] = taken_binder;
+
+        const binder = () => {};
+        ajax.register(binder);
+
+        assert.true(random_calls > uuid_length);
+        assert.strictEqual(ajax.binders[taken_name], taken_binder);
+        const names = Object.keys(ajax.binders).filter((name) => name !== taken_name);
+        assert.deepEqual(names.length, 1);
+        assert.strictEqual(ajax.binders[names[0]], binder);
     });
 
     QUnit.test('Test Ajax.attach', (assert) => {

@@ -17,24 +17,6 @@ QUnit.module('treibstoff.websocket', (_hooks) => {
         }
     }
 
-    QUnit.test('Test Websocket TLS scheme', (assert) => {
-        // Save original protocol
-        const _orig_protocol = window.location.protocol;
-
-        // Override window.location.protocol by creating a ws and checking uri
-        // Since window.location.protocol is 'http:' in tests, the default
-        // test already covers 'ws://'. We need to cover the 'wss://' branch.
-        // We can't override window.location.protocol directly, so use a
-        // subclass that overrides the uri getter.
-        class TLSWebsocket extends Websocket {
-            get uri() {
-                return `wss://${window.location.hostname}${this.path}`;
-            }
-        }
-        const ws = new TLSWebsocket('/path', DummyWebSocket);
-        assert.strictEqual(ws.uri, 'wss://localhost/path');
-    });
-
     QUnit.test('Test Websocket double open', (assert) => {
         let close_count = 0;
 

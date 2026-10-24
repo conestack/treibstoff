@@ -1139,7 +1139,7 @@ var ts = (function (exports, $) {
             }
         }
         next(operations) {
-            if (!operations || !operations.length) {
+            if (!operations?.length) {
                 return;
             }
             this.spinner.hide();

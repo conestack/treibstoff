@@ -4,6 +4,20 @@ Changes
 2.0.1 (unreleased)
 ------------------
 
+- Extend the JS tests to 100 % coverage, all modules including bundles are
+  loaded by the tests now.
+  [rnix]
+
+- Update biome to 2.6 and add ``check`` and ``format`` targets running biome to
+  ``include.mk``.
+  [rnix]
+
+- JS tooling: Commit ``pnpm-lock.yaml``. Upgrade ``@web/test-runner`` to 1.0
+  and run the JS tests headless in Chromium via Playwright, installed in the JS
+  CI workflow. Drop the accidental ``install`` dev dependency. Pin patched
+  versions of vulnerable transitive dependencies via ``pnpm.overrides``.
+  [rnix]
+
 - Set ``PYTHON_MIN_VERSION`` in the Makefile to 3.10.
   [rnix]
 

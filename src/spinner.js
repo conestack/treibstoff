@@ -85,4 +85,5 @@ export class LoadingSpinner {
 }
 
 const spinner = new LoadingSpinner();
+
 export { spinner };

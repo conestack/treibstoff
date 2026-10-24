@@ -492,6 +492,7 @@ export class Ajax extends AjaxUtil {
 }
 
 const ajax = new Ajax();
+
 export { ajax };
 
 $.fn.tsajax = function () {

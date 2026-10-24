@@ -118,4 +118,5 @@ export class Clock {
 }
 
 const clock = new Clock();
+
 export { clock };

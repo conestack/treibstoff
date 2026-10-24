@@ -19,6 +19,7 @@ jobs:
     - name: Install
       run: |
         make nodejs
+        pnpm exec playwright install --with-deps chromium
 
     - name: Run tests
       run: make wtr

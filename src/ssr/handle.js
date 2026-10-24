@@ -73,7 +73,7 @@ export class AjaxHandle extends AjaxUtil {
      * has a ``type`` property (path, action, event, overlay, message).
      */
     next(operations) {
-        if (!operations || !operations.length) {
+        if (!operations?.length) {
             return;
         }
         this.spinner.hide();
