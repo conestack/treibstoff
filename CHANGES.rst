@@ -4,6 +4,11 @@ Changes
 2.0.0 (unreleased)
 ------------------
 
+- Complete package metadata: description, keywords, project urls and
+  development status, audience and license classifiers. pyroma rated the
+  package 0/10 without them.
+  [rnix]
+
 - Re create the hidden form iframe on submit in ``AjaxForm``. It is shared by
   every bound form and gets removed on a successful submit, so a form that was
   bound before that and has not been re rendered since pointed at a frame name
